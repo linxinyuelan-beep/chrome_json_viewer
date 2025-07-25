@@ -1,0 +1,2 @@
+(()=>{"use strict";chrome.runtime.onInstalled.addListener((()=>{console.log("Chrome extension installed")})),chrome.runtime.onMessage.addListener(((e,t,a)=>{"setTabName"===e.action?chrome.tabs.query({active:!0,currentWindow:!0},(t=>{t[0].id&&chrome.tabs.executeScript(t[0].id,{code:`document.title = "${e.tabName}";`})})):"getData"===e.action&&a({data:"Sample data"})}))})();
+//# sourceMappingURL=background.bundle.js.map

@@ -1,0 +1,232 @@
+/* main.css */
+
+/* Reset some default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Popup container */
+.popup {
+    width: 100%;
+    min-height: 100%;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: white;
+}
+
+/* Section styles */
+.section {
+    margin-bottom: 20px;
+}
+
+/* Input styles */
+.input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+/* Button styles */
+.button {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.button:hover:not(:disabled) {
+    background-color: #357abd;
+}
+
+.button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Tab styles */
+.tabs {
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.tab-list {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tab-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    margin-bottom: -1px;
+    background-color: transparent;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.tab-item:hover {
+    color: #4a90e2;
+}
+
+.tab-item.active {
+    border-color: #ddd;
+    border-bottom-color: white;
+    color: #4a90e2;
+    background-color: white;
+}
+
+/* Table styles */
+.rules-table-container {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;  /* 隐藏横向滚动条 */
+    border: 1px solid #eee;
+    border-radius: 4px;
+    margin: 0 -20px;  /* 抵消父容器的 padding */
+    padding: 0 20px;  /* 添加内边距 */
+}
+
+.rules-table {
+    width: 100%;
+    table-layout: fixed;  /* 使用固定表格布局 */
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.rules-table th,
+.rules-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    word-wrap: break-word;  /* 允许单词内换行 */
+}
+
+.rules-table th {
+    background-color: #fafafa;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+}
+
+.rules-table th:first-child {
+    width: 45%;  /* URL 列占比 */
+}
+
+.rules-table th:nth-child(2) {
+    width: 25%;  /* 标题列占比 */
+}
+
+.rules-table th:nth-child(3) {
+    width: 15%;  /* 匹配模式列占比 */
+}
+
+.rules-table th:last-child {
+    width: 15%;  /* 操作列占比 */
+}
+
+.rules-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+.rules-table td {
+    vertical-align: middle;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.rule-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background-color: #fff;
+    transition: border-color 0.2s;
+}
+
+.rule-item:hover {
+    border-color: #4a90e2;
+}
+
+.rule-content {
+    flex: 1;
+    font-size: 13px;
+    margin-right: 12px;
+    word-break: break-all;
+}
+
+.rule-content > div {
+    margin-bottom: 4px;
+}
+
+.rule-content > div:last-child {
+    margin-bottom: 0;
+}
+
+.delete-button {
+    padding: 4px 8px;
+    background-color: #ff4d4f;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.delete-button:hover:not(:disabled) {
+    background-color: #ff7875;
+}
+
+.edit-button {
+    padding: 4px 8px;
+    background-color: #52c41a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.edit-button:hover:not(:disabled) {
+    background-color: #73d13d;
+}
+
+.edit-button:disabled,
+.delete-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
