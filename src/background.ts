@@ -89,25 +89,36 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (request.action === 'getData') {
         sendResponse({ data: 'Sample data' });
     } else if (request.action === 'moveTabToOtherWindow') {
-        // Get all Chrome windows
-        chrome.windows.getAll({ populate: true }, (windows) => {
-            // Get the current window
-            chrome.windows.getCurrent((currentWindow) => {
-                // Find another window that is not the current one
+        (async () => {
+            try {
+                const windows = await chrome.windows.getAll();
+                const currentWindow = await chrome.windows.getCurrent();
                 const otherWindow = windows.find(w => w.id !== currentWindow.id);
-                
+
                 if (otherWindow?.id) {
-                    // Get the active tab in the current window
-                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                        if (tabs[0].id) {
-                            // Move the active tab to the other window
-                            chrome.tabs.move(tabs[0].id, { windowId: otherWindow.id, index: -1 });
+                    const otherWindowId = otherWindow.id;
+                    const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+                    if (activeTab?.id) {
+                        // Move the tab
+                        await chrome.tabs.move(activeTab.id, { windowId: otherWindowId, index: -1 });
+                        
+                        // Ensure the window is not minimized before focusing
+                        if (otherWindow.state === 'minimized') {
+                            await chrome.windows.update(otherWindowId, { state: 'normal' });
                         }
-                    });
+                        
+                        // Focus the window and activate the tab
+                        await chrome.windows.update(otherWindowId, { focused: true });
+                        await chrome.tabs.update(activeTab.id, { active: true });
+                    }
                 } else {
                     console.log('No other window found');
                 }
-            });
-        });
+            } catch (error) {
+                console.error('Error moving tab:', error);
+            }
+        })();
+        return true; // Indicates an asynchronous response
     }
 });
