@@ -20,6 +20,53 @@
   background-color: rgba(255, 85, 0, 0.05);
 }
 
+/* Hover detection styles */
+.json-hover-indicator {
+  animation: pulse 1.5s infinite;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
+
+@keyframes pulse {
+  0% { opacity: 0.8; }
+  50% { opacity: 1; }
+  100% { opacity: 0.8; }
+}
+
+.json-hover-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: bold;
+}
+
+/* 鼠标悬停时只给JSON部分添加样式 */
+.json-text-hover {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: #007bff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 2px;
+}
+
+.json-text-hover:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+  text-decoration-style: solid;
+}
+
+/* Badge styles */
+.json-badge {
+  position: absolute;
+  font-size: 11px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 3px;
+  padding: 2px 5px;
+  opacity: 0.9;
+  z-index: 9999;
+  pointer-events: none;
+}
+
 .json-drawer {
   position: fixed;
   top: 0;

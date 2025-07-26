@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tab Title Changer",
-  "version": "1.0",
+  "version": "1.1.13",
   "description": "A Chrome extension that allows you to change tab titles.",
   "permissions": [
     "activeTab",
