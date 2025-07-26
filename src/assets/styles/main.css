@@ -1,4 +1,4 @@
-/* main.css */
+/* main.css - JSON Formatter & Viewer */
 
 /* Reset some default styles */
 * {
@@ -12,21 +12,144 @@ body {
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     color: #333;
+    width: 350px;
+    min-height: 300px;
 }
 
 /* Popup container */
 .popup {
     width: 100%;
     min-height: 100%;
-    padding: 20px;
+    padding: 16px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     background-color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 16px;
+}
+
+.header h1 {
+    font-size: 18px;
+    color: #2e7db5;
+    margin: 0;
+}
+
+.version {
+    font-size: 12px;
+    color: #999;
+}
+
+/* Content area */
+.content {
+    flex: 1;
 }
 
 /* Section styles */
 .section {
     margin-bottom: 20px;
+}
+
+.section h2 {
+    font-size: 15px;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+/* Footer styles */
+.footer {
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+    margin-top: 12px;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+}
+
+/* Lists */
+.shortcut-list,
+.feature-list {
+    list-style-type: none;
+    margin-left: 4px;
+}
+
+.shortcut-list li,
+.feature-list li {
+    padding: 4px 0;
+    font-size: 13px;
+}
+
+/* Keyboard shortcut style */
+kbd {
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+    color: #333;
+    display: inline-block;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 1;
+    padding: 2px 5px;
+    margin: 0 2px;
+}
+
+/* Toggle switch */
+.toggle-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 22px;
+    background-color: #ccc;
+    border-radius: 22px;
+    transition: .4s;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 2px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s;
+}
+
+input:checked + .toggle-slider {
+    background-color: #2e7db5;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
+.toggle-label {
+    margin-left: 10px;
+    font-size: 14px;
 }
 
 /* Input styles */

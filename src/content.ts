@@ -1,13 +1,13 @@
 // This file is the content script that interacts with web pages.
-// It can manipulate the DOM of the pages the extension is active on.
+// It detects and formats JSON on web pages
 
 // Import JSON drawer styles
 import './assets/styles/json-drawer.css';
 import './assets/styles/json-viewer-component.css';
 
 // 定义版本号常量
-const EXTENSION_VERSION = "1.3.4";
-console.log(`Content script loaded. JSON Detector version ${EXTENSION_VERSION}`);
+const EXTENSION_VERSION = "1.0.2";
+console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_VERSION}`);
 
 // 添加全局showNestedJsonInDrawer函数，用于显示嵌套JSON
 (window as any).showNestedJsonInDrawer = function(jsonString: string) {
@@ -27,24 +27,11 @@ let enableHoverDetection = true;
 
 // Listen for the keyboard shortcuts
 document.addEventListener('keydown', (event) => {
-    // 'W' key: Move tab to other window
-    if (event.key === 'W') {
-        console.log('W key pressed, sending message to background script');
-        chrome.runtime.sendMessage({ action: 'moveTabToOtherWindow' });
-    }
-    
     // Ctrl+Shift+J or Cmd+Shift+J: 格式化选中的JSON
     if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'e') {
         console.log('Keyboard shortcut for formatting selected JSON');
         event.preventDefault();
         formatSelectedJson();
-    }
-    
-    // Ctrl+Shift+C or Cmd+Shift+C: 复制选中的JSON
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'c') {
-        console.log('Keyboard shortcut for copying selected JSON');
-        event.preventDefault();
-        copySelectedJson();
     }
     
     // Ctrl+Shift+H or Cmd+Shift+H: 切换悬停检测模式
@@ -91,40 +78,6 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-interface Rule {
-    pattern: string;
-    template: string;
-}
-
-function updateTitle(rules: Rule[]) {
-    const url = window.location.href;
-
-    for (const rule of rules) {
-        try {
-            if (url === rule.pattern) {
-                document.title = rule.template;
-                return;
-            }
-        } catch (error) {
-            console.error('Error processing rule:', rule, error);
-        }
-    }
-}
-
-// 监听存储变化
-chrome.storage.onChanged.addListener((changes) => {
-    if (changes.urlRules) {
-        updateTitle(changes.urlRules.newValue);
-    }
-});
-
-// 初始化
-chrome.storage.sync.get(['urlRules'], (result) => {
-    if (result.urlRules) {
-        updateTitle(result.urlRules);
-    }
-});
-
 // 格式化选中的JSON文本
 function formatSelectedJson(): void {
     // 获取选中的文本
@@ -146,45 +99,7 @@ function formatSelectedJson(): void {
     }
 }
 
-// 复制选中的JSON文本
-function copySelectedJson(): void {
-    // 获取选中的文本
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-        showNotification('没有选中任何文本', 'error');
-        return;
-    }
-    
-    // 获取选中的文本内容
-    const selectedText = selection.toString();
-    
-    // 验证JSON并尝试格式化后复制
-    if (isValidJson(selectedText)) {
-        try {
-            // 解析和美化JSON
-            const jsonObj = JSON.parse(selectedText);
-            const formattedJson = JSON.stringify(jsonObj, null, 2);
-            
-            // 复制到剪贴板
-            void copyTextToClipboard(formattedJson).then(() => {
-                showNotification('JSON已复制到剪贴板', 'success');
-            }).catch((err: Error) => {
-                console.error('复制失败:', err);
-                showNotification('复制失败，请重试', 'error');
-            });
-        } catch (e) {
-            showNotification('JSON格式化失败', 'error');
-        }
-    } else {
-        // 尝试复制原始文本
-        void copyTextToClipboard(selectedText).then(() => {
-            showNotification('文本已复制到剪贴板', 'info');
-        }).catch((err: Error) => {
-            console.error('复制失败:', err);
-            showNotification('复制失败，请重试', 'error');
-        });
-    }
-}
+
 
 // 显示通知
 function showNotification(message: string, type: 'success' | 'error' | 'info' = 'info'): void {
@@ -874,37 +789,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         } else {
             showNotification('所选文本不是有效的JSON', 'error');
         }
-    } else if (request.action === 'copySelectedJson' && request.selectedText) {
-        // 复制选中的 JSON
-        if (isValidJson(request.selectedText)) {
-            try {
-                // 解析和美化JSON
-                const jsonObj = JSON.parse(request.selectedText);
-                const formattedJson = JSON.stringify(jsonObj, null, 2);
-                
-                // 复制到剪贴板
-                void copyTextToClipboard(formattedJson).then(() => {
-                    showNotification('JSON已复制到剪贴板', 'success');
-                }).catch((err: Error) => {
-                    console.error('复制失败:', err);
-                    showNotification('复制失败，请重试', 'error');
-                });
-            } catch (e) {
-                showNotification('JSON格式化失败', 'error');
-            }
-        } else {
-            showNotification('所选文本不是有效的JSON', 'error');
+    } else if (request.action === 'toggleHoverDetection') {
+        // 切换悬停检测状态
+        enableHoverDetection = !enableHoverDetection;
+        
+        // 显示状态变化通知
+        showNotification(
+            `JSON悬停检测: ${enableHoverDetection ? '已启用' : '已禁用'}`,
+            enableHoverDetection ? 'success' : 'info'
+        );
+        
+        // 刷新页面以应用更改（如果启用悬停检测）
+        if (enableHoverDetection) {
+            location.reload();
         }
     }
 });
 
 window.addEventListener('load', () => {
-    chrome.storage.sync.get(['urlRules'], (result) => {
-        if (result.urlRules) {
-            updateTitle(result.urlRules);
-        }
-    });
-    
     // 创建抽屉元素
     const drawer = createJsonDrawer();
     document.body.appendChild(drawer);    // 等待页面完全加载后再初始化JSON检测
