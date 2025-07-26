@@ -5,7 +5,7 @@
 import './assets/styles/json-drawer.css';
 
 // 定义版本号常量
-const EXTENSION_VERSION = "1.1.16";
+const EXTENSION_VERSION = "1.1.20";
 console.log(`Content script loaded. JSON Detector version ${EXTENSION_VERSION}`);
 
 // 是否启用悬停检测
@@ -159,9 +159,9 @@ function detectJsonInElement(element: Element): string[] {
         while ((reqResMatch = reqResPattern.exec(text)) !== null) {
             try {
                 const jsonStr = reqResMatch[2];
-                console.log(`Found req/res pattern, JSON start: ${jsonStr.substring(0, 50)}...`);
+                // console.log(`Found req/res pattern, JSON start: ${jsonStr.substring(0, 50)}...`);
                 if (isValidJson(jsonStr)) {
-                    console.log(`Valid API req/res JSON detected with length ${jsonStr.length}`);
+                    // console.log(`Valid API req/res JSON detected with length ${jsonStr.length}`);
                     detectedJsons.push(jsonStr);
                 }
             } catch (e) {
@@ -322,11 +322,9 @@ function findBalancedPatterns(text: string, openChar: string, closeChar: string)
     return results;
 }
 
-// 在抽屉中显示JSON - 支持多个JSON对象
-function showJsonInDrawer(jsonStrings: string | string[]): void {
-    // 确保输入是数组格式
-    const jsonArray = Array.isArray(jsonStrings) ? jsonStrings : [jsonStrings];
-    if (jsonArray.length === 0) return;
+// 在抽屉中显示JSON - 只支持单个JSON对象 - 浅色主题 - 紧凑布局
+function showJsonInDrawer(jsonString: string): void {
+    if (!jsonString) return;
     
     // 获取或创建抽屉
     const drawer = document.querySelector('.json-drawer') as HTMLElement || createJsonDrawer();
@@ -340,113 +338,20 @@ function showJsonInDrawer(jsonStrings: string | string[]): void {
     
     // 格式化JSON并显示
     try {
-        let content = '';
+        // 格式化单个JSON
+        const content = formatJsonWithHighlight(jsonString);
+        const jsonSize = formatSize(jsonString.length);
         
-        // 如果有多个JSON对象，添加切换选项卡
-        if (jsonArray.length > 1) {
-            // 创建选项卡容器
-            content += `
-                <div class="json-tabs" style="margin-bottom: 15px;">
-                    <div style="margin-bottom: 10px; font-size: 0.9em; color: #666;">
-                        发现 ${jsonArray.length} 个JSON对象:
-                    </div>
-                    <div style="display: flex; overflow-x: auto; gap: 8px; padding-bottom: 5px;">
-            `;
-            
-            // 为每个JSON创建一个选项卡按钮
-            jsonArray.forEach((_, index) => {
-                const isActive = index === 0;
-                content += `
-                    <button 
-                        class="json-tab-button ${isActive ? 'active' : ''}" 
-                        data-tab-index="${index}"
-                        style="
-                            padding: 5px 10px;
-                            border: 1px solid ${isActive ? '#007bff' : '#ccc'};
-                            background-color: ${isActive ? '#e7f1ff' : '#f8f9fa'};
-                            color: ${isActive ? '#007bff' : '#333'};
-                            border-radius: 4px;
-                            cursor: pointer;
-                            font-size: 0.9em;
-                            white-space: nowrap;
-                            flex-shrink: 0;
-                        "
-                    >
-                        JSON ${index + 1} (${formatSize(jsonArray[index].length)})
-                    </button>
-                `;
-            });
-            
-            content += `
-                    </div>
-                </div>
-                <div class="json-content-container">
-            `;
-            
-            // 添加每个JSON的内容区域（默认只显示第一个）
-            jsonArray.forEach((jsonStr, index) => {
-                const isActive = index === 0;
-                content += `
-                    <div 
-                        class="json-content" 
-                        data-content-index="${index}" 
-                        style="display: ${isActive ? 'block' : 'none'};"
-                    >
-                        ${formatJsonWithHighlight(jsonStr)}
-                    </div>
-                `;
-            });
-            
-            content += '</div>';
-        } else {
-            // 单个JSON的情况
-            content = formatJsonWithHighlight(jsonArray[0]);
-        }
-        
-        // 添加版本号和来源信息
+        // 添加版本号和来源信息 - 浅色主题 - 单行显示 - 紧凑布局
         drawerContent.innerHTML = `
-            <div style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="color: #888; font-size: 0.9em;">
-                    Detected by JSON Detector v${EXTENSION_VERSION} (Hover Mode)
-                </span>
-                <span style="color: #007bff; font-size: 0.9em; font-weight: bold;">
-                    ${jsonArray.length > 1 ? `Multiple JSON Objects (${jsonArray.length})` : 'Hover Detected JSON'}
-                </span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: -45px 0; padding: 4px 8px; background-color: #e9f0f8;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: #666; font-size: 0.8em;">v${EXTENSION_VERSION}</span>
+                    <span style="color: #666; font-size: 0.8em;">大小: ${jsonSize}</span>
+                </div>
             </div>
-            ${content}
+            <div style="padding: 0 8px;">${content}</div>
         `;
-        
-        // 为选项卡按钮添加点击事件
-        if (jsonArray.length > 1) {
-            const tabButtons = drawerContent.querySelectorAll('.json-tab-button');
-            tabButtons.forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const tabIndex = (event.currentTarget as HTMLElement).dataset.tabIndex;
-                    if (!tabIndex) return;
-                    
-                    // 更新按钮样式
-                    tabButtons.forEach(btn => {
-                        (btn as HTMLElement).classList.remove('active');
-                        (btn as HTMLElement).style.backgroundColor = '#f8f9fa';
-                        (btn as HTMLElement).style.borderColor = '#ccc';
-                        (btn as HTMLElement).style.color = '#333';
-                    });
-                    (event.currentTarget as HTMLElement).classList.add('active');
-                    (event.currentTarget as HTMLElement).style.backgroundColor = '#e7f1ff';
-                    (event.currentTarget as HTMLElement).style.borderColor = '#007bff';
-                    (event.currentTarget as HTMLElement).style.color = '#007bff';
-                    
-                    // 显示对应的内容
-                    const contentDivs = drawerContent.querySelectorAll('.json-content');
-                    contentDivs.forEach(div => {
-                        (div as HTMLElement).style.display = 'none';
-                        if ((div as HTMLElement).dataset.contentIndex === tabIndex) {
-                            (div as HTMLElement).style.display = 'block';
-                        }
-                    });
-                });
-            });
-        }
         
         // 打开抽屉
         drawer.classList.add('open');
@@ -467,35 +372,45 @@ function formatSize(bytes: number): string {
     }
 }
 
-// 格式化JSON字符串并添加语法高亮
+// 格式化JSON字符串并添加语法高亮 - 浅色主题 - 紧凑布局
 function formatJsonWithHighlight(jsonStr: string): string {
     try {
         const obj = JSON.parse(jsonStr);
         const formatted = JSON.stringify(obj, null, 2);
         
-        // 添加语法高亮
-        return formatted.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+        // 使用浅色主题的语法高亮
+        const highlightedJson = formatted.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
             let cls = 'json-number';
+            let style = 'color: #b5622e;'; // 数字-浅色主题
+            
             if (/^"/.test(match)) {
                 if (/:$/.test(match)) {
                     cls = 'json-key';
+                    style = 'color: #2e7db5; font-weight: bold;'; // 键名-浅色主题
                 } else {
                     cls = 'json-string';
+                    style = 'color: #288c28;'; // 字符串-浅色主题
                 }
             } else if (/true|false/.test(match)) {
                 cls = 'json-boolean';
+                style = 'color: #9e40b5;'; // 布尔值-浅色主题
             } else if (/null/.test(match)) {
                 cls = 'json-null';
+                style = 'color: #b5404a;'; // null值-浅色主题
             }
-            return `<span class="${cls}">${match}</span>`;
+            
+            return `<span class="${cls}" style="${style}">${match}</span>`;
         });
+        
+        // 添加额外的样式，使JSON更易于阅读 - 紧凑布局
+        return `<div style="font-family: 'Monaco', 'Menlo', 'Consolas', monospace; font-size: 13px; line-height: 1.4; margin-top: 0;">${highlightedJson}</div>`;
     } catch (e) {
         const error = e as Error;
-        return `<div class="json-error">Error formatting JSON: ${error.message}</div>`;
+        return `<div style="color: #d32f2f; background-color: #ffebee; padding: 10px; border-radius: 4px; border-left: 4px solid #d32f2f; margin: 10px 0;">Error formatting JSON: ${error.message}</div>`;
     }
 }
 
-// 创建JSON抽屉元素
+// 创建JSON抽屉元素 - 使用浅色主题，更紧凑的布局
 function createJsonDrawer(): HTMLElement {
     const drawer = document.createElement('div');
     drawer.className = 'json-drawer';
@@ -507,9 +422,43 @@ function createJsonDrawer(): HTMLElement {
         <div class="json-drawer-content"></div>
     `;
     
-    // 关闭按钮的点击事件
+    // 应用浅色主题样式和更紧凑的布局
+    drawer.style.backgroundColor = '#f8f9fa';
+    drawer.style.color = '#333333';
+    drawer.style.boxShadow = '-5px 0 15px rgba(0, 0, 0, 0.1)';
+    drawer.style.padding = '0'; // 移除整体内边距，使内容更紧凑
+    
+    // 为标题栏应用浅色主题样式
+    const headerElement = drawer.querySelector('.json-drawer-header');
+    if (headerElement) {
+        (headerElement as HTMLElement).style.display = 'flex';
+        (headerElement as HTMLElement).style.justifyContent = 'space-between';
+        (headerElement as HTMLElement).style.alignItems = 'center';
+        (headerElement as HTMLElement).style.padding = '8px 12px'; // 减小内边距
+        (headerElement as HTMLElement).style.borderBottom = '1px solid #e0e0e0';
+        (headerElement as HTMLElement).style.color = '#333333';
+        (headerElement as HTMLElement).style.margin = '0'; // 移除外边距
+    }
+    
+    // 为标题应用样式
+    const titleElement = drawer.querySelector('.json-drawer-title');
+    if (titleElement) {
+        (titleElement as HTMLElement).style.fontWeight = 'bold';
+        (titleElement as HTMLElement).style.fontSize = '14px';
+        (titleElement as HTMLElement).style.color = '#2e7db5';
+    }
+    
+    // 为关闭按钮应用浅色主题样式
     const closeBtn = drawer.querySelector('.json-drawer-close');
     if (closeBtn) {
+        (closeBtn as HTMLElement).style.color = '#666';
+        (closeBtn as HTMLElement).style.fontSize = '18px';
+        (closeBtn as HTMLElement).style.background = 'none';
+        (closeBtn as HTMLElement).style.border = 'none';
+        (closeBtn as HTMLElement).style.cursor = 'pointer';
+        (closeBtn as HTMLElement).style.padding = '0 5px';
+        
+        // 关闭按钮的点击事件
         closeBtn.addEventListener('click', () => {
             drawer.classList.remove('open');
         });
@@ -756,7 +705,7 @@ window.addEventListener('load', () => {
                                     }
                                     
                                     if (!processedNode) {
-                                        console.log(`Could not find text node containing JSON: ${json.substring(0, 30)}...`);
+                                        // console.log(`Could not find text node containing JSON: ${json.substring(0, 30)}...`);
                                     }
                                 } catch (e) {
                                     console.error("Error highlighting JSON:", e);
