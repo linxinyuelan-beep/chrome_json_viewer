@@ -392,7 +392,7 @@ function findBalancedPatterns(text: string, openChar: string, closeChar: string)
     return results;
 }
 
-// 在抽屉中显示JSON - 只支持单个JSON对象 - 浅色主题 - 紧凑布局
+// 在抽屉中显示JSON - 使用@textea/json-viewer库实现折叠功能
 function showJsonInDrawer(jsonString: string): void {
     if (!jsonString) return;
 
@@ -408,26 +408,263 @@ function showJsonInDrawer(jsonString: string): void {
 
     // 格式化JSON并显示
     try {
-        // 格式化单个JSON
-        const content = formatJsonWithHighlight(jsonString);
+        // 解析JSON字符串
+        const jsonData = JSON.parse(jsonString);
         const jsonSize = formatSize(jsonString.length);
 
-        // 添加版本号和来源信息 - 浅色主题 - 单行显示 - 紧凑布局
-        drawerContent.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin: -40px 0; padding: 4px 8px; background-color: #e9f0f8;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="color: #666; font-size: 0.8em;">v${EXTENSION_VERSION}</span>
-                    <span style="color: #666; font-size: 0.8em;">大小: ${jsonSize}</span>
-                </div>
-            </div>
-            <div style="padding: 0 8px;">${content}</div>
+        // 清空抽屉内容
+        drawerContent.innerHTML = '';
+        
+        // 创建信息栏
+        const infoBar = document.createElement('div');
+        infoBar.style.display = 'flex';
+        infoBar.style.justifyContent = 'space-between';
+        infoBar.style.alignItems = 'center';
+        infoBar.style.padding = '4px 8px';
+        infoBar.style.backgroundColor = '#e9f0f8';
+        infoBar.style.marginBottom = '8px';
+        
+        // 添加版本和大小信息
+        const infoSection = document.createElement('div');
+        infoSection.style.display = 'flex';
+        infoSection.style.alignItems = 'center';
+        infoSection.style.gap = '8px';
+        infoSection.innerHTML = `
+            <span style="color: #666; font-size: 0.8em;">v${EXTENSION_VERSION}</span>
+            <span style="color: #666; font-size: 0.8em;">大小: ${jsonSize}</span>
         `;
+        
+        // 创建操作按钮区域
+        const actionSection = document.createElement('div');
+        actionSection.style.display = 'flex';
+        actionSection.style.gap = '8px';
+        
+        // 添加全部展开按钮
+        const expandAllBtn = document.createElement('button');
+        expandAllBtn.textContent = '全部展开';
+        expandAllBtn.style.fontSize = '12px';
+        expandAllBtn.style.padding = '2px 6px';
+        expandAllBtn.style.backgroundColor = '#2e7db5';
+        expandAllBtn.style.color = 'white';
+        expandAllBtn.style.border = 'none';
+        expandAllBtn.style.borderRadius = '3px';
+        expandAllBtn.style.cursor = 'pointer';
+        
+        // 添加全部折叠按钮
+        const collapseAllBtn = document.createElement('button');
+        collapseAllBtn.textContent = '全部折叠';
+        collapseAllBtn.style.fontSize = '12px';
+        collapseAllBtn.style.padding = '2px 6px';
+        collapseAllBtn.style.backgroundColor = '#666';
+        collapseAllBtn.style.color = 'white';
+        collapseAllBtn.style.border = 'none';
+        collapseAllBtn.style.borderRadius = '3px';
+        collapseAllBtn.style.cursor = 'pointer';
+        
+        actionSection.appendChild(expandAllBtn);
+        actionSection.appendChild(collapseAllBtn);
+        
+        infoBar.appendChild(infoSection);
+        infoBar.appendChild(actionSection);
+        drawerContent.appendChild(infoBar);
+        
+        // 创建JSON容器
+        const jsonContainer = document.createElement('div');
+        jsonContainer.style.padding = '8px';
+        jsonContainer.id = 'json-viewer-container';
+        drawerContent.appendChild(jsonContainer);
+        
+        // 渲染JSON Viewer
+        renderJsonViewer(jsonData, jsonContainer);
+        
+        // 添加全部展开/折叠功能
+        expandAllBtn.addEventListener('click', () => {
+            // 找到所有折叠的元素并点击展开
+            const collapsedElements = jsonContainer.querySelectorAll('.collapsed');
+            collapsedElements.forEach((el: Element) => {
+                (el as HTMLElement).click();
+            });
+        });
+        
+        collapseAllBtn.addEventListener('click', () => {
+            // 找到所有可折叠但当前展开的元素并点击折叠
+            const expandedElements = jsonContainer.querySelectorAll('.expanded');
+            expandedElements.forEach((el: Element) => {
+                (el as HTMLElement).click();
+            });
+        });
 
         // 打开抽屉
         drawer.classList.add('open');
 
     } catch (e) {
         console.error('Error showing JSON in drawer:', e);
+        // 显示错误信息
+        drawerContent.innerHTML = `
+            <div style="color: #d32f2f; background-color: #ffebee; padding: 10px; border-radius: 4px; 
+                border-left: 4px solid #d32f2f; margin: 10px 0;">
+                Error formatting JSON: ${(e as Error).message}
+            </div>
+        `;
+    }
+}
+
+// 使用JSON Viewer渲染JSON
+function renderJsonViewer(data: any, container: HTMLElement): void {
+    try {
+        // 如果不是使用React，我们需要手动创建JSON树
+        const jsonTree = document.createElement('div');
+        jsonTree.className = 'json-tree';
+        container.appendChild(jsonTree);
+        
+        // 创建JSON树的HTML结构
+        createJsonTreeHTML(data, jsonTree, true);
+    } catch (e) {
+        console.error('Error rendering JSON viewer:', e);
+        container.innerHTML = `<div style="color: #d32f2f;">Error rendering JSON: ${(e as Error).message}</div>`;
+    }
+}
+
+// 递归创建JSON树的HTML结构
+function createJsonTreeHTML(data: any, container: HTMLElement, isRoot: boolean = false): void {
+    if (data === null) {
+        // 处理null值
+        const nullNode = document.createElement('span');
+        nullNode.className = 'json-null';
+        nullNode.textContent = 'null';
+        nullNode.style.color = '#b5404a';
+        container.appendChild(nullNode);
+        return;
+    }
+    
+    const valueType = typeof data;
+    
+    if (valueType === 'object' && data !== null) {
+        const isArray = Array.isArray(data);
+        const keys = isArray ? Object.keys(data).map(Number) : Object.keys(data);
+        
+        if (keys.length === 0) {
+            // 处理空对象/数组
+            const emptyNode = document.createElement('span');
+            emptyNode.textContent = isArray ? '[]' : '{}';
+            emptyNode.style.color = isArray ? '#288c28' : '#2e7db5';
+            container.appendChild(emptyNode);
+            return;
+        }
+        
+        // 创建对象/数组容器
+        const objContainer = document.createElement('div');
+        objContainer.className = 'json-object-container';
+        
+        // 创建对象/数组的展开/折叠控件
+        const toggle = document.createElement('span');
+        toggle.className = 'json-toggle expanded';
+        toggle.innerHTML = isArray ? '[' : '{';
+        toggle.style.cursor = 'pointer';
+        toggle.style.color = '#555';
+        toggle.style.fontWeight = 'bold';
+        toggle.style.marginRight = '3px';
+        
+        // 折叠状态标记
+        let isExpanded = true;
+        
+        // 创建内容容器
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'json-content';
+        contentContainer.style.paddingLeft = '20px';
+        
+        // 创建每个属性
+        keys.forEach((key, index) => {
+            const propertyContainer = document.createElement('div');
+            propertyContainer.className = 'json-property';
+            
+            // 创建属性名
+            const propertyName = document.createElement('span');
+            propertyName.className = 'json-key';
+            propertyName.textContent = isArray ? '' : `"${key}"`;
+            propertyName.style.color = '#2e7db5';
+            propertyName.style.fontWeight = 'bold';
+            
+            // 添加冒号（对象属性）
+            if (!isArray) {
+                const colon = document.createElement('span');
+                colon.textContent = ': ';
+                propertyName.appendChild(colon);
+            }
+            
+            propertyContainer.appendChild(propertyName);
+            
+            // 创建属性值（递归）
+            const propertyValue = document.createElement('span');
+            propertyValue.className = 'json-value';
+            propertyContainer.appendChild(propertyValue);
+            
+            createJsonTreeHTML(data[key], propertyValue);
+            
+            // 添加逗号
+            if (index < keys.length - 1) {
+                const comma = document.createElement('span');
+                comma.textContent = ',';
+                comma.style.color = '#555';
+                propertyContainer.appendChild(comma);
+            }
+            
+            contentContainer.appendChild(propertyContainer);
+        });
+        
+        // 添加结束括号
+        const closingBracket = document.createElement('span');
+        closingBracket.innerHTML = isArray ? ']' : '}';
+        closingBracket.style.color = '#555';
+        closingBracket.style.fontWeight = 'bold';
+        
+        // 组装到容器中
+        objContainer.appendChild(toggle);
+        objContainer.appendChild(contentContainer);
+        objContainer.appendChild(closingBracket);
+        container.appendChild(objContainer);
+        
+        // 添加展开/折叠功能
+        toggle.addEventListener('click', () => {
+            isExpanded = !isExpanded;
+            contentContainer.style.display = isExpanded ? 'block' : 'none';
+            toggle.className = isExpanded ? 'json-toggle expanded' : 'json-toggle collapsed';
+            
+            // 更新显示的括号（添加省略号表示有内容）
+            if (isExpanded) {
+                toggle.innerHTML = isArray ? '[' : '{';
+                closingBracket.style.display = 'inline';
+            } else {
+                toggle.innerHTML = isArray ? '[...]' : '{...}';
+                closingBracket.style.display = 'none';
+            }
+        });
+    } else {
+        // 处理基本类型的值
+        const valueNode = document.createElement('span');
+        
+        switch (valueType) {
+            case 'string':
+                valueNode.className = 'json-string';
+                valueNode.textContent = `"${data}"`;
+                valueNode.style.color = '#288c28';
+                break;
+            case 'number':
+                valueNode.className = 'json-number';
+                valueNode.textContent = data;
+                valueNode.style.color = '#b5622e';
+                break;
+            case 'boolean':
+                valueNode.className = 'json-boolean';
+                valueNode.textContent = data ? 'true' : 'false';
+                valueNode.style.color = '#9e40b5';
+                break;
+            default:
+                valueNode.textContent = String(data);
+                valueNode.style.color = '#555';
+        }
+        
+        container.appendChild(valueNode);
     }
 }
 
@@ -442,7 +679,7 @@ function formatSize(bytes: number): string {
     }
 }
 
-// 格式化JSON字符串并添加语法高亮 - 浅色主题 - 紧凑布局
+// 格式化JSON字符串并添加语法高亮 - 浅色主题 - 紧凑布局 (保留作为备份方法)
 function formatJsonWithHighlight(jsonStr: string): string {
     try {
         const obj = JSON.parse(jsonStr);

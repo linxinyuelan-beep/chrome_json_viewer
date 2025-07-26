@@ -142,4 +142,62 @@
   border-radius: 4px;
 }
 
+/* JSON Tree Viewer styles */
+.json-tree {
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-top: 0;
+}
+
+.json-object-container {
+  position: relative;
+}
+
+.json-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.json-toggle.expanded::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 3px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 5px 3px 0 3px;
+  border-color: #888 transparent transparent transparent;
+  transform: rotate(0);
+  transition: transform 0.2s;
+}
+
+.json-toggle.collapsed::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 3px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 5px 3px 0 3px;
+  border-color: #888 transparent transparent transparent;
+  transform: rotate(-90deg);
+  transition: transform 0.2s;
+}
+
+.json-property {
+  margin: 2px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.json-content {
+  margin-left: 10px;
+  padding-left: 10px;
+  border-left: 1px dotted #ccc;
+}
+
 /* Chrome 原生右键菜单 - 不需要额外的样式 */
