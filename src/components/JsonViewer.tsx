@@ -211,7 +211,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
       <div className="json-tree-container">
         <ReactJson
           src={jsonData}
-          theme={expanded ? "rjv-default" : "pop"}
+          theme="rjv-default" // Always use rjv-default theme for consistent coloring
           style={{ backgroundColor: 'transparent' }}
           collapsed={!expanded}
           collapseStringsAfterLength={80}
