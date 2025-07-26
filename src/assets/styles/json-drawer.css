@@ -201,3 +201,36 @@
 }
 
 /* Chrome 原生右键菜单 - 不需要额外的样式 */
+
+/* 复制按钮样式 */
+.copy-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover {
+  background-color: #218838;
+}
+
+.copy-button.copied {
+  background-color: #43a047;
+}
+
+/* 复制成功动画 */
+@keyframes copySuccess {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.copy-success {
+  animation: copySuccess 0.3s ease-in-out;
+}
+
+/* 使用Chrome原生右键菜单，无需自定义样式 */

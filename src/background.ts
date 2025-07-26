@@ -75,7 +75,14 @@ chrome.runtime.onInstalled.addListener(() => {
     // 创建右键菜单项
     chrome.contextMenus.create({
         id: 'formatSelectedJson',
-        title: '格式化 JSON (Ctrl+Shift+J)',
+        title: '格式化 JSON (Ctrl+Shift+E)',
+        contexts: ['selection'], // 仅在文本选中时显示
+    });
+    
+    // 创建复制JSON的右键菜单项
+    chrome.contextMenus.create({
+        id: 'copySelectedJson',
+        title: '复制 JSON (Ctrl+Shift+C)',
         contexts: ['selection'], // 仅在文本选中时显示
     });
 });
@@ -87,6 +94,12 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         chrome.tabs.sendMessage(tab.id, { 
             action: 'formatSelectedJson', 
             selectedText: info.selectionText 
+        });
+    } else if (info.menuItemId === 'copySelectedJson' && tab?.id) {
+        // 向内容脚本发送消息，复制选中的JSON
+        chrome.tabs.sendMessage(tab.id, {
+            action: 'copySelectedJson',
+            selectedText: info.selectionText
         });
     }
 });

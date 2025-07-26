@@ -5,7 +5,7 @@
 import './assets/styles/json-drawer.css';
 
 // 定义版本号常量
-const EXTENSION_VERSION = "1.1.22";
+const EXTENSION_VERSION = "1.2.0";
 console.log(`Content script loaded. JSON Detector version ${EXTENSION_VERSION}`);
 
 // 是否启用悬停检测
@@ -24,6 +24,13 @@ document.addEventListener('keydown', (event) => {
         console.log('Keyboard shortcut for formatting selected JSON');
         event.preventDefault();
         formatSelectedJson();
+    }
+    
+    // Ctrl+Shift+C or Cmd+Shift+C: 复制选中的JSON
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'c') {
+        console.log('Keyboard shortcut for copying selected JSON');
+        event.preventDefault();
+        copySelectedJson();
     }
     
     // Ctrl+Shift+H or Cmd+Shift+H: 切换悬停检测模式
@@ -122,6 +129,46 @@ function formatSelectedJson(): void {
         showJsonInDrawer(selectedText);
     } else {
         showNotification('所选文本不是有效的JSON', 'error');
+    }
+}
+
+// 复制选中的JSON文本
+function copySelectedJson(): void {
+    // 获取选中的文本
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+        showNotification('没有选中任何文本', 'error');
+        return;
+    }
+    
+    // 获取选中的文本内容
+    const selectedText = selection.toString();
+    
+    // 验证JSON并尝试格式化后复制
+    if (isValidJson(selectedText)) {
+        try {
+            // 解析和美化JSON
+            const jsonObj = JSON.parse(selectedText);
+            const formattedJson = JSON.stringify(jsonObj, null, 2);
+            
+            // 复制到剪贴板
+            void copyTextToClipboard(formattedJson).then(() => {
+                showNotification('JSON已复制到剪贴板', 'success');
+            }).catch((err: Error) => {
+                console.error('复制失败:', err);
+                showNotification('复制失败，请重试', 'error');
+            });
+        } catch (e) {
+            showNotification('JSON格式化失败', 'error');
+        }
+    } else {
+        // 尝试复制原始文本
+        void copyTextToClipboard(selectedText).then(() => {
+            showNotification('文本已复制到剪贴板', 'info');
+        }).catch((err: Error) => {
+            console.error('复制失败:', err);
+            showNotification('复制失败，请重试', 'error');
+        });
     }
 }
 
@@ -461,8 +508,20 @@ function showJsonInDrawer(jsonString: string): void {
         collapseAllBtn.style.borderRadius = '3px';
         collapseAllBtn.style.cursor = 'pointer';
         
+        // 添加复制按钮
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '复制JSON';
+        copyBtn.style.fontSize = '12px';
+        copyBtn.style.padding = '2px 6px';
+        copyBtn.style.backgroundColor = '#28a745';
+        copyBtn.style.color = 'white';
+        copyBtn.style.border = 'none';
+        copyBtn.style.borderRadius = '3px';
+        copyBtn.style.cursor = 'pointer';
+        
         actionSection.appendChild(expandAllBtn);
         actionSection.appendChild(collapseAllBtn);
+        actionSection.appendChild(copyBtn);
         
         infoBar.appendChild(infoSection);
         infoBar.appendChild(actionSection);
@@ -491,6 +550,22 @@ function showJsonInDrawer(jsonString: string): void {
             const expandedElements = jsonContainer.querySelectorAll('.expanded');
             expandedElements.forEach((el: Element) => {
                 (el as HTMLElement).click();
+            });
+        });
+        
+        // 添加JSON复制功能
+        copyBtn.addEventListener('click', () => {
+            // 直接复制格式化好的JSON字符串
+            const formattedJson = JSON.stringify(jsonData, null, 2);
+            
+            // 使用Clipboard API复制到剪贴板
+            void copyTextToClipboard(formattedJson).then(() => {
+                // 显示成功提示
+                showCopySuccessIndicator(copyBtn);
+                showNotification('JSON已复制到剪贴板', 'success');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                showNotification('复制失败，请重试', 'error');
             });
         });
 
@@ -677,6 +752,54 @@ function formatSize(bytes: number): string {
     } else {
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     }
+}
+
+// 复制文本到剪贴板
+async function copyTextToClipboard(text: string): Promise<void> {
+    try {
+        // 使用现代 Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+
+        // 回退方法：使用传统方式
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const success = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (!success) {
+            throw new Error('Copy command was unsuccessful');
+        }
+    } catch (err) {
+        console.error('复制失败:', err);
+        throw err;
+    }
+}
+
+// 显示复制成功的视觉反馈
+function showCopySuccessIndicator(buttonElement: HTMLElement): void {
+    // 保存原始文本和背景色
+    const originalText = buttonElement.textContent;
+    const originalBgColor = buttonElement.style.backgroundColor;
+    
+    // 更改按钮状态以提供反馈
+    buttonElement.textContent = '✓ 已复制';
+    buttonElement.style.backgroundColor = '#43a047';
+    
+    // 1.5秒后恢复原始状态
+    setTimeout(() => {
+        buttonElement.textContent = originalText;
+        buttonElement.style.backgroundColor = originalBgColor;
+    }, 1500);
 }
 
 // 格式化JSON字符串并添加语法高亮 - 浅色主题 - 紧凑布局 (保留作为备份方法)
@@ -874,6 +997,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         } else {
             showNotification('所选文本不是有效的JSON', 'error');
         }
+    } else if (request.action === 'copySelectedJson' && request.selectedText) {
+        // 复制选中的 JSON
+        if (isValidJson(request.selectedText)) {
+            try {
+                // 解析和美化JSON
+                const jsonObj = JSON.parse(request.selectedText);
+                const formattedJson = JSON.stringify(jsonObj, null, 2);
+                
+                // 复制到剪贴板
+                void copyTextToClipboard(formattedJson).then(() => {
+                    showNotification('JSON已复制到剪贴板', 'success');
+                }).catch((err: Error) => {
+                    console.error('复制失败:', err);
+                    showNotification('复制失败，请重试', 'error');
+                });
+            } catch (e) {
+                showNotification('JSON格式化失败', 'error');
+            }
+        } else {
+            showNotification('所选文本不是有效的JSON', 'error');
+        }
     }
 });
 
@@ -996,7 +1140,9 @@ window.addEventListener('load', () => {
                                             })(json);
 
                                             // 为当前jsonSpan添加双击处理
-                                            jsonSpan.addEventListener('dblclick', dblClickHandlerForJson);                                            // 鼠标移出时安全移除高亮
+                                            jsonSpan.addEventListener('dblclick', dblClickHandlerForJson);
+                                            
+                                            // 鼠标移出时安全移除高亮
                                             const currentHighlightId = jsonHighlightId; // 保存当前ID以便在闭包中访问
                                             htmlTarget.addEventListener('mouseleave', () => {
                                                 try {
