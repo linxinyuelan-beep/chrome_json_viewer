@@ -3,10 +3,24 @@
 
 // Import JSON drawer styles
 import './assets/styles/json-drawer.css';
+import './assets/styles/json-viewer-component.css';
 
 // 定义版本号常量
-const EXTENSION_VERSION = "1.2.0";
+const EXTENSION_VERSION = "1.3.3";
 console.log(`Content script loaded. JSON Detector version ${EXTENSION_VERSION}`);
+
+// 添加全局showNestedJsonInDrawer函数，用于显示嵌套JSON
+(window as any).showNestedJsonInDrawer = function(jsonString: string) {
+    console.log('Showing nested JSON in drawer:', jsonString.substring(0, 50) + '...');
+    if (isValidNestedJson(jsonString)) {
+        showJsonInDrawer(jsonString);
+    } else {
+        console.warn('Invalid nested JSON format detected');
+    }
+};
+
+// 导入工具函数
+import { isValidNestedJson } from './utils/nestedJsonHandler';
 
 // 是否启用悬停检测
 let enableHoverDetection = true;
@@ -217,45 +231,8 @@ function showNotification(message: string, type: 'success' | 'error' | 'info' = 
     }, 3000);
 }
 
-// 判断字符串是否是有效的JSON，增强验证逻辑
-function isValidJson(str: string): boolean {
-    try {
-        // 先验证基本格式
-        if (!str || typeof str !== 'string') {
-            return false;
-        }
-        
-        // 确保开始和结束符号匹配
-        const trimmed = str.trim();
-        if (!(
-            (trimmed.startsWith('{') && trimmed.endsWith('}')) || 
-            (trimmed.startsWith('[') && trimmed.endsWith(']'))
-        )) {
-            return false;
-        }        // 尝试解析JSON
-        const result = JSON.parse(str);
-
-        // 检查是否是对象或数组
-        if (typeof result !== 'object' || result === null) {
-            return false;
-        }
-
-        // 检查数据结构是否有意义（不是空对象或空数组）
-        if (Array.isArray(result)) {
-            if (result.length === 0) {
-                return false; // 忽略空数组
-            }
-            // 对于数组，至少有一个元素是对象
-            return result.some(item => typeof item === 'object' && item !== null);
-        } else {
-            // 对于对象，至少有一个属性
-            return Object.keys(result).length > 0;
-        }
-    } catch (e) {
-        // console.log("Invalid JSON:", str.substring(0, 50) + "...");
-        return false;
-    }
-}
+// 使用导入的 isValidNestedJson 函数，不再需要本地定义
+const isValidJson = isValidNestedJson;
 
 // 在元素中检测JSON内容
 function detectJsonInElement(element: Element): string[] {
@@ -439,149 +416,49 @@ function findBalancedPatterns(text: string, openChar: string, closeChar: string)
     return results;
 }
 
-// 在抽屉中显示JSON - 使用@textea/json-viewer库实现折叠功能
+// 在抽屉中显示JSON - 使用React JSON Viewer组件
 function showJsonInDrawer(jsonString: string): void {
-    if (!jsonString) return;
+    console.log(`Displaying JSON in drawer, length: ${jsonString.length}`);
+    
+    // 导入React渲染器 - 使用动态导入确保只在需要时加载
+    import('./utils/reactJsonDrawer').then(({ showJsonInDrawerWithReact }) => {
+        console.log('React JSON drawer module loaded successfully');
+        
+        // 使用React组件显示JSON
+        showJsonInDrawerWithReact(jsonString, EXTENSION_VERSION);
+    }).catch(e => {
+        console.error('Error importing React JSON drawer:', e);
+        
+        // 回退到原始实现
+        const drawer = document.querySelector('.json-drawer') as HTMLElement || createJsonDrawer();
+        if (!document.body.contains(drawer)) {
+            document.body.appendChild(drawer);
+        }
 
-    // 获取或创建抽屉
-    const drawer = document.querySelector('.json-drawer') as HTMLElement || createJsonDrawer();
-    if (!document.body.contains(drawer)) {
-        document.body.appendChild(drawer);
-    }
+        const drawerContent = drawer.querySelector('.json-drawer-content');
+        if (!drawerContent) return;
 
-    // 获取抽屉内容区域
-    const drawerContent = drawer.querySelector('.json-drawer-content');
-    if (!drawerContent) return;
-
-    // 格式化JSON并显示
-    try {
-        // 解析JSON字符串
-        const jsonData = JSON.parse(jsonString);
-        const jsonSize = formatSize(jsonString.length);
-
-        // 清空抽屉内容
+        // 移除现有内容
         drawerContent.innerHTML = '';
         
-        // 创建信息栏
-        const infoBar = document.createElement('div');
-        infoBar.style.display = 'flex';
-        infoBar.style.justifyContent = 'space-between';
-        infoBar.style.alignItems = 'center';
-        infoBar.style.padding = '4px 8px';
-        infoBar.style.backgroundColor = '#e9f0f8';
-        infoBar.style.marginBottom = '8px';
-        
-        // 添加版本和大小信息
-        const infoSection = document.createElement('div');
-        infoSection.style.display = 'flex';
-        infoSection.style.alignItems = 'center';
-        infoSection.style.gap = '8px';
-        infoSection.innerHTML = `
-            <span style="color: #666; font-size: 0.8em;">v${EXTENSION_VERSION}</span>
-            <span style="color: #666; font-size: 0.8em;">大小: ${jsonSize}</span>
+        // 显示错误信息
+        const errorDiv = document.createElement('div');
+        errorDiv.style.color = '#d32f2f';
+        errorDiv.style.backgroundColor = '#ffebee';
+        errorDiv.style.padding = '10px';
+        errorDiv.style.borderRadius = '4px';
+        errorDiv.style.borderLeft = '4px solid #d32f2f';
+        errorDiv.style.margin = '10px 0';
+        errorDiv.innerHTML = `
+            Error loading JSON Viewer: ${(e as Error).message}
+            <br><br>
+            <code>${jsonString.substring(0, 200)}${jsonString.length > 200 ? '...' : ''}</code>
         `;
+        drawerContent.appendChild(errorDiv);
         
-        // 创建操作按钮区域
-        const actionSection = document.createElement('div');
-        actionSection.style.display = 'flex';
-        actionSection.style.gap = '8px';
-        
-        // 添加全部展开按钮
-        const expandAllBtn = document.createElement('button');
-        expandAllBtn.textContent = '全部展开';
-        expandAllBtn.style.fontSize = '12px';
-        expandAllBtn.style.padding = '2px 6px';
-        expandAllBtn.style.backgroundColor = '#2e7db5';
-        expandAllBtn.style.color = 'white';
-        expandAllBtn.style.border = 'none';
-        expandAllBtn.style.borderRadius = '3px';
-        expandAllBtn.style.cursor = 'pointer';
-        
-        // 添加全部折叠按钮
-        const collapseAllBtn = document.createElement('button');
-        collapseAllBtn.textContent = '全部折叠';
-        collapseAllBtn.style.fontSize = '12px';
-        collapseAllBtn.style.padding = '2px 6px';
-        collapseAllBtn.style.backgroundColor = '#666';
-        collapseAllBtn.style.color = 'white';
-        collapseAllBtn.style.border = 'none';
-        collapseAllBtn.style.borderRadius = '3px';
-        collapseAllBtn.style.cursor = 'pointer';
-        
-        // 添加复制按钮
-        const copyBtn = document.createElement('button');
-        copyBtn.textContent = '复制JSON';
-        copyBtn.style.fontSize = '12px';
-        copyBtn.style.padding = '2px 6px';
-        copyBtn.style.backgroundColor = '#28a745';
-        copyBtn.style.color = 'white';
-        copyBtn.style.border = 'none';
-        copyBtn.style.borderRadius = '3px';
-        copyBtn.style.cursor = 'pointer';
-        
-        actionSection.appendChild(expandAllBtn);
-        actionSection.appendChild(collapseAllBtn);
-        actionSection.appendChild(copyBtn);
-        
-        infoBar.appendChild(infoSection);
-        infoBar.appendChild(actionSection);
-        drawerContent.appendChild(infoBar);
-        
-        // 创建JSON容器
-        const jsonContainer = document.createElement('div');
-        jsonContainer.style.padding = '8px';
-        jsonContainer.id = 'json-viewer-container';
-        drawerContent.appendChild(jsonContainer);
-        
-        // 渲染JSON Viewer
-        renderJsonViewer(jsonData, jsonContainer);
-        
-        // 添加全部展开/折叠功能
-        expandAllBtn.addEventListener('click', () => {
-            // 找到所有折叠的元素并点击展开
-            const collapsedElements = jsonContainer.querySelectorAll('.collapsed');
-            collapsedElements.forEach((el: Element) => {
-                (el as HTMLElement).click();
-            });
-        });
-        
-        collapseAllBtn.addEventListener('click', () => {
-            // 找到所有可折叠但当前展开的元素并点击折叠
-            const expandedElements = jsonContainer.querySelectorAll('.expanded');
-            expandedElements.forEach((el: Element) => {
-                (el as HTMLElement).click();
-            });
-        });
-        
-        // 添加JSON复制功能
-        copyBtn.addEventListener('click', () => {
-            // 直接复制格式化好的JSON字符串
-            const formattedJson = JSON.stringify(jsonData, null, 2);
-            
-            // 使用Clipboard API复制到剪贴板
-            void copyTextToClipboard(formattedJson).then(() => {
-                // 显示成功提示
-                showCopySuccessIndicator(copyBtn);
-                showNotification('JSON已复制到剪贴板', 'success');
-            }).catch(err => {
-                console.error('复制失败:', err);
-                showNotification('复制失败，请重试', 'error');
-            });
-        });
-
         // 打开抽屉
         drawer.classList.add('open');
-
-    } catch (e) {
-        console.error('Error showing JSON in drawer:', e);
-        // 显示错误信息
-        drawerContent.innerHTML = `
-            <div style="color: #d32f2f; background-color: #ffebee; padding: 10px; border-radius: 4px; 
-                border-left: 4px solid #d32f2f; margin: 10px 0;">
-                Error formatting JSON: ${(e as Error).message}
-            </div>
-        `;
-    }
+    });
 }
 
 // 使用JSON Viewer渲染JSON

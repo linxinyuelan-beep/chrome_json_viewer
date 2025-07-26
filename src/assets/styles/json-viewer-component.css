@@ -1,0 +1,94 @@
+/* JSON Viewer component styles */
+.json-viewer-component {
+  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow: auto;
+  max-height: calc(100vh - 120px);
+  padding: 0;
+  margin: 0;
+}
+
+.json-viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  background-color: #e9f0f8;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+.json-viewer-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.json-viewer-version {
+  color: #666;
+  font-size: 0.8em;
+}
+
+.json-viewer-size {
+  color: #666;
+  font-size: 0.8em;
+}
+
+.json-viewer-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.json-viewer-button {
+  font-size: 12px;
+  padding: 2px 6px;
+  background-color: #2e7db5;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.json-viewer-button:hover {
+  background-color: #1e6ba3;
+}
+
+.json-viewer-button.success {
+  background-color: #43a047;
+}
+
+.json-tree-container {
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  overflow: auto;
+}
+
+/* Customizing react-json-view styles */
+.react-json-view {
+  background-color: #f8f9fa !important;
+}
+
+/* Custom highlight styles */
+.key-string {
+  color: #2e7db5;
+  font-weight: bold;
+}
+
+.string-value {
+  color: #288c28;
+}
+
+.number-value {
+  color: #b5622e;
+}
+
+.boolean-value {
+  color: #9e40b5;
+}
+
+.null-value {
+  color: #b5404a;
+}
