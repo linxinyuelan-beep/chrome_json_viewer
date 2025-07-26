@@ -6,7 +6,7 @@ import './assets/styles/json-drawer.css';
 import './assets/styles/json-viewer-component.css';
 
 // 定义版本号常量
-const EXTENSION_VERSION = "1.0.2";
+const EXTENSION_VERSION = "1.0.3";
 console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_VERSION}`);
 
 // 添加全局showNestedJsonInDrawer函数，用于显示嵌套JSON
