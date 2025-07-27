@@ -118,7 +118,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
           collapseStringsAfterLength={false}
           displayDataTypes={false}
           displayObjectSize={true}
-          enableClipboard={false} // We provide our own copy button
+          enableClipboard={true} // We provide our own copy button
           name={null}
         />
       </div>
