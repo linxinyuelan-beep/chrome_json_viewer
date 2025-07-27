@@ -260,9 +260,6 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
           {/* Info and actions bar */}
           <div className="json-viewer-header">
             <div className="json-viewer-info">
-              <span className="json-viewer-version">v{version}</span>
-              <span className="json-viewer-size">Size: {jsonSize}</span>
-              
               {/* Navigation buttons */}
               <div className="json-viewer-navigation">
                 <button 
@@ -281,6 +278,9 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
                 >
                   ▶
                 </button>
+
+                <span className="json-viewer-version">v{version}</span>
+                <span className="json-viewer-size">Size: {jsonSize}</span>
               </div>
             </div>
             <div className="json-viewer-actions">
