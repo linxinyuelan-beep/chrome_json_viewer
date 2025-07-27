@@ -15,6 +15,23 @@
 import React, { useState, useEffect } from 'react';
 import ReactJson from '@microlink/react-json-view';
 import { formatJsonSize } from '../utils/jsonViewer';
+import { addToHistory } from '../utils/jsonHistory';
+import { 
+  addToNavigationHistory, 
+  navigateBack, 
+  navigateForward, 
+  canNavigateBack, 
+  canNavigateForward 
+} from '../utils/jsonNavigation';
+import History from './History';
+import '../assets/styles/history.css';
+
+// Declare global function that will be added to window by reactJsonDrawer.tsx
+declare global {
+  interface Window {
+    showJsonInDrawerWithReact?: (jsonString: string, version: string) => void;
+  }
+}
 
 interface JsonViewerProps {
   jsonData: any;
@@ -25,8 +42,12 @@ interface JsonViewerProps {
 const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) => {
   const [expanded, setExpanded] = useState<boolean>(true);
   const [jsonSize, setJsonSize] = useState<string>('');
+  const [showHistory, setShowHistory] = useState<boolean>(false);
   // 添加内部组件 ID 用于强制重新渲染
   const [instanceId] = useState<string>(`json-viewer-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
+  // 添加导航按钮状态
+  const [canGoBack, setCanGoBack] = useState<boolean>(false);
+  const [canGoForward, setCanGoForward] = useState<boolean>(false);
 
   // 确保组件初始化时记录日志
   useEffect(() => {
@@ -43,7 +64,41 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
     const size = new TextEncoder().encode(JSON.stringify(jsonData)).length;
     setJsonSize(formatJsonSize(size));
     console.log(`JSON size calculated: ${size} bytes`);
+    
+    // Add to history when JSON data is loaded
+    // Use current URL as source
+    const jsonString = JSON.stringify(jsonData);
+    const currentUrl = window.location.href;
+    addToHistory(jsonString, currentUrl)
+      .then(id => console.log(`Added to history with ID: ${id}`))
+      .catch(err => console.error('Error adding to history:', err));
+    
+    // 添加到导航历史
+    addToNavigationHistory(jsonString);
+    
+    // 更新导航按钮状态
+    setCanGoBack(canNavigateBack());
+    setCanGoForward(canNavigateForward());
   }, [jsonData]);
+  
+  // 监听导航状态更新事件
+  useEffect(() => {
+    const handleNavigationUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail) {
+        setCanGoBack(customEvent.detail.canGoBack);
+        setCanGoForward(customEvent.detail.canGoForward);
+      }
+    };
+    
+    // 添加事件监听器
+    document.addEventListener('json-navigation-updated', handleNavigationUpdate);
+    
+    // 清理函数
+    return () => {
+      document.removeEventListener('json-navigation-updated', handleNavigationUpdate);
+    };
+  }, []);
 
   // For react-json-view, we use predefined themes
   // Available themes: "apathy", "apathy:inverted", "ashes", "bespin", "brewer",
@@ -72,8 +127,97 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
     setExpanded(!expanded);
   };
 
+  // Handle navigation back
+  const handleNavigateBack = () => {
+    const previousJson = navigateBack();
+    if (previousJson && window.showJsonInDrawerWithReact) {
+      window.showJsonInDrawerWithReact(previousJson, version);
+    }
+  };
+  
+  // Handle navigation forward
+  const handleNavigateForward = () => {
+    const nextJson = navigateForward();
+    if (nextJson && window.showJsonInDrawerWithReact) {
+      window.showJsonInDrawerWithReact(nextJson, version);
+    }
+  };
+
   // Copy success state
   const [copySuccess, setCopySuccess] = useState(false);
+
+  // State for history dropdown
+  const [historyItems, setHistoryItems] = useState<Array<{id: string, preview: string, timestamp: number}>>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Load history items for dropdown when needed
+  const loadHistoryForDropdown = async () => {
+    try {
+      // Import dynamically to avoid circular dependency
+      const { getHistory, formatTimestamp } = await import('../utils/jsonHistory');
+      const items = await getHistory();
+      // Format items for dropdown display
+      const formattedItems = items.map(item => ({
+        id: item.id,
+        preview: item.preview,
+        timestamp: item.timestamp
+      }));
+      setHistoryItems(formattedItems);
+    } catch (e) {
+      console.error('Error loading history for dropdown:', e);
+    }
+  };
+
+  // Toggle history panel for full view
+  const toggleHistory = () => {
+    setShowHistory(!showHistory);
+  };
+
+  // Toggle dropdown
+  const toggleDropdown = async () => {
+    if (!isDropdownOpen) {
+      await loadHistoryForDropdown();
+    }
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  // Handle selecting JSON from history (full history panel)
+  const handleSelectFromHistory = (jsonString: string) => {
+    try {
+      const parsedJson = JSON.parse(jsonString);
+      // Replace the current JSON with the selected one from history
+      if (window.showJsonInDrawerWithReact) {
+        window.showJsonInDrawerWithReact(jsonString, version);
+      } else {
+        console.error('showJsonInDrawerWithReact function not available');
+      }
+    } catch (e) {
+      console.error('Error parsing JSON from history:', e);
+    }
+  };
+  
+  // Handle selecting JSON from dropdown
+  const handleSelectFromDropdown = async (id: string) => {
+    try {
+      // Close the dropdown
+      setIsDropdownOpen(false);
+      
+      // Import dynamically
+      const { getHistoryItem } = await import('../utils/jsonHistory');
+      const item = await getHistoryItem(id);
+      
+      if (item && item.jsonData) {
+        // Use the same function to display the selected JSON
+        if (window.showJsonInDrawerWithReact) {
+          window.showJsonInDrawerWithReact(item.jsonData, version);
+        } else {
+          console.error('showJsonInDrawerWithReact function not available');
+        }
+      }
+    } catch (e) {
+      console.error('Error selecting from dropdown:', e);
+    }
+  };
 
   // 阻止点击事件冒泡，确保在JSON视图内部的点击不会关闭抽屉
   const stopPropagation = (e: React.MouseEvent) => {
@@ -81,47 +225,139 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
     e.stopPropagation();
   };
   
+  // 添加点击外部关闭下拉框的事件处理
+  useEffect(() => {
+    if (isDropdownOpen) {
+      const handleClickOutside = (event: MouseEvent) => {
+        const dropdown = document.querySelector('.json-viewer-dropdown-container');
+        if (dropdown && !dropdown.contains(event.target as Node)) {
+          setIsDropdownOpen(false);
+        }
+      };
+      
+      // 添加事件监听器
+      document.addEventListener('click', handleClickOutside);
+      
+      // 清理函数
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+      };
+    }
+  }, [isDropdownOpen]);;
+  
   return (
     <div 
       className="json-viewer-component" 
       onClick={stopPropagation} // 添加点击处理以阻止冒泡
     >
-      {/* Info and actions bar */}
-      <div className="json-viewer-header">
-        <div className="json-viewer-info">
-          <span className="json-viewer-version">v{version}</span>
-          <span className="json-viewer-size">Size: {jsonSize}</span>
-        </div>
-        <div className="json-viewer-actions">
-          <button 
-            className="json-viewer-button" 
-            onClick={toggleExpand}
-          >
-            {expanded ? 'Collapse All' : 'Expand All'}
-          </button>
-          <button 
-            className={`json-viewer-button ${copySuccess ? 'success' : ''}`}
-            onClick={copyJson}
-          >
-            {copySuccess ? '✓ Copied' : 'Copy JSON'}
-          </button>
-        </div>
-      </div>
-
-      {/* JSON Tree component */}
-      <div className="json-tree-container">
-        <ReactJson
-          src={jsonData}
-          theme="rjv-default" // Always use rjv-default theme for consistent coloring
-          style={{ backgroundColor: 'transparent' }}
-          collapsed={!expanded}
-          collapseStringsAfterLength={false}
-          displayDataTypes={false}
-          displayObjectSize={true}
-          enableClipboard={true} // We provide our own copy button
-          name={null}
+      {showHistory ? (
+        <History 
+          onSelect={handleSelectFromHistory}
+          onClose={() => setShowHistory(false)}
         />
-      </div>
+      ) : (
+        <>
+          {/* Info and actions bar */}
+          <div className="json-viewer-header">
+            <div className="json-viewer-info">
+              <span className="json-viewer-version">v{version}</span>
+              <span className="json-viewer-size">Size: {jsonSize}</span>
+              
+              {/* Navigation buttons */}
+              <div className="json-viewer-navigation">
+                <button 
+                  className={`json-viewer-nav-button ${!canGoBack ? 'disabled' : ''}`}
+                  onClick={handleNavigateBack}
+                  disabled={!canGoBack}
+                  title="Back to previous JSON"
+                >
+                  ◀
+                </button>
+                <button 
+                  className={`json-viewer-nav-button ${!canGoForward ? 'disabled' : ''}`}
+                  onClick={handleNavigateForward}
+                  disabled={!canGoForward}
+                  title="Forward to next JSON"
+                >
+                  ▶
+                </button>
+              </div>
+            </div>
+            <div className="json-viewer-actions">
+              <button 
+                className="json-viewer-button" 
+                onClick={toggleExpand}
+              >
+                {expanded ? 'Collapse All' : 'Expand All'}
+              </button>
+              <button 
+                className={`json-viewer-button ${copySuccess ? 'success' : ''}`}
+                onClick={copyJson}
+              >
+                {copySuccess ? '✓ Copied' : 'Copy JSON'}
+              </button>
+              
+              {/* History dropdown */}
+              <div className="json-viewer-dropdown-container">
+                <button 
+                  className="json-viewer-button history-dropdown-button"
+                  onClick={toggleDropdown}
+                  title="View history"
+                >
+                  History ▾
+                </button>
+                {isDropdownOpen && (
+                  <div className="json-viewer-dropdown-menu">
+                    <div className="json-viewer-dropdown-header">
+                      <span>Recent JSON</span>
+                      <button 
+                        className="json-viewer-dropdown-view-all"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          toggleHistory();
+                        }}
+                      >
+                        View All
+                      </button>
+                    </div>
+                    {historyItems.length === 0 ? (
+                      <div className="json-viewer-dropdown-empty">No history found</div>
+                    ) : (
+                      <>
+                        {historyItems.slice(0, 10).map(item => (
+                          <div 
+                            key={item.id} 
+                            className="json-viewer-dropdown-item"
+                            onClick={() => handleSelectFromDropdown(item.id)}
+                            title={new Date(item.timestamp).toLocaleString()}
+                          >
+                            {item.preview}
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* JSON Tree component */}
+          <div className="json-tree-container">
+            <ReactJson
+              src={jsonData}
+              theme="rjv-default" // Always use rjv-default theme for consistent coloring
+              style={{ backgroundColor: 'transparent' }}
+              collapsed={!expanded}
+              collapseStringsAfterLength={false}
+              displayDataTypes={false}
+              displayObjectSize={true}
+              enableClipboard={true} // We provide our own copy button
+              name={null}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -237,6 +237,9 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
     // 添加标记以帮助识别抽屉是由哪次显示创建的
     drawer.dataset.openedAt = Date.now().toString();
     
+    // Add the function to the window object so it can be called from the JsonViewer component
+    window.showJsonInDrawerWithReact = showJsonInDrawerWithReact;
+    
     // 重新绑定点击外部关闭事件（首先移除所有已存在的事件监听器）
     const clickOutsideHandler = (event: MouseEvent) => {
       // 抽屉必须是打开的

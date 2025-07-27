@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
   "name": "JSON Formatter & Viewer",
-  "version": "1.0.6",
+  "version": "1.0.9",
   "description": "A Chrome extension that detects, formats and visualizes JSON on web pages.",
   "permissions": [
     "activeTab",
     "scripting",
-    "contextMenus"
+    "contextMenus",
+    "storage"
   ],
   "host_permissions": [
     "<all_urls>"
