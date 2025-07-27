@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 检测测试页面</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .test-section {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .json-example {
+            background-color: #f5f5f5;
+            border-left: 3px solid #3498db;
+            padding: 10px 15px;
+            margin: 10px 0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .description {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        .highlight {
+            background-color: #ffffcc;
+            padding: 2px;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>JSON 检测测试页面</h1>
+    <div class="controls">
+        <p><strong>提示:</strong> 使用 <code>Ctrl+Shift+H</code> 切换悬停检测，使用 <code>Ctrl+点击</code> 在抽屉中查看格式化的 JSON。</p>
+    </div>
+
+    <div class="container">
+        <!-- 简单 JSON 对象 -->
+        <div class="test-section">
+            <h2>1. 简单 JSON 对象</h2>
+            <div class="description">基本的键值对 JSON 对象：</div>
+            <div class="json-example">{"name": "张三", "age": 30, "isStudent": false, "email": "zhangsan@example.com"}</div>
+        </div>
+
+        <!-- 简单 JSON 数组 -->
+        <div class="test-section">
+            <h2>2. JSON 数组</h2>
+            <div class="description">包含简单值的数组：</div>
+            <div class="json-example">["苹果", "香蕉", "橙子", "葡萄", "西瓜"]</div>
+            <div class="description">包含对象的数组：</div>
+            <div class="json-example">[
+  {"id": 1, "name": "张三", "role": "开发者"},
+  {"id": 2, "name": "李四", "role": "设计师"},
+  {"id": 3, "name": "王五", "role": "产品经理"}
+]</div>
+        </div>
+
+        <!-- 多个相邻的 JSON -->
+        <div class="test-section">
+            <h2>3. 多个相邻的 JSON</h2>
+            <div class="description">页面中存在多个相邻的 JSON 对象：</div>
+            <div class="json-example">{"id": "user-123", "status": "active"}</div>
+            <div class="json-example">{"server": "nginx", "version": "1.18.0"}</div>
+            <div class="json-example">{"success": true, "message": "操作成功"}</div>
+        </div>
+
+        <!-- 嵌套 JSON -->
+        <div class="test-section">
+            <h2>4. 嵌套 JSON</h2>
+            <div class="description">包含嵌套对象的 JSON：</div>
+            <div class="json-example">{
+  "user": {
+    "name": "张三",
+    "contact": {
+      "email": "zhangsan@example.com",
+      "phone": "13812345678"
+    },
+    "address": {
+      "city": "北京",
+      "district": "朝阳区",
+      "street": "建国路88号"
+    }
+  },
+  "isRegistered": true
+}</div>
+        </div>
+
+        <!-- 多层嵌套 JSON -->
+        <div class="test-section">
+            <h2>5. 多层嵌套 JSON</h2>
+            <div class="description">包含多层嵌套的复杂 JSON：</div>
+            <div class="json-example">{
+  "company": {
+    "name": "科技创新有限公司",
+    "founded": 2010,
+    "headquarters": {
+      "country": "中国",
+      "city": "上海",
+      "address": {
+        "street": "浦东新区张江高科技园区",
+        "building": "创新大厦",
+        "floor": 16,
+        "room": "1601-1605"
+      }
+    },
+    "departments": [
+      {
+        "name": "研发部",
+        "employees": [
+          {
+            "id": "dev-001",
+            "name": "张三",
+            "position": "高级开发工程师",
+            "skills": ["JavaScript", "TypeScript", "React", "Node.js"],
+            "projects": {
+              "current": "JSON检测扩展",
+              "previous": ["数据可视化平台", "企业管理系统"]
+            }
+          },
+          {
+            "id": "dev-002",
+            "name": "李四",
+            "position": "前端开发工程师",
+            "skills": ["HTML", "CSS", "Vue.js"],
+            "projects": {
+              "current": "用户界面更新",
+              "previous": ["网站重设计"]
+            }
+          }
+        ]
+      },
+      {
+        "name": "产品部",
+        "employees": [
+          {
+            "id": "pm-001",
+            "name": "王五",
+            "position": "产品经理",
+            "responsibilities": ["需求分析", "产品规划", "用户研究"]
+          }
+        ]
+      }
+    ]
+  },
+  "statistics": {
+    "revenue": {
+      "2023": {
+        "q1": 1200000,
+        "q2": 1450000,
+        "q3": 1300000,
+        "q4": 1650000
+      },
+      "2024": {
+        "q1": 1500000,
+        "q2": 1800000
+      }
+    },
+    "growth": {
+      "year_over_year": "20%",
+      "quarterly": {
+        "q1_2024": "25%",
+        "q2_2024": "24%"
+      }
+    }
+  },
+  "metadata": {
+    "generated": "2024-07-27T08:15:30.123Z",
+    "version": "1.0.0",
+    "debug": {
+      "processingTime": "0.045s",
+      "memoryUsage": "12.5MB"
+    }
+  }
+}</div>
+        </div>
+
+        <!-- 混合文本和 JSON -->
+        <div class="test-section">
+            <h2>6. 混合文本和 JSON</h2>
+            <div class="description">文本中嵌入 JSON：</div>
+            <div>
+                <p>以下是用户信息的 JSON 格式表示：</p>
+                <div class="json-example">{"user_id": 12345, "username": "zhangwei", "email": "zhangwei@example.com"}</div>
+                <p>系统配置可以表示为：</p>
+                <div class="json-example">{"theme": "dark", "notifications": true, "language": "zh-CN"}</div>
+                <p>用户的购物车中有 <span class="json-example">{"items": 3, "total": 299.50}</span> 值。</p>
+            </div>
+        </div>
+
+        <!-- JSON 与 API 相关格式 -->
+        <div class="test-section">
+            <h2>7. API 响应格式 JSON</h2>
+            <div class="description">常见 API 响应格式：</div>
+            <div class="json-example">{
+  "code": 200,
+  "message": "Success",
+  "data": {
+    "users": [
+      {"id": 1, "name": "张三", "age": 30},
+      {"id": 2, "name": "李四", "age": 25},
+      {"id": 3, "name": "王五", "age": 35}
+    ],
+    "pagination": {
+      "total": 25,
+      "page": 1,
+      "limit": 3
+    }
+  }
+}</div>
+        </div>
+
+        <!-- 格式错误的 JSON -->
+        <div class="test-section">
+            <h2>8. 格式错误的 JSON</h2>
+            <div class="description">测试扩展如何处理格式错误的 JSON：</div>
+            <div class="json-example">{"name": "错误的 JSON", "age": 30, isValid: false}</div>
+            <div class="json-example">{"unclosed": "引号}</div>
+            <div class="json-example">{name: "缺少引号", "age": 25}</div>
+        </div>
+
+        <!-- 超大 JSON -->
+        <div class="test-section">
+            <h2>9. 超大 JSON</h2>
+            <div class="description">一个包含大量数据的 JSON（可能需要性能测试）：</div>
+            <div class="json-example" id="large-json">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        // 动态生成大型 JSON 数据
+        function generateLargeJson() {
+            const items = [];
+            for (let i = 0; i < 100; i++) {
+                items.push({
+                    id: `item-${i}`,
+                    value: Math.random() * 1000,
+                    properties: {
+                        color: ["红色", "蓝色", "绿色", "黄色"][Math.floor(Math.random() * 4)],
+                        size: Math.floor(Math.random() * 100),
+                        tags: Array(Math.floor(Math.random() * 5) + 1).fill(0).map((_, idx) => `标签-${i}-${idx}`),
+                        metadata: {
+                            created: new Date().toISOString(),
+                            modified: new Date(Date.now() - Math.random() * 10000000).toISOString(),
+                            status: Math.random() > 0.5 ? "active" : "inactive"
+                        }
+                    }
+                });
+            }
+            
+            const largeJson = {
+                dataset: "large-test-data",
+                timestamp: new Date().toISOString(),
+                count: items.length,
+                items: items
+            };
+            
+            document.getElementById('large-json').textContent = JSON.stringify(largeJson, null, 2);
+        }
+        
+        window.onload = generateLargeJson;
+    </script>
+</body>
+</html>
