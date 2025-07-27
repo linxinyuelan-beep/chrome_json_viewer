@@ -1,9 +1,12 @@
 {
   "name": "chrome-extension",
-  "version": "1.0.0",
+  "version": "1.0.12",
   "description": "A simple Chrome extension.",
   "main": "src/background.ts",
   "scripts": {
+    "version-sync": "node scripts/version-sync.js",
+    "prebuild": "npm run version-sync",
+    "predev": "npm run version-sync",
     "build": "webpack --mode production",
     "dev": "webpack --mode development",
     "watch": "webpack --watch"

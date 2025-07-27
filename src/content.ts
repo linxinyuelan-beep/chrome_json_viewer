@@ -5,8 +5,9 @@
 import './assets/styles/json-drawer.css';
 import './assets/styles/json-viewer-component.css';
 
-// 定义版本号常量
-const EXTENSION_VERSION = "1.0.9";
+// 导入版本号从中心配置
+import { VERSION } from './config/version';
+const EXTENSION_VERSION = VERSION;
 console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_VERSION}`);
 
 
