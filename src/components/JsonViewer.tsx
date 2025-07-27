@@ -15,43 +15,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactJson from '@microlink/react-json-view';
 import { formatJsonSize } from '../utils/jsonViewer';
-import { isValidNestedJson, decorateNestedJsonElement } from '../utils/nestedJsonHandler';
-
-// 声明全局Window接口的扩展，以支持我们的自定义方法
-declare global {
-  interface Window {
-    showNestedJsonInDrawer?: (jsonString: string) => void;
-  }
-}
-
-// react-json-view类型补充
-interface ReactJsonViewProps {
-  src: any;
-  name?: string | null;
-  theme?: string;
-  style?: React.CSSProperties;
-  iconStyle?: string;
-  indentWidth?: number;
-  collapsed?: boolean;
-  collapseStringsAfterLength?: number;
-  shouldCollapse?: (field: any) => boolean;
-  sortKeys?: boolean;
-  quotesOnKeys?: boolean;
-  displayDataTypes?: boolean;
-  displayObjectSize?: boolean;
-  enableClipboard?: boolean;
-  groupArraysAfterLength?: number;
-  indentSize?: number;
-  displayArrayKey?: boolean;
-  onEdit?: (edit: { updated_src: any }) => void;
-  onAdd?: (add: { updated_src: any }) => void;
-  onDelete?: (remove: { updated_src: any }) => void;
-  onSelect?: (select: { name: string; namespace: string[]; value: any }) => boolean;
-  validationMessage?: string;
-  // 自定义属性
-  onClickValue?: (info: { name: string; namespace: string[]; value: any }) => boolean;
-  valueRenderer?: (props: { name: string; value: any }) => React.ReactNode;
-}
 
 interface JsonViewerProps {
   jsonData: any;
@@ -118,68 +81,6 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
     e.stopPropagation();
   };
   
-  // 处理嵌套JSON的点击，允许查看嵌套的JSON字符串
-  const handleNestedJsonClick = (e: React.MouseEvent, data: any) => {
-    // 检查是否是字符串类型的数据
-    if (typeof data === 'string') {
-      // 使用我们的工具函数检查是否是有效的嵌套JSON
-      if (isValidNestedJson(data)) {
-        console.log('Nested JSON detected, showing in drawer', {
-          stringLength: data.length,
-          sample: data.substring(0, 50) + '...'
-        });
-        
-        // 阻止冒泡和默认行为
-        e.stopPropagation();
-        e.preventDefault();
-        
-        // 调用全局函数显示JSON
-        if (window.showNestedJsonInDrawer) {
-          window.showNestedJsonInDrawer(data);
-        } else {
-          console.error('showNestedJsonInDrawer function not found on window object');
-        }
-        
-        return true;
-      } else {
-        console.log('Not a valid nested JSON string');
-      }
-    }
-    return false;
-  };
-
-  // 使用 useEffect 处理嵌套 JSON
-  useEffect(() => {
-    // 在组件挂载后添加嵌套JSON的处理
-    const timeoutId = setTimeout(() => {
-      // 找到所有可能的JSON字符串
-      const strElements = document.querySelectorAll('.json-tree-container .string-value');
-      
-      strElements.forEach(el => {
-        const text = el.textContent || '';
-        // 移除引号，获取实际内容
-        const content = text.replace(/^"|"$/g, '');
-        
-        // 使用工具函数检查是否是有效的嵌套JSON
-        if (isValidNestedJson(content)) {
-          // 使用工具函数装饰元素
-          decorateNestedJsonElement(
-            el as HTMLElement, 
-            content, 
-            (jsonContent) => {
-              if (window.showNestedJsonInDrawer) {
-                window.showNestedJsonInDrawer(jsonContent);
-              }
-            }
-          );
-        }
-      });
-    }, 500); // 等待渲染完成
-
-    // 清理函数
-    return () => clearTimeout(timeoutId);
-  }, [jsonData]);
-
   return (
     <div 
       className="json-viewer-component" 
@@ -214,26 +115,11 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
           theme="rjv-default" // Always use rjv-default theme for consistent coloring
           style={{ backgroundColor: 'transparent' }}
           collapsed={!expanded}
-          collapseStringsAfterLength={80}
+          collapseStringsAfterLength={false}
           displayDataTypes={false}
           displayObjectSize={true}
           enableClipboard={false} // We provide our own copy button
           name={null}
-          // 将任何 onXXX 的事件回调包装为阻止冒泡
-          onSelect={(select: any) => { 
-            console.log('Selected:', select);
-            // 检查这是否是一个嵌套的JSON字符串
-            if (select && typeof select.value === 'string') {
-              // 尝试处理嵌套JSON
-              if (handleNestedJsonClick({ 
-                stopPropagation: () => {}, 
-                preventDefault: () => {} 
-              } as React.MouseEvent<HTMLElement>, select.value)) {
-                return false;
-              }
-            }
-            return false; // 阻止默认行为
-          }}
         />
       </div>
     </div>

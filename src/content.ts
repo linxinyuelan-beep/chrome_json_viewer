@@ -6,18 +6,9 @@ import './assets/styles/json-drawer.css';
 import './assets/styles/json-viewer-component.css';
 
 // 定义版本号常量
-const EXTENSION_VERSION = "1.0.3";
+const EXTENSION_VERSION = "1.0.6";
 console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_VERSION}`);
 
-// 添加全局showNestedJsonInDrawer函数，用于显示嵌套JSON
-(window as any).showNestedJsonInDrawer = function(jsonString: string) {
-    console.log('Showing nested JSON in drawer:', jsonString.substring(0, 50) + '...');
-    if (isValidNestedJson(jsonString)) {
-        showJsonInDrawer(jsonString);
-    } else {
-        console.warn('Invalid nested JSON format detected');
-    }
-};
 
 // 导入工具函数
 import { isValidNestedJson } from './utils/nestedJsonHandler';
@@ -535,102 +526,6 @@ function createJsonTreeHTML(data: any, container: HTMLElement, isRoot: boolean =
     }
 }
 
-// 格式化大小显示
-function formatSize(bytes: number): string {
-    if (bytes < 1024) {
-        return bytes + ' 字节';
-    } else if (bytes < 1024 * 1024) {
-        return (bytes / 1024).toFixed(1) + ' KB';
-    } else {
-        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    }
-}
-
-// 复制文本到剪贴板
-async function copyTextToClipboard(text: string): Promise<void> {
-    try {
-        // 使用现代 Clipboard API
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText(text);
-            return;
-        }
-
-        // 回退方法：使用传统方式
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        
-        const success = document.execCommand('copy');
-        document.body.removeChild(textArea);
-        
-        if (!success) {
-            throw new Error('Copy command was unsuccessful');
-        }
-    } catch (err) {
-        console.error('复制失败:', err);
-        throw err;
-    }
-}
-
-// 显示复制成功的视觉反馈
-function showCopySuccessIndicator(buttonElement: HTMLElement): void {
-    // 保存原始文本和背景色
-    const originalText = buttonElement.textContent;
-    const originalBgColor = buttonElement.style.backgroundColor;
-    
-    // 更改按钮状态以提供反馈
-    buttonElement.textContent = '✓ 已复制';
-    buttonElement.style.backgroundColor = '#43a047';
-    
-    // 1.5秒后恢复原始状态
-    setTimeout(() => {
-        buttonElement.textContent = originalText;
-        buttonElement.style.backgroundColor = originalBgColor;
-    }, 1500);
-}
-
-// 格式化JSON字符串并添加语法高亮 - 浅色主题 - 紧凑布局 (保留作为备份方法)
-function formatJsonWithHighlight(jsonStr: string): string {
-    try {
-        const obj = JSON.parse(jsonStr);
-        const formatted = JSON.stringify(obj, null, 2);
-
-        // 使用浅色主题的语法高亮
-        const highlightedJson = formatted.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
-            let cls = 'json-number';
-            let style = 'color: #b5622e;'; // 数字-浅色主题
-
-            if (/^"/.test(match)) {
-                if (/:$/.test(match)) {
-                    cls = 'json-key';
-                    style = 'color: #2e7db5; font-weight: bold;'; // 键名-浅色主题
-                } else {
-                    cls = 'json-string';
-                    style = 'color: #288c28;'; // 字符串-浅色主题
-                }
-            } else if (/true|false/.test(match)) {
-                cls = 'json-boolean';
-                style = 'color: #9e40b5;'; // 布尔值-浅色主题
-            } else if (/null/.test(match)) {
-                cls = 'json-null';
-                style = 'color: #b5404a;'; // null值-浅色主题
-            }
-
-            return `<span class="${cls}" style="${style}">${match}</span>`;
-        });
-
-        // 添加额外的样式，使JSON更易于阅读 - 紧凑布局
-        return `<div style="font-family: 'Monaco', 'Menlo', 'Consolas', monospace; font-size: 13px; line-height: 1.4; margin-top: 0;">${highlightedJson}</div>`;
-    } catch (e) {
-        const error = e as Error;
-        return `<div style="color: #d32f2f; background-color: #ffebee; padding: 10px; border-radius: 4px; border-left: 4px solid #d32f2f; margin: 10px 0;">Error formatting JSON: ${error.message}</div>`;
-    }
-}
 
 // 创建JSON抽屉元素 - 使用浅色主题，更紧凑的布局
 function createJsonDrawer(): HTMLElement {
@@ -776,9 +671,6 @@ function throttle<T extends (...args: any[]) => any>(
         func(...args);
     };
 }
-
-// 已处理的元素记录
-const processedElements = new WeakSet<Node>();
 
 // 监听来自背景脚本的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
