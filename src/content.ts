@@ -335,7 +335,7 @@ function showJsonInDrawer(jsonString: string): void {
     }).catch(e => {
         console.error('Error importing React JSON drawer:', e);
         
-        // 回退到原始实现
+        // Create a simple error message if React component fails to load
         const drawer = document.querySelector('.json-drawer') as HTMLElement || createJsonDrawer();
         if (!document.body.contains(drawer)) {
             document.body.appendChild(drawer);
@@ -344,191 +344,25 @@ function showJsonInDrawer(jsonString: string): void {
         const drawerContent = drawer.querySelector('.json-drawer-content');
         if (!drawerContent) return;
 
-        // 移除现有内容
-        drawerContent.innerHTML = '';
-        
-        // 显示错误信息
-        const errorDiv = document.createElement('div');
-        errorDiv.style.color = '#d32f2f';
-        errorDiv.style.backgroundColor = '#ffebee';
-        errorDiv.style.padding = '10px';
-        errorDiv.style.borderRadius = '4px';
-        errorDiv.style.borderLeft = '4px solid #d32f2f';
-        errorDiv.style.margin = '10px 0';
-        errorDiv.innerHTML = `
-            Error loading JSON Viewer: ${(e as Error).message}
-            <br><br>
-            <code>${jsonString.substring(0, 200)}${jsonString.length > 200 ? '...' : ''}</code>
+        drawerContent.innerHTML = `
+            <div style="color: #d32f2f; background-color: #ffebee; padding: 10px; 
+                border-radius: 4px; border-left: 4px solid #d32f2f; margin: 10px 0;">
+                Error loading JSON Viewer: ${(e as Error).message}
+                <br><br>
+                <code>${jsonString.substring(0, 200)}${jsonString.length > 200 ? '...' : ''}</code>
+            </div>
         `;
-        drawerContent.appendChild(errorDiv);
         
-        // 打开抽屉
         drawer.classList.add('open');
     });
 }
 
-// 使用JSON Viewer渲染JSON
-function renderJsonViewer(data: any, container: HTMLElement): void {
-    try {
-        // 如果不是使用React，我们需要手动创建JSON树
-        const jsonTree = document.createElement('div');
-        jsonTree.className = 'json-tree';
-        container.appendChild(jsonTree);
-        
-        // 创建JSON树的HTML结构
-        createJsonTreeHTML(data, jsonTree, true);
-    } catch (e) {
-        console.error('Error rendering JSON viewer:', e);
-        container.innerHTML = `<div style="color: #d32f2f;">Error rendering JSON: ${(e as Error).message}</div>`;
-    }
-}
-
-// 递归创建JSON树的HTML结构
-function createJsonTreeHTML(data: any, container: HTMLElement, isRoot: boolean = false): void {
-    if (data === null) {
-        // 处理null值
-        const nullNode = document.createElement('span');
-        nullNode.className = 'json-null';
-        nullNode.textContent = 'null';
-        nullNode.style.color = '#b5404a';
-        container.appendChild(nullNode);
-        return;
-    }
-    
-    const valueType = typeof data;
-    
-    if (valueType === 'object' && data !== null) {
-        const isArray = Array.isArray(data);
-        const keys = isArray ? Object.keys(data).map(Number) : Object.keys(data);
-        
-        if (keys.length === 0) {
-            // 处理空对象/数组
-            const emptyNode = document.createElement('span');
-            emptyNode.textContent = isArray ? '[]' : '{}';
-            emptyNode.style.color = isArray ? '#288c28' : '#2e7db5';
-            container.appendChild(emptyNode);
-            return;
-        }
-        
-        // 创建对象/数组容器
-        const objContainer = document.createElement('div');
-        objContainer.className = 'json-object-container';
-        
-        // 创建对象/数组的展开/折叠控件
-        const toggle = document.createElement('span');
-        toggle.className = 'json-toggle expanded';
-        toggle.innerHTML = isArray ? '[' : '{';
-        toggle.style.cursor = 'pointer';
-        toggle.style.color = '#555';
-        toggle.style.fontWeight = 'bold';
-        toggle.style.marginRight = '3px';
-        
-        // 折叠状态标记
-        let isExpanded = true;
-        
-        // 创建内容容器
-        const contentContainer = document.createElement('div');
-        contentContainer.className = 'json-content';
-        contentContainer.style.paddingLeft = '20px';
-        
-        // 创建每个属性
-        keys.forEach((key, index) => {
-            const propertyContainer = document.createElement('div');
-            propertyContainer.className = 'json-property';
-            
-            // 创建属性名
-            const propertyName = document.createElement('span');
-            propertyName.className = 'json-key';
-            propertyName.textContent = isArray ? '' : `"${key}"`;
-            propertyName.style.color = '#2e7db5';
-            propertyName.style.fontWeight = 'bold';
-            
-            // 添加冒号（对象属性）
-            if (!isArray) {
-                const colon = document.createElement('span');
-                colon.textContent = ': ';
-                propertyName.appendChild(colon);
-            }
-            
-            propertyContainer.appendChild(propertyName);
-            
-            // 创建属性值（递归）
-            const propertyValue = document.createElement('span');
-            propertyValue.className = 'json-value';
-            propertyContainer.appendChild(propertyValue);
-            
-            createJsonTreeHTML(data[key], propertyValue);
-            
-            // 添加逗号
-            if (index < keys.length - 1) {
-                const comma = document.createElement('span');
-                comma.textContent = ',';
-                comma.style.color = '#555';
-                propertyContainer.appendChild(comma);
-            }
-            
-            contentContainer.appendChild(propertyContainer);
-        });
-        
-        // 添加结束括号
-        const closingBracket = document.createElement('span');
-        closingBracket.innerHTML = isArray ? ']' : '}';
-        closingBracket.style.color = '#555';
-        closingBracket.style.fontWeight = 'bold';
-        
-        // 组装到容器中
-        objContainer.appendChild(toggle);
-        objContainer.appendChild(contentContainer);
-        objContainer.appendChild(closingBracket);
-        container.appendChild(objContainer);
-        
-        // 添加展开/折叠功能
-        toggle.addEventListener('click', () => {
-            isExpanded = !isExpanded;
-            contentContainer.style.display = isExpanded ? 'block' : 'none';
-            toggle.className = isExpanded ? 'json-toggle expanded' : 'json-toggle collapsed';
-            
-            // 更新显示的括号（添加省略号表示有内容）
-            if (isExpanded) {
-                toggle.innerHTML = isArray ? '[' : '{';
-                closingBracket.style.display = 'inline';
-            } else {
-                toggle.innerHTML = isArray ? '[...]' : '{...}';
-                closingBracket.style.display = 'none';
-            }
-        });
-    } else {
-        // 处理基本类型的值
-        const valueNode = document.createElement('span');
-        
-        switch (valueType) {
-            case 'string':
-                valueNode.className = 'json-string';
-                valueNode.textContent = `"${data}"`;
-                valueNode.style.color = '#288c28';
-                break;
-            case 'number':
-                valueNode.className = 'json-number';
-                valueNode.textContent = data;
-                valueNode.style.color = '#b5622e';
-                break;
-            case 'boolean':
-                valueNode.className = 'json-boolean';
-                valueNode.textContent = data ? 'true' : 'false';
-                valueNode.style.color = '#9e40b5';
-                break;
-            default:
-                valueNode.textContent = String(data);
-                valueNode.style.color = '#555';
-        }
-        
-        container.appendChild(valueNode);
-    }
-}
-
-
-// 创建JSON抽屉元素 - 使用浅色主题，更紧凑的布局
+// These JSON rendering functions were removed as they are not used.
+// The extension now uses React-based JSON viewer component.
+// Create a simplified JSON drawer element
 function createJsonDrawer(): HTMLElement {
+    // Use a simple drawer implementation since we're now primarily using the React-based drawer
+    // from reactJsonDrawer.tsx for the actual JSON viewing
     const drawer = document.createElement('div');
     drawer.className = 'json-drawer';
     drawer.innerHTML = `
@@ -538,34 +372,34 @@ function createJsonDrawer(): HTMLElement {
         </div>
         <div class="json-drawer-content"></div>
     `;
-
-    // 应用浅色主题样式和更紧凑的布局
+    
+    // Apply light theme styles
     drawer.style.backgroundColor = '#f8f9fa';
     drawer.style.color = '#333333';
     drawer.style.boxShadow = '-5px 0 15px rgba(0, 0, 0, 0.1)';
-    drawer.style.padding = '0'; // 移除整体内边距，使内容更紧凑
-
-    // 为标题栏应用浅色主题样式
+    drawer.style.padding = '0';
+    
+    // Style header
     const headerElement = drawer.querySelector('.json-drawer-header');
     if (headerElement) {
         (headerElement as HTMLElement).style.display = 'flex';
         (headerElement as HTMLElement).style.justifyContent = 'space-between';
         (headerElement as HTMLElement).style.alignItems = 'center';
-        (headerElement as HTMLElement).style.padding = '8px 12px'; // 减小内边距
+        (headerElement as HTMLElement).style.padding = '8px 12px';
         (headerElement as HTMLElement).style.borderBottom = '1px solid #e0e0e0';
-        (headerElement as HTMLElement).style.color = '#333333';
-        (headerElement as HTMLElement).style.margin = '0'; // 移除外边距
+        (headerElement as HTMLElement).style.backgroundColor = '#e9f0f8';
+        (headerElement as HTMLElement).style.margin = '0';
     }
-
-    // 为标题应用样式
+    
+    // Style title
     const titleElement = drawer.querySelector('.json-drawer-title');
     if (titleElement) {
         (titleElement as HTMLElement).style.fontWeight = 'bold';
         (titleElement as HTMLElement).style.fontSize = '14px';
         (titleElement as HTMLElement).style.color = '#2e7db5';
     }
-
-    // 为关闭按钮应用浅色主题样式
+    
+    // Style close button
     const closeBtn = drawer.querySelector('.json-drawer-close');
     if (closeBtn) {
         (closeBtn as HTMLElement).style.color = '#666';
@@ -574,22 +408,13 @@ function createJsonDrawer(): HTMLElement {
         (closeBtn as HTMLElement).style.border = 'none';
         (closeBtn as HTMLElement).style.cursor = 'pointer';
         (closeBtn as HTMLElement).style.padding = '0 5px';
-
-        // 关闭按钮的点击事件
+        
+        // Close button click event
         closeBtn.addEventListener('click', () => {
             drawer.classList.remove('open');
         });
     }
-
-    // 点击抽屉外部关闭
-    document.addEventListener('click', (event: MouseEvent) => {
-        if (drawer.classList.contains('open') &&
-            !drawer.contains(event.target as Node) &&
-            !(event.target as Element).classList.contains('json-text-hover')) {
-            drawer.classList.remove('open');
-        }
-    });
-
+    
     return drawer;
 }
 

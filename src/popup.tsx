@@ -4,7 +4,7 @@ import './assets/styles/main.css';
 
 const App: React.FC = () => {
   const [jsonHoverEnabled, setJsonHoverEnabled] = React.useState(true);
-  const version = '1.0.2';
+  const version = '1.0.6';
 
   // Toggle JSON hover detection
   const toggleHoverDetection = async () => {
