@@ -6,7 +6,7 @@ chrome.runtime.onInstalled.addListener(() => {
     // 创建右键菜单项
     chrome.contextMenus.create({
         id: 'formatSelectedJson',
-        title: '格式化 JSON (Ctrl+Shift+E)',
+        title: '格式化 JSON',
         contexts: ['selection'], // 仅在文本选中时显示
     });
 });
@@ -18,6 +18,36 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         chrome.tabs.sendMessage(tab.id, { 
             action: 'formatSelectedJson', 
             selectedText: info.selectionText 
+        });
+    }
+});
+
+// 监听命令快捷键
+chrome.commands.onCommand.addListener(async (command) => {
+    console.log(`Command received: ${command}`);
+
+    // 获取当前标签页
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.id) return;
+
+    if (command === 'format-selected-json') {
+        // 获取选中的文本
+        chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            func: () => window.getSelection()?.toString() || '',
+        }).then(injectionResults => {
+            const selectedText = injectionResults[0].result;
+            if (selectedText) {
+                chrome.tabs.sendMessage(tab.id as number, { 
+                    action: 'formatSelectedJson', 
+                    selectedText
+                });
+            }
+        });
+    } else if (command === 'toggle-hover-detection') {
+        // 发送切换悬停检测模式的消息
+        chrome.tabs.sendMessage(tab.id, { 
+            action: 'toggleHoverDetection'
         });
     }
 });

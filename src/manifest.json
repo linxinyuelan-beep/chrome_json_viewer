@@ -37,5 +37,21 @@
         "content.bundle.js"
       ]
     }
-  ]
+  ],
+  "commands": {
+    "format-selected-json": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
+      },
+      "description": "Format selected JSON text"
+    },
+    "toggle-hover-detection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+H",
+        "mac": "Command+Shift+H"
+      },
+      "description": "Toggle JSON hover detection"
+    }
+  }
 }

@@ -17,58 +17,8 @@ import { isValidNestedJson } from './utils/nestedJsonHandler';
 // 是否启用悬停检测
 let enableHoverDetection = true;
 
-// Listen for the keyboard shortcuts
-document.addEventListener('keydown', (event) => {
-    // Ctrl+Shift+J or Cmd+Shift+J: 格式化选中的JSON
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'e') {
-        console.log('Keyboard shortcut for formatting selected JSON');
-        event.preventDefault();
-        formatSelectedJson();
-    }
-    
-    // Ctrl+Shift+H or Cmd+Shift+H: 切换悬停检测模式
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'h') {
-        console.log('Keyboard shortcut for toggling hover detection');
-        event.preventDefault();
-
-        // 切换悬停检测状态
-        enableHoverDetection = !enableHoverDetection;
-
-        // 创建通知元素
-        const notification = document.createElement('div');
-        notification.style.position = 'fixed';
-        notification.style.top = '20px';
-        notification.style.left = '50%';
-        notification.style.transform = 'translateX(-50%)';
-        notification.style.padding = '10px 20px';
-        notification.style.backgroundColor = enableHoverDetection ? '#4caf50' : '#f44336';
-        notification.style.color = 'white';
-        notification.style.borderRadius = '4px';
-        notification.style.zIndex = '100000';
-        notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-        notification.style.transition = 'opacity 0.5s';
-        notification.style.fontSize = '14px';
-        notification.textContent = `JSON Hover Detection: ${enableHoverDetection ? 'Enabled' : 'Disabled'}`;
-
-        // 添加到页面
-        document.body.appendChild(notification);
-
-        // 3秒后淡出
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 500);
-        }, 3000);
-
-        // 刷新页面（如果启用悬停检测）
-        if (enableHoverDetection) {
-            location.reload();
-        }
-    }
-});
+// 我们将不再使用直接的键盘事件监听器
+// 而是通过Chrome命令 (chrome://extensions/shortcuts) 和background script的消息来处理
 
 // 格式化选中的JSON文本
 function formatSelectedJson(): void {
