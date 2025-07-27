@@ -1,24 +1,28 @@
-# Tab Title Changer & JSON Detector Chrome Extension - AI Assistant Guide
+# JSON Formatter & Viewer Chrome Extension - AI Assistant Guide
 
 ## Project Overview
-This is a Chrome extension with two main features:
-1. **Tab Title Changer**: Allows users to change the titles of browser tabs based on URL patterns or manually
-2. **JSON Detector**: Detects JSON content on web pages, highlights it, and provides a formatted view in a slide-out drawer
+This Chrome extension provides:
+1. **JSON Detection & Formatting**: Automatically detects JSON on web pages, highlights it, and provides a formatted view
+2. **JSON Viewer**: Displays formatted JSON in a slide-out drawer with advanced features like history navigation and copying
 
 ## Key Components
 
 ### Core Files
-- `src/content.ts` - Content script with JSON detection and tab title functionality
-- `src/background.ts` - Background service worker for handling tab operations and extension lifecycle
-- `src/popup.tsx` - React-based popup UI for managing tab title rules
-- `src/components/App.tsx` - Main React component for the popup interface
+- `src/content.ts` - Content script with JSON detection functionality
+- `src/background.ts` - Background service worker for context menu integration
+- `src/popup.tsx` - React-based popup UI for controlling extension features
+- `src/components/JsonViewer.tsx` - React component for JSON visualization
+- `src/utils/reactJsonDrawer.tsx` - Integration between content script and React components
+- `src/utils/nestedJsonHandler.ts` - JSON validation and detection utilities
 - `src/assets/styles/json-drawer.css` - Styling for JSON highlighting and drawer
+- `src/assets/styles/json-viewer-component.css` - Styling for the JSON viewer
 - `src/assets/styles/main.css` - General styling for the extension
 
 ### Architecture
-- **Content Script**: Runs on all web pages, detecting JSON and handling title changes
-- **Background Script**: Manages tab operations, rule application, and cross-window functionality
-- **Popup Interface**: React-based UI for setting and managing title change rules
+- **Content Script**: Runs on all web pages, detecting JSON content and managing the drawer UI
+- **Background Script**: Handles context menu integration and extension lifecycle events
+- **React Components**: Provides interactive JSON visualization with history and navigation
+- **Utility Modules**: Handle JSON validation, history tracking, and drawer management
 
 ## Development Workflow
 
@@ -38,49 +42,73 @@ The build process:
 ### Testing the Extension
 1. Build the extension
 2. Load unpacked from Chrome's extension page (`chrome://extensions/`)
-3. Navigate to pages to test tab title rules or JSON detection
+3. Navigate to pages with JSON content to test detection and formatting
 
 ## Key Features & Implementation
 
-### 1. Tab Title Changer
-- Allows setting URL patterns and corresponding titles
-- Supports manual title changes through the popup
-- Persists rules using Chrome storage sync API
-- Applies rules automatically when tabs are updated
-
-### 2. JSON Detection
+### 1. JSON Detection
 The extension uses multiple strategies to detect JSON:
 - Automatic scanning of text nodes
 - Hover-based detection (toggle with `Ctrl+Shift+H`)
 - Special detection for API logs format
 - Highlights JSON with dotted underlines
 
-### 3. JSON Viewer
+### 2. JSON Viewer
 - Shows formatted JSON in a slide-out drawer
 - Syntax highlighting for better readability
 - Accessible via Ctrl+Click on detected JSON
 - Supports large JSON structures
 
-### 4. Window Management
-- Supports moving tabs between windows with keyboard shortcut 'W'
+### 3. History Management
+- Maintains history of viewed JSON for navigation
+- Supports back/forward navigation between JSON views
+- Provides a dropdown menu for quickly accessing recent JSON
 
-### 5. Keyboard Shortcuts
+### 4. Keyboard Shortcuts
+- `Ctrl+Shift+E`: Format selected JSON text
 - `Ctrl+Shift+H`: Toggle hover detection for JSON
-- `W`: Move current tab to another window
 
-## Common Tasks
-
-### Adding New Tab Title Rules
-Add rules through the popup UI or modify the default rules in the storage.
+## Common Development Tasks
 
 ### Enhancing JSON Detection
-Extend the patterns in `detectJsonInElement()` function in `content.ts`.
+The `detectJsonInElement()` function in `content.ts` handles JSON detection:
 
-### Modifying JSON Highlighting Style
-Update the CSS classes in `src/assets/styles/json-drawer.css`.
+```typescript
+function detectJsonInElement(element: Element): string[] {
+  // Special cases like API logs
+  if (text.includes('GdsOrderSystemServiceImpl')) {
+    // API-specific detection patterns
+  }
+  
+  // General JSON detection for any valid objects/arrays
+  const allPotentialJsons = findAllPotentialJsons(text);
+  // ...
+}
+```
+
+Add new patterns by extending the detection logic in this function.
+
+### Improving the JSON Viewer
+The React-based JSON viewer is defined in `src/components/JsonViewer.tsx`. To add new features:
+
+1. Update the component's state and handlers
+2. Add UI elements to the viewer's toolbar
+3. Update styling in `src/assets/styles/json-viewer-component.css`
+
+### Working with History
+JSON history management is handled by:
+- `src/utils/jsonHistory.ts` - Persistent storage of viewed JSON
+- `src/utils/jsonNavigation.ts` - In-memory navigation history
 
 ### Changing Keyboard Shortcuts
-Modify the key detection in the keydown event listeners in `content.ts`.
+Modify the key detection in the keydown event listeners in `content.ts`:
+
+```typescript
+// Ctrl+Shift+E for formatting JSON
+if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'e') {
+  formatSelectedJson();
+}
+```
 
 ## Version Tracking
 The extension version is defined in:
