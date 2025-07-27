@@ -415,6 +415,18 @@ function createJsonDrawer(): HTMLElement {
         });
     }
     
+    // 点击抽屉外部关闭
+    const clickOutsideHandler = (event: MouseEvent) => {
+        if (drawer.classList.contains('open') && 
+            !drawer.contains(event.target as Node) &&
+            !(event.target as Element).classList.contains('json-text-hover')) {
+            drawer.classList.remove('open');
+        }
+    };
+    
+    // 添加全局点击监听，确保点击抽屉外部时关闭抽屉
+    document.addEventListener('click', clickOutsideHandler);
+    
     return drawer;
 }
 

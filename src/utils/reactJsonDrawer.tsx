@@ -237,6 +237,66 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
     // 添加标记以帮助识别抽屉是由哪次显示创建的
     drawer.dataset.openedAt = Date.now().toString();
     
+    // 重新绑定点击外部关闭事件（首先移除所有已存在的事件监听器）
+    const clickOutsideHandler = (event: MouseEvent) => {
+      // 抽屉必须是打开的
+      if (!drawer.classList.contains('open')) {
+        return;
+      }
+      
+      // 获取点击目标
+      const target = event.target as Element;
+      
+      // 忽略抽屉内部的点击
+      if (drawer.contains(target)) {
+        return;
+      }
+      
+      // 忽略JSON高亮文本的点击
+      if (target.classList && target.classList.contains('json-text-hover')) {
+        return;
+      }
+      
+      // 忽略react-json-view组件内部的点击（它们可能在Portal外渲染）
+      if (isJsonViewerElement(target)) {
+        return;
+      }
+      
+      // 如果点击在抽屉外部，关闭抽屉
+      console.log('Click outside drawer, closing');
+      const drawerContent = drawer.querySelector('.json-drawer-content');
+      if (drawerContent) {
+        try {
+          ReactDOM.unmountComponentAtNode(drawerContent);
+        } catch (e) {
+          console.error('Error unmounting React component:', e);
+        }
+      }
+      drawer.classList.remove('open');
+    };
+    
+    // 先移除现有的所有点击事件监听器
+    const oldHandlerId = drawer.getAttribute('data-click-handler-id');
+    if (oldHandlerId) {
+      try {
+        const oldHandler = (window as any)[`jsonDrawerClickHandler_${oldHandlerId}`];
+        if (typeof oldHandler === 'function') {
+          document.removeEventListener('click', oldHandler);
+          delete (window as any)[`jsonDrawerClickHandler_${oldHandlerId}`];
+        }
+      } catch (e) {
+        console.error('Error removing old click handler:', e);
+      }
+    }
+    
+    // 添加新的点击事件监听器
+    document.addEventListener('click', clickOutsideHandler);
+    
+    // 存储事件监听器引用以便后续移除
+    const handlerId = Date.now().toString();
+    drawer.setAttribute('data-click-handler-id', handlerId);
+    (window as any)[`jsonDrawerClickHandler_${handlerId}`] = clickOutsideHandler;
+    
     console.log('JSON viewer mounted successfully', { 
       jsonSize: jsonString.length,
       drawerOpenedAt: drawer.dataset.openedAt
