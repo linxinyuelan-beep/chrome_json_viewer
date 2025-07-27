@@ -56,7 +56,7 @@
 <body>
     <h1>JSON 检测测试页面</h1>
     <div class="controls">
-        <p><strong>提示:</strong> 使用 <code>Ctrl+Shift+H</code> 切换悬停检测，使用 <code>Ctrl+点击</code> 在抽屉中查看格式化的 JSON。</p>
+        <p><strong>提示:</strong> 使用 <code>Ctrl+Shift+H</code> 切换悬停检测，使用 <code>双击</code> 在抽屉中查看格式化的 JSON。</p>
     </div>
 
     <div class="container">
@@ -198,10 +198,17 @@
   }
 }</div>
         </div>
+    <div class="test-section">
+            <h2>6. 多层嵌套 JSON（简化版）</h2>
+            <div class="description">一个简化的多层嵌套 JSON 示例：</div>
+            <div class="json-example">{
+    "message": "This is random message 20250727201719211",
+    "nestedData": "{\"message\":\"This is random message 20250727202231245\",\"nestedData\":\"This is nested data\"}"
+}</div>
 
         <!-- 混合文本和 JSON -->
         <div class="test-section">
-            <h2>6. 混合文本和 JSON</h2>
+            <h2>7. 混合文本和 JSON</h2>
             <div class="description">文本中嵌入 JSON：</div>
             <div>
                 <p>以下是用户信息的 JSON 格式表示：</p>
@@ -214,7 +221,7 @@
 
         <!-- JSON 与 API 相关格式 -->
         <div class="test-section">
-            <h2>7. API 响应格式 JSON</h2>
+            <h2>8. API 响应格式 JSON</h2>
             <div class="description">常见 API 响应格式：</div>
             <div class="json-example">{
   "code": 200,
@@ -236,7 +243,7 @@
 
         <!-- 格式错误的 JSON -->
         <div class="test-section">
-            <h2>8. 格式错误的 JSON</h2>
+            <h2>9. 格式错误的 JSON</h2>
             <div class="description">测试扩展如何处理格式错误的 JSON：</div>
             <div class="json-example">{"name": "错误的 JSON", "age": 30, isValid: false}</div>
             <div class="json-example">{"unclosed": "引号}</div>
@@ -245,7 +252,7 @@
 
         <!-- 超大 JSON -->
         <div class="test-section">
-            <h2>9. 超大 JSON</h2>
+            <h2>10. 超大 JSON</h2>
             <div class="description">一个包含大量数据的 JSON（可能需要性能测试）：</div>
             <div class="json-example" id="large-json">加载中...</div>
         </div>
