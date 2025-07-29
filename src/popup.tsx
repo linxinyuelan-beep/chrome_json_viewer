@@ -2,10 +2,35 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './assets/styles/main.css';
 import { VERSION } from './config/version';
+import { getDefaultViewType, saveDefaultViewType, JsonViewType } from './utils/jsonViewer';
 
 const App: React.FC = () => {
   const [jsonHoverEnabled, setJsonHoverEnabled] = React.useState(true);
+  const [defaultViewType, setDefaultViewType] = React.useState<JsonViewType>('react-json-view');
   const version = VERSION;
+
+  // Load saved settings when popup opens
+  React.useEffect(() => {
+    // Get saved view type
+    getDefaultViewType().then(viewType => {
+      setDefaultViewType(viewType);
+    });
+
+    // Check if hover detection is enabled
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: 'getHoverDetectionState' })
+          .then(response => {
+            if (response && response.enabled !== undefined) {
+              setJsonHoverEnabled(response.enabled);
+            }
+          })
+          .catch(error => {
+            console.log('Error getting hover detection state:', error);
+          });
+      }
+    });
+  }, []);
 
   // Toggle JSON hover detection
   const toggleHoverDetection = async () => {
@@ -16,6 +41,12 @@ const App: React.FC = () => {
       }
     });
     setJsonHoverEnabled(!jsonHoverEnabled);
+  };
+  
+  // Change default view type
+  const changeDefaultViewType = async (viewType: JsonViewType) => {
+    await saveDefaultViewType(viewType);
+    setDefaultViewType(viewType);
   };
 
   return (
@@ -45,15 +76,44 @@ const App: React.FC = () => {
         </div>
 
         <div className="section">
-          <label className="toggle-switch">
-            <input 
-              type="checkbox"
-              checked={jsonHoverEnabled}
-              onChange={toggleHoverDetection}
-            />
-            <span className="toggle-slider"></span>
-            <span className="toggle-label">悬停检测</span>
-          </label>
+          <h2>设置</h2>
+          <div className="settings-group">
+            <label className="toggle-switch">
+              <input 
+                type="checkbox"
+                checked={jsonHoverEnabled}
+                onChange={toggleHoverDetection}
+              />
+              <span className="toggle-slider"></span>
+              <span className="toggle-label">悬停检测</span>
+            </label>
+          </div>
+          
+          <div className="settings-group view-type-selection">
+            <span className="setting-label">默认视图类型：</span>
+            <div className="radio-group">
+              <label className="radio-label">
+                <input 
+                  type="radio"
+                  name="viewType"
+                  value="react-json-view"
+                  checked={defaultViewType === 'react-json-view'}
+                  onChange={() => changeDefaultViewType('react-json-view')}
+                />
+                <span>JSON View</span>
+              </label>
+              <label className="radio-label">
+                <input 
+                  type="radio"
+                  name="viewType"
+                  value="react-json-tree"
+                  checked={defaultViewType === 'react-json-tree'}
+                  onChange={() => changeDefaultViewType('react-json-tree')}
+                />
+                <span>Tree View</span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
       

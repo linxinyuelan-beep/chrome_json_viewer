@@ -19,7 +19,7 @@
 import React, { useState, useEffect } from 'react';
 import { JSONTree } from 'react-json-tree';
 import ReactJson from '@microlink/react-json-view';
-import { formatJsonSize } from '../utils/jsonViewer';
+import { formatJsonSize, getDefaultViewType, JsonViewType } from '../utils/jsonViewer';
 import { addToHistory } from '../utils/jsonHistory';
 import { 
   addToNavigationHistory, 
@@ -48,13 +48,39 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
   const [expanded, setExpanded] = useState<boolean>(true);
   const [jsonSize, setJsonSize] = useState<string>('');
   const [showHistory, setShowHistory] = useState<boolean>(false);
-  // 添加视图类型状态，默认为 'react-json-view'
-  const [viewType, setViewType] = useState<'react-json-view' | 'react-json-tree'>('react-json-view');
+  // 添加视图类型状态，初始值会在 useEffect 中被覆盖
+  const [viewType, setViewType] = useState<JsonViewType>('react-json-view');
   // 添加内部组件 ID 用于强制重新渲染
   const [instanceId] = useState<string>(`json-viewer-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
   // 添加导航按钮状态
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
   const [canGoForward, setCanGoForward] = useState<boolean>(false);
+
+  // 加载默认视图类型
+  useEffect(() => {
+    // 从存储中获取默认视图类型
+    getDefaultViewType().then((defaultViewType) => {
+      setViewType(defaultViewType);
+    });
+  }, []);
+
+  // 监听视图类型更新事件
+  useEffect(() => {
+    const handleViewTypeUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{viewType: JsonViewType}>;
+      if (customEvent.detail && customEvent.detail.viewType) {
+        setViewType(customEvent.detail.viewType);
+      }
+    };
+    
+    // 添加事件监听器
+    document.addEventListener('json-view-type-updated', handleViewTypeUpdate);
+    
+    // 清理函数
+    return () => {
+      document.removeEventListener('json-view-type-updated', handleViewTypeUpdate);
+    };
+  }, []);
 
   // 确保组件初始化时记录日志
   useEffect(() => {
@@ -402,7 +428,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
                 collapseStringsAfterLength={false}
                 displayDataTypes={false}
                 displayObjectSize={true}
-                enableClipboard={false} // We provide our own copy button
+                enableClipboard={true}
                 name={null}
               />
             )}

@@ -152,6 +152,46 @@ input:checked + .toggle-slider:before {
     font-size: 14px;
 }
 
+/* Settings group */
+.settings-group {
+    margin-bottom: 12px;
+    padding: 8px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+
+.settings-group:last-child {
+    margin-bottom: 0;
+}
+
+.setting-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+/* Radio button group */
+.radio-group {
+    display: flex;
+    gap: 16px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.radio-label input {
+    margin-right: 6px;
+}
+
+.view-type-selection {
+    padding-top: 10px;
+}
+
 /* Input styles */
 .input {
     width: 100%;
