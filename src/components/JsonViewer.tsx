@@ -1,18 +1,23 @@
 /**
- * JSON Viewer Component using react-json-view
+ * JSON Viewer Component with switchable view between react-json-tree and react-json-view
  * 
- * Alternative libraries to consider:
+ * 1. react-json-tree from Redux DevTools
+ *    See: https://github.com/reduxjs/redux-devtools/tree/master/packages/react-json-tree
+ *    Lightweight and focused on display only
+ * 
+ * 2. @microlink/react-json-view
+ *    Feature-rich JSON editor and viewer
+ * 
+ * Other alternative libraries:
  * 1. @textea/json-viewer - https://github.com/TexteaInc/json-viewer
  *    Lightweight JSON display component
  * 
- * 2. react-json-tree - https://github.com/reduxjs/redux-devtools/tree/master/packages/react-json-tree
- *    Lightweight and focused on display only
- * 
- * 3. monaco-editor - https://github.com/microsoft/monaco-editor
+ * 2. monaco-editor - https://github.com/microsoft/monaco-editor
  *    Professional editor (powers VS Code) with JSON support
  */
 
 import React, { useState, useEffect } from 'react';
+import { JSONTree } from 'react-json-tree';
 import ReactJson from '@microlink/react-json-view';
 import { formatJsonSize } from '../utils/jsonViewer';
 import { addToHistory } from '../utils/jsonHistory';
@@ -43,6 +48,8 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
   const [expanded, setExpanded] = useState<boolean>(true);
   const [jsonSize, setJsonSize] = useState<string>('');
   const [showHistory, setShowHistory] = useState<boolean>(false);
+  // 添加视图类型状态，默认为 'react-json-view'
+  const [viewType, setViewType] = useState<'react-json-view' | 'react-json-tree'>('react-json-view');
   // 添加内部组件 ID 用于强制重新渲染
   const [instanceId] = useState<string>(`json-viewer-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
   // 添加导航按钮状态
@@ -125,6 +132,11 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
   // Toggle expand/collapse all
   const toggleExpand = () => {
     setExpanded(!expanded);
+  };
+  
+  // Toggle between JSON view implementations
+  const toggleViewType = () => {
+    setViewType(viewType === 'react-json-view' ? 'react-json-tree' : 'react-json-view');
   };
 
   // Handle navigation back
@@ -297,6 +309,15 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
                 {copySuccess ? '✓ Copied' : 'Copy JSON'}
               </button>
               
+              {/* Toggle view type button */}
+              <button
+                className={`json-viewer-button view-toggle-button ${viewType === 'react-json-tree' ? 'tree-active' : 'json-active'}`}
+                onClick={toggleViewType}
+                title={`Switch to ${viewType === 'react-json-view' ? 'react-json-tree' : 'react-json-view'}`}
+              >
+                {viewType === 'react-json-view' ? 'Tree View' : 'JSON View'}
+              </button>
+              
               {/* History dropdown */}
               <div className="json-viewer-dropdown-container">
                 <button 
@@ -342,19 +363,49 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
             </div>
           </div>
 
-          {/* JSON Tree component */}
+          {/* JSON Viewer components - conditionally render based on viewType */}
           <div className="json-tree-container">
-            <ReactJson
-              src={jsonData}
-              theme="rjv-default" // Always use rjv-default theme for consistent coloring
-              style={{ backgroundColor: 'transparent' }}
-              collapsed={!expanded}
-              collapseStringsAfterLength={false}
-              displayDataTypes={false}
-              displayObjectSize={true}
-              enableClipboard={true} // We provide our own copy button
-              name={null}
-            />
+            {viewType === 'react-json-tree' ? (
+              <JSONTree
+                data={jsonData}
+                theme={{
+                  scheme: 'default',
+                  base00: 'transparent', // background
+                  base01: '#f5f5f5',     // lines
+                  base02: '#e0e0e0',     // borders
+                  base03: '#999999',     // punctuation
+                  base04: '#777777',     // comments
+                  base05: '#333333',     // text
+                  base06: '#222222',     // highlights
+                  base07: '#111111',     // value text
+                  base08: '#b5404a',     // null
+                  base09: '#b5622e',     // number
+                  base0A: '#9e40b5',     // boolean
+                  base0B: '#288c28',     // string
+                  base0C: '#0086b3',     // date
+                  base0D: '#2e7db5',     // key
+                  base0E: '#9e40b5',     // regex
+                  base0F: '#777777'      // function
+                }}
+                invertTheme={false}
+                getItemString={() => null}
+                shouldExpandNodeInitially={() => expanded}
+                hideRoot={false}
+                sortObjectKeys={false}
+              />
+            ) : (
+              <ReactJson
+                src={jsonData}
+                theme="rjv-default"
+                style={{ backgroundColor: 'transparent' }}
+                collapsed={!expanded}
+                collapseStringsAfterLength={false}
+                displayDataTypes={false}
+                displayObjectSize={true}
+                enableClipboard={false} // We provide our own copy button
+                name={null}
+              />
+            )}
           </div>
         </>
       )}
