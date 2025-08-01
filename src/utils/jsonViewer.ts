@@ -9,8 +9,16 @@
 // JSON view type options
 export type JsonViewType = 'react-json-view' | 'react-json-tree';
 
+// 自动切换配置类型
+export interface AutoSwitchRule {
+  enabled: boolean;
+  patterns: string[]; // 包含这些内容的JSON将触发自动切换
+  targetViewType: JsonViewType; // 切换到的目标视图类型
+}
+
 // Storage key for JSON view type preference
 const VIEW_TYPE_STORAGE_KEY = 'json_viewer_default_view_type';
+const AUTO_SWITCH_RULES_KEY = 'json_viewer_auto_switch_rules';
 
 // Function to format JSON size for display
 export function formatJsonSize(bytes: number): string {
@@ -53,4 +61,63 @@ export function saveDefaultViewType(viewType: JsonViewType): Promise<void> {
       resolve();
     });
   });
+}
+
+// 获取自动切换规则
+export function getAutoSwitchRules(): Promise<AutoSwitchRule[]> {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(AUTO_SWITCH_RULES_KEY, (result) => {
+      const rules = result[AUTO_SWITCH_RULES_KEY] as AutoSwitchRule[];
+      resolve(rules || [{ 
+        enabled: false, 
+        patterns: [], 
+        targetViewType: 'react-json-tree' 
+      }]); // 默认空规则
+    });
+  });
+}
+
+// 保存自动切换规则
+export function saveAutoSwitchRules(rules: AutoSwitchRule[]): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.sync.set({ [AUTO_SWITCH_RULES_KEY]: rules }, () => {
+      // 广播规则变化
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach(tab => {
+          if (tab.id) {
+            chrome.tabs.sendMessage(tab.id, { 
+              action: 'updateAutoSwitchRules', 
+              rules 
+            }).catch(() => {
+              // 忽略非活动标签页的错误
+            });
+          }
+        });
+      });
+      resolve();
+    });
+  });
+}
+
+// 根据JSON内容决定视图类型
+export function determineViewTypeByContent(
+  jsonString: string, 
+  defaultType: JsonViewType, 
+  autoSwitchRules: AutoSwitchRule[]
+): JsonViewType {
+  // 如果没有启用自动规则，直接返回默认类型
+  const enabledRules = autoSwitchRules.filter(rule => rule.enabled);
+  if (enabledRules.length === 0) {
+    return defaultType;
+  }
+
+  // 检查每条规则
+  for (const rule of enabledRules) {
+    if (rule.patterns.some(pattern => pattern && jsonString.includes(pattern))) {
+      return rule.targetViewType;
+    }
+  }
+
+  // 如果没有匹配的规则，返回默认类型
+  return defaultType;
 }

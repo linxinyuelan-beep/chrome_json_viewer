@@ -19,7 +19,14 @@
 import React, { useState, useEffect } from 'react';
 import { JSONTree } from 'react-json-tree';
 import ReactJson from '@microlink/react-json-view';
-import { formatJsonSize, getDefaultViewType, JsonViewType } from '../utils/jsonViewer';
+import { 
+  formatJsonSize, 
+  getDefaultViewType, 
+  getAutoSwitchRules,
+  determineViewTypeByContent, 
+  JsonViewType,
+  AutoSwitchRule
+} from '../utils/jsonViewer';
 import { addToHistory } from '../utils/jsonHistory';
 import { 
   addToNavigationHistory, 
@@ -50,21 +57,32 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
   const [showHistory, setShowHistory] = useState<boolean>(false);
   // 添加视图类型状态，初始值会在 useEffect 中被覆盖
   const [viewType, setViewType] = useState<JsonViewType>('react-json-view');
+  // 添加自动切换规则状态
+  const [autoSwitchRules, setAutoSwitchRules] = useState<AutoSwitchRule[]>([]);
   // 添加内部组件 ID 用于强制重新渲染
   const [instanceId] = useState<string>(`json-viewer-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
   // 添加导航按钮状态
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
   const [canGoForward, setCanGoForward] = useState<boolean>(false);
 
-  // 加载默认视图类型
+  // 加载默认视图类型和自动切换规则
   useEffect(() => {
-    // 从存储中获取默认视图类型
-    getDefaultViewType().then((defaultViewType) => {
-      setViewType(defaultViewType);
-    });
-  }, []);
+    // 获取默认视图类型
+    const loadSettings = async () => {
+      const defaultViewType = await getDefaultViewType();
+      const rules = await getAutoSwitchRules();
+      setAutoSwitchRules(rules);
+      
+      // 如果有自动切换规则，根据JSON内容决定视图类型
+      const jsonString = JSON.stringify(jsonData);
+      const determinedType = determineViewTypeByContent(jsonString, defaultViewType, rules);
+      setViewType(determinedType);
+    };
+    
+    loadSettings();
+  }, [jsonData]);
 
-  // 监听视图类型更新事件
+  // 监听视图类型和自动切换规则更新事件
   useEffect(() => {
     const handleViewTypeUpdate = (event: Event) => {
       const customEvent = event as CustomEvent<{viewType: JsonViewType}>;
@@ -73,14 +91,30 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
       }
     };
     
+    const handleAutoSwitchRulesUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{rules: AutoSwitchRule[]}>;
+      if (customEvent.detail && customEvent.detail.rules) {
+        setAutoSwitchRules(customEvent.detail.rules);
+        
+        // 重新根据规则评估视图类型
+        getDefaultViewType().then((defaultViewType) => {
+          const jsonString = JSON.stringify(jsonData);
+          const determinedType = determineViewTypeByContent(jsonString, defaultViewType, customEvent.detail.rules);
+          setViewType(determinedType);
+        });
+      }
+    };
+    
     // 添加事件监听器
     document.addEventListener('json-view-type-updated', handleViewTypeUpdate);
+    document.addEventListener('json-auto-switch-rules-updated', handleAutoSwitchRulesUpdate);
     
     // 清理函数
     return () => {
       document.removeEventListener('json-view-type-updated', handleViewTypeUpdate);
+      document.removeEventListener('json-auto-switch-rules-updated', handleAutoSwitchRulesUpdate);
     };
-  }, []);
+  }, [jsonData]);
 
   // 确保组件初始化时记录日志
   useEffect(() => {

@@ -192,6 +192,45 @@ input:checked + .toggle-slider:before {
     padding-top: 10px;
 }
 
+/* Auto-switch settings */
+.auto-switch-settings {
+    background-color: #f0f8ff;
+    border: 1px solid #e0f0ff;
+    margin-top: 10px;
+}
+
+.auto-switch-header {
+    margin-bottom: 10px;
+}
+
+.auto-switch-config {
+    padding-top: 8px;
+    border-top: 1px dashed #d0e5ff;
+}
+
+.auto-switch-patterns {
+    margin-bottom: 12px;
+}
+
+.pattern-input {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.pattern-input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.auto-switch-target {
+    margin-top: 10px;
+}
+
 /* Input styles */
 .input {
     width: 100%;

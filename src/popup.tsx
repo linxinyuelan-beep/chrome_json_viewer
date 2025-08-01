@@ -2,34 +2,54 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './assets/styles/main.css';
 import { VERSION } from './config/version';
-import { getDefaultViewType, saveDefaultViewType, JsonViewType } from './utils/jsonViewer';
+import { 
+  getDefaultViewType, 
+  saveDefaultViewType, 
+  getAutoSwitchRules,
+  saveAutoSwitchRules,
+  JsonViewType, 
+  AutoSwitchRule 
+} from './utils/jsonViewer';
 
 const App: React.FC = () => {
   const [jsonHoverEnabled, setJsonHoverEnabled] = React.useState(true);
   const [defaultViewType, setDefaultViewType] = React.useState<JsonViewType>('react-json-view');
+  const [autoSwitchRules, setAutoSwitchRules] = React.useState<AutoSwitchRule[]>([]);
   const version = VERSION;
 
   // Load saved settings when popup opens
   React.useEffect(() => {
-    // Get saved view type
-    getDefaultViewType().then(viewType => {
-      setDefaultViewType(viewType);
-    });
+    // 获取所有保存的设置
+    const loadSettings = async () => {
+      try {
+        // 获取默认视图类型
+        const viewType = await getDefaultViewType();
+        setDefaultViewType(viewType);
+        
+        // 获取自动切换规则
+        const rules = await getAutoSwitchRules();
+        setAutoSwitchRules(rules);
 
-    // Check if hover detection is enabled
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: 'getHoverDetectionState' })
-          .then(response => {
-            if (response && response.enabled !== undefined) {
-              setJsonHoverEnabled(response.enabled);
-            }
-          })
-          .catch(error => {
-            console.log('Error getting hover detection state:', error);
-          });
+        // 检查悬停检测是否启用
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]?.id) {
+            chrome.tabs.sendMessage(tabs[0].id, { action: 'getHoverDetectionState' })
+              .then(response => {
+                if (response && response.enabled !== undefined) {
+                  setJsonHoverEnabled(response.enabled);
+                }
+              })
+              .catch(error => {
+                console.log('Error getting hover detection state:', error);
+              });
+          }
+        });
+      } catch (error) {
+        console.error("Error loading settings:", error);
       }
-    });
+    };
+    
+    loadSettings();
   }, []);
 
   // Toggle JSON hover detection
@@ -47,6 +67,72 @@ const App: React.FC = () => {
   const changeDefaultViewType = async (viewType: JsonViewType) => {
     await saveDefaultViewType(viewType);
     setDefaultViewType(viewType);
+  };
+  
+  // 切换自动切换功能的启用状态
+  const toggleAutoSwitch = async () => {
+    // 复制并更新第一条规则
+    const updatedRules = [...autoSwitchRules];
+    if (updatedRules.length === 0) {
+      updatedRules.push({
+        enabled: true,
+        patterns: [],
+        targetViewType: 'react-json-tree'
+      });
+    } else {
+      updatedRules[0] = {
+        ...updatedRules[0],
+        enabled: !updatedRules[0].enabled
+      };
+    }
+    
+    await saveAutoSwitchRules(updatedRules);
+    setAutoSwitchRules(updatedRules);
+  };
+  
+  // 更新自动切换规则的模式
+  const updateAutoSwitchPatterns = async (patterns: string) => {
+    // 分割模式字符串成数组（逗号分隔）
+    const patternArray = patterns.split(',').map(p => p.trim()).filter(p => p !== '');
+    
+    // 更新规则
+    const updatedRules = [...autoSwitchRules];
+    if (updatedRules.length === 0) {
+      updatedRules.push({
+        enabled: true,
+        patterns: patternArray,
+        targetViewType: 'react-json-tree'
+      });
+    } else {
+      updatedRules[0] = {
+        ...updatedRules[0],
+        patterns: patternArray
+      };
+    }
+    
+    await saveAutoSwitchRules(updatedRules);
+    setAutoSwitchRules(updatedRules);
+  };
+  
+  // 更新自动切换的目标视图类型
+  const updateAutoSwitchTargetType = async (viewType: JsonViewType) => {
+    // 更新规则
+    const updatedRules = [...autoSwitchRules];
+    if (updatedRules.length === 0) {
+      updatedRules.push({
+        enabled: true,
+        patterns: [],
+        targetViewType: viewType
+      });
+    } else {
+      updatedRules[0] = {
+        ...updatedRules[0],
+        targetViewType: viewType
+      };
+    }
+    
+    await saveAutoSwitchRules(updatedRules);
+    setAutoSwitchRules(updatedRules);
   };
 
   return (
@@ -113,6 +199,63 @@ const App: React.FC = () => {
                 <span>Tree View</span>
               </label>
             </div>
+          </div>
+          
+          <div className="settings-group auto-switch-settings">
+            <div className="auto-switch-header">
+              <label className="toggle-switch">
+                <input 
+                  type="checkbox"
+                  checked={autoSwitchRules.length > 0 ? autoSwitchRules[0]?.enabled : false}
+                  onChange={toggleAutoSwitch}
+                />
+                <span className="toggle-slider"></span>
+                <span className="toggle-label">自动切换视图类型</span>
+              </label>
+            </div>
+            
+            {autoSwitchRules.length > 0 && autoSwitchRules[0]?.enabled && (
+              <div className="auto-switch-config">
+                <div className="auto-switch-patterns">
+                  <label>
+                    <span className="setting-label">包含关键词（逗号分隔）：</span>
+                    <input 
+                      type="text"
+                      className="pattern-input"
+                      value={autoSwitchRules[0]?.patterns?.join(', ') || ''}
+                      placeholder="例如: error, 404, fail"
+                      onChange={(e) => updateAutoSwitchPatterns(e.target.value)}
+                    />
+                  </label>
+                </div>
+                
+                <div className="auto-switch-target">
+                  <span className="setting-label">自动切换至：</span>
+                  <div className="radio-group">
+                    <label className="radio-label">
+                      <input 
+                        type="radio"
+                        name="autoSwitchTarget"
+                        value="react-json-view"
+                        checked={autoSwitchRules[0]?.targetViewType === 'react-json-view'}
+                        onChange={() => updateAutoSwitchTargetType('react-json-view')}
+                      />
+                      <span>JSON View</span>
+                    </label>
+                    <label className="radio-label">
+                      <input 
+                        type="radio"
+                        name="autoSwitchTarget"
+                        value="react-json-tree"
+                        checked={autoSwitchRules[0]?.targetViewType === 'react-json-tree'}
+                        onChange={() => updateAutoSwitchTargetType('react-json-tree')}
+                      />
+                      <span>Tree View</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
