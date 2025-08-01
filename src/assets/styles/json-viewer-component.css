@@ -7,6 +7,7 @@
   max-height: calc(100vh - 120px);
   padding: 0;
   margin: 0;
+  position: relative;
 }
 
 .json-viewer-header {
@@ -17,6 +18,9 @@
   background-color: #e9f0f8;
   margin-bottom: 8px;
   border-radius: 4px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .json-viewer-info {
@@ -42,6 +46,11 @@
   align-items: center;
   gap: 2px;
   margin-left: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: #e9f0f8;
+  padding: 4px 0;
 }
 
 .json-viewer-nav-button {
@@ -194,6 +203,7 @@
   border-radius: 4px;
   background-color: #f8f9fa;
   overflow: auto;
+  margin-top: 4px;
 }
 
 /* Customizing react-json-tree styles */

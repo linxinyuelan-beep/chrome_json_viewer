@@ -146,12 +146,41 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
   const copyJson = async () => {
     try {
       const formattedJson = JSON.stringify(jsonData, null, 2);
-      await navigator.clipboard.writeText(formattedJson);
+      
+      // First try the modern clipboard API
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(formattedJson);
+      } else {
+        // Fallback to execCommand for older browsers or when Clipboard API is not available
+        const textArea = document.createElement('textarea');
+        textArea.value = formattedJson;
+        // Make the textarea out of viewport
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        if (!successful) {
+          throw new Error('Failed to copy using execCommand');
+        }
+        
+        document.body.removeChild(textArea);
+      }
+      
       // Show success feedback
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to copy JSON:', err);
+      // Show error feedback to the user
+      let errorMessage = 'Unknown error';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      alert('Failed to copy: ' + errorMessage);
     }
   };
 
