@@ -99,48 +99,6 @@ function detectJsonInElement(element: Element): string[] {
 
     const detectedJsons: string[] = [];
 
-    // 先尝试检测特定服务的API日志格式
-    if (text.includes('GdsOrderSystemServiceImpl')) {
-        // 特殊处理GdsOrderSystemServiceImpl的API日志格式
-        console.log("Detected GdsOrderSystemServiceImpl pattern");
-
-        // 通用格式匹配，寻找任何req: 或 res: 后面的JSON
-        const reqResPattern = /(req|res):(\{[\s\S]*?\})/ig;
-        let reqResMatch;
-        while ((reqResMatch = reqResPattern.exec(text)) !== null) {
-            try {
-                const jsonStr = reqResMatch[2];
-                // console.log(`Found req/res pattern, JSON start: ${jsonStr.substring(0, 50)}...`);
-                if (isValidJson(jsonStr)) {
-                    // console.log(`Valid API req/res JSON detected with length ${jsonStr.length}`);
-                    detectedJsons.push(jsonStr);
-                }
-            } catch (e) {
-                console.error("Error parsing req/res JSON:", e);
-            }
-        }
-
-        // 常规API模式匹配
-        const apiPatterns = [
-            /order system api logging,\s*class=GdsOrderSystemServiceImpl,\s*method=[\w.]+,\s*param=(\{[\s\S]*?\}|\[[\s\S]*?\])/ig,
-            /class=GdsOrderSystemServiceImpl[\s\S]*?method=[\w.]+[\s\S]*?param=(\{[\s\S]*?\}|\[[\s\S]*?\])/ig,
-            /GdsOrderSystemServiceImpl[\s\S]*?(\{[\s\S]*?\}|\[[\s\S]*?\])/ig,
-            /GdsOrderSystemServiceImpl[\s\S]*(req|res):(\{[\s\S]*?\}|\[[\s\S]*?\])/ig
-        ];
-
-        for (const pattern of apiPatterns) {
-            let match;
-            while ((match = pattern.exec(text)) !== null) {
-                // 根据捕获组数量判断JSON位置
-                const jsonStr = match.length > 2 ? match[2] : match[1];
-                if (jsonStr && isValidJson(jsonStr)) {
-                    console.log(`Hover detected API log JSON: ${jsonStr.substring(0, 30)}...`);
-                    detectedJsons.push(jsonStr);
-                }
-            }
-        }
-    }
-
     // 查找文本中可能包含的所有JSON
     const allPotentialJsons = findAllPotentialJsons(text);
     detectedJsons.push(...allPotentialJsons);
@@ -564,7 +522,7 @@ window.addEventListener('load', () => {
                     // 快速检查是否可能包含JSON (预筛选)
                     const mayContainJson = text.includes('{') && text.includes('}') ||
                         text.includes('[') && text.includes(']') ||
-                        text.includes('param=') && text.includes('GdsOrderSystemServiceImpl');
+                        text.includes('param=');
 
                     if (mayContainJson) {
                         // 尝试提取和检测JSON
