@@ -18,7 +18,10 @@ A powerful Chrome extension that automatically detects, highlights, formats, and
 - **Hover Detection**: Highlights potential JSON on mouseover (toggle with Ctrl+Shift+H)
 - **JSON Formatting**: One-click formatting of selected JSON text
 - **Interactive Viewer**: View formatted JSON in a slide-out drawer
-- **Dual View Modes**: Switch between JSON View and Tree View
+- **Manual JSON Input**: Input and format JSON directly from the popup
+- **JSON Minification**: Compress JSON to a single line without whitespace
+- **String Escaping/Unescaping**: Tools to escape and unescape JSON strings
+- **Date Format Conversion**: Convert Microsoft-style dates to human-readable format
 - **History Tracking**: Navigate through previously viewed JSON
 - **Copy to Clipboard**: Easily copy formatted JSON
 - **Keyboard Shortcuts**: Quick access to features
@@ -95,14 +98,22 @@ The extension automatically detects and highlights JSON content on web pages. Yo
 - Hover over text to detect JSON (when hover detection is enabled)
 - Double-click on highlighted JSON to open it in the viewer
 - Select any text and press Ctrl+Shift+E (Cmd+Shift+E on Mac) to format it as JSON
+- Click the extension icon and paste JSON directly into the popup
 
 ### JSON Viewer
 The JSON viewer provides:
 - Expandable/collapsible tree view of JSON data
-- Switch between JSON View and Tree View modes
 - Back/Forward navigation through viewed JSON
 - Copy formatted JSON to clipboard
 - History dropdown to access recently viewed JSON
+
+### Popup Interface
+The extension popup offers:
+- Direct JSON input and formatting
+- JSON minification (compression to single line)
+- String escaping and unescaping tools
+- Date format conversion for Microsoft-style dates (/Date(timestamp)/)
+- Quick access to extension settings
 
 ### Keyboard Shortcuts
 - `Ctrl+Shift+E` (Mac: `Cmd+Shift+E`): Format selected text as JSON
