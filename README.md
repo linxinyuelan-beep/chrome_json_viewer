@@ -10,7 +10,7 @@ This project is a simple Chrome extension that enhances the user experience by p
 
 A powerful Chrome extension that automatically detects, highlights, formats, and visualizes JSON on web pages, making it easier to work with JSON data while browsing.
 
-![JSON Formatter & Viewer](public/images/icon128.png)
+![JSON Formatter & Viewer](https://raw.githubusercontent.com/linxinyuelan-beep/chrome_json_viewer/refs/heads/main/src/assets/images/icon.png)
 
 ## Features
 
