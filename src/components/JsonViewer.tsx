@@ -492,6 +492,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
                 displayDataTypes={false}
                 displayObjectSize={true}
                 enableClipboard={true}
+                escapeStrings={false}
                 name={null}
               />
             )}
