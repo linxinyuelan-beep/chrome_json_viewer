@@ -52,3 +52,24 @@ chrome.commands.onCommand.addListener(async (command) => {
     }
 });
 
+// 监听来自 popup 的消息
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log('Background script received message:', request);
+    
+    if (request.action === 'showJsonFromPopup') {
+        console.log('Background script received showJsonFromPopup request');
+        // 转发消息到当前活动标签页
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]?.id) {
+                chrome.tabs.sendMessage(tabs[0].id, request, (response) => {
+                    console.log('Response from content script:', response);
+                    sendResponse(response);
+                });
+            } else {
+                sendResponse({ success: false, error: 'No active tab found' });
+            }
+        });
+        return true; // 保持消息通道开放
+    }
+});
+

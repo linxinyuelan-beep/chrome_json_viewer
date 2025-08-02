@@ -270,4 +270,152 @@ input:checked + .toggle-slider:before {
     opacity: 0.7;
 }
 
-/* Removed unused tab and table styles that are not used in the current implementation */
+/* Tab styles */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 16px;
+}
+
+.tab {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    border-bottom: 2px solid transparent;
+    flex: 1;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    color: #2e7db5;
+}
+
+.tab.active {
+    color: #2e7db5;
+    border-bottom-color: #2e7db5;
+    font-weight: bold;
+}
+
+/* JSON Input section styles */
+.json-input-section {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.json-input-container {
+    flex-grow: 1;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.json-textarea {
+    width: 100%;
+    height: 200px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    resize: vertical;
+}
+
+.json-textarea:focus {
+    outline: none;
+    border-color: #2e7db5;
+    box-shadow: 0 0 0 2px rgba(46, 125, 181, 0.2);
+}
+
+.json-input-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.json-button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: white;
+    flex: 1;
+    transition: background-color 0.2s;
+}
+
+.json-button.format {
+    background-color: #2e7db5;
+}
+
+.json-button.format:hover {
+    background-color: #236293;
+}
+
+.json-button.convert {
+    background-color: #9C27B0;
+}
+
+.json-button.convert:hover {
+    background-color: #7B1FA2;
+}
+
+.json-input-help code {
+    background-color: #f0f0f0;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
+}
+
+.json-button.clear {
+    background-color: #f44336;
+}
+
+.json-button.clear:hover {
+    background-color: #d32f2f;
+}
+
+.json-error-message {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background-color: #ffebee;
+    border-left: 3px solid #f44336;
+    color: #d32f2f;
+    font-size: 12px;
+    border-radius: 2px;
+}
+
+.json-error-message.success {
+    background-color: #e8f5e9;
+    border-left-color: #4CAF50;
+    color: #388E3C;
+}
+
+.json-input-help {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #666;
+    text-align: center;
+    padding: 8px;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+}
+
+/* 焦点样式增强 */
+.json-textarea:focus {
+    outline: none;
+    border-color: #2e7db5;
+    box-shadow: 0 0 0 2px rgba(46, 125, 181, 0.25);
+    transition: all 0.2s ease;
+}
+
+/* 突出显示当前活动的标签 */
+.tab.active {
+    color: #2e7db5;
+    border-bottom-color: #2e7db5;
+    font-weight: bold;
+    background-color: rgba(46, 125, 181, 0.05);
+}

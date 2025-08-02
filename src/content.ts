@@ -470,8 +470,24 @@ function throttle<T extends (...args: any[]) => any>(
     };
 }
 
+// 初始化JSON格式化功能
+function initializeJsonFormatter() {
+    console.log('Initializing JSON formatter...');
+    
+    // 创建抽屉元素以便随时使用
+    const drawer = createJsonDrawer();
+    document.body.appendChild(drawer);
+}
+
+// 在DOMContentLoaded事件中初始化基本功能
+document.addEventListener('DOMContentLoaded', () => {
+    initializeJsonFormatter();
+});
+
 // 监听来自背景脚本的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log('Content script received message:', request.action);
+    
     if (request.action === 'formatSelectedJson' && request.selectedText) {
         // 尝试格式化选中的 JSON
         if (isValidJson(request.selectedText)) {
@@ -520,6 +536,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         
         // 发送响应
         sendResponse({ success: true });
+    } else if (request.action === 'showJsonFromPopup') {
+        // 处理来自弹出窗口的JSON格式化请求
+        console.log('Received showJsonFromPopup message with JSON length:', request.jsonString?.length);
+        if (request.jsonString) {
+            try {
+                showJsonInDrawer(request.jsonString);
+                console.log('JSON drawer should be displayed now');
+                sendResponse({ success: true });
+            } catch (error) {
+                console.error('Error showing JSON in drawer:', error);
+                sendResponse({ success: false, error: (error as Error).message });
+            }
+        } else {
+            console.error('No JSON string provided in popup request');
+            sendResponse({ success: false, error: 'No JSON string provided' });
+        }
     }
     
     // 必须返回 true 以支持异步响应
@@ -527,9 +559,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 window.addEventListener('load', () => {
-    // 创建抽屉元素
-    const drawer = createJsonDrawer();
-    document.body.appendChild(drawer);    // 等待页面完全加载后再初始化JSON检测
+    // 等待页面完全加载后再初始化JSON检测
     setTimeout(() => {
         // 添加鼠标悬停检测功能
         if (enableHoverDetection) {

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 格式化测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #2e7db5;
+            margin-bottom: 20px;
+        }
+        .json-sample {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        .instructions {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-left: 5px solid #2e7db5;
+            margin: 20px 0;
+        }
+        code {
+            background-color: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>JSON 格式化测试页面</h1>
+    
+    <div class="instructions">
+        <p><strong>说明：</strong> 此页面用于测试 JSON Formatter & Viewer 插件的功能。您可以：</p>
+        <ol>
+            <li>将鼠标悬停在下方的 JSON 示例上，然后双击查看格式化视图</li>
+            <li>选择 JSON 文本后使用 <code>Ctrl+Shift+E</code> 快捷键格式化</li>
+            <li>点击插件图标，在弹出窗口中切换到"JSON格式化"标签，粘贴 JSON 进行格式化</li>
+        </ol>
+    </div>
+    
+    <h2>JSON 示例</h2>
+    <div class="json-sample">{"name":"JSON Formatter & Viewer","version":"1.0.0","description":"一个格式化和查看 JSON 的 Chrome 扩展","author":"您的名字","features":["格式化 JSON","语法高亮","树状视图","JSON 历史记录","自动检测 JSON"],"settings":{"theme":"light","defaultView":"tree","enableHover":true},"stats":{"downloads":1000,"rating":4.8,"reviews":[{"user":"用户1","comment":"非常好用的工具！","rating":5},{"user":"用户2","comment":"界面简洁，功能强大","rating":4}]}}</div>
+    
+    <h2>嵌套 JSON 示例</h2>
+    <div class="json-sample">{"response":{"status":200,"data":{"user":{"id":12345,"name":"测试用户","email":"test@example.com","preferences":{"theme":"dark","notifications":true,"language":"zh-CN"},"history":[{"id":1,"action":"login","timestamp":"2023-10-01T08:30:00Z"},{"id":2,"action":"view_profile","timestamp":"2023-10-01T08:35:22Z"},{"id":3,"action":"update_settings","timestamp":"2023-10-01T08:42:15Z"}]}},"meta":{"processingTime":"50ms","server":"api-1","version":"v2.3.1"}}}</div>
+    
+    <h2>使用说明</h2>
+    <p>这个 Chrome 扩展可以帮助您更方便地查看和格式化 JSON 数据。主要功能包括：</p>
+    <ul>
+        <li>自动检测页面上的 JSON 文本</li>
+        <li>格式化并美化 JSON 数据</li>
+        <li>提供树状结构视图</li>
+        <li>支持大型 JSON 文件的高效处理</li>
+        <li>保存 JSON 历史记录</li>
+    </ul>
+    
+    <p>您现在可以尝试使用扩展的<strong>弹出窗口输入功能</strong>来格式化自定义的 JSON 文本。只需点击浏览器工具栏中的扩展图标，切换到"JSON格式化"选项卡，然后粘贴您的 JSON 文本进行格式化。</p>
+</body>
+</html>
