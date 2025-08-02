@@ -102,31 +102,7 @@
   background-color: #43a047;
 }
 
-/* View toggle button styles */
-.json-viewer-button.view-toggle-button {
-  position: relative;
-  background-color: #555;
-}
-
-.json-viewer-button.view-toggle-button.json-active {
-  background-color: #2e7db5;
-}
-
-.json-viewer-button.view-toggle-button.tree-active {
-  background-color: #8e44ad;
-}
-
-.json-viewer-button.view-toggle-button:hover {
-  background-color: #444;
-}
-
-.json-viewer-button.view-toggle-button.json-active:hover {
-  background-color: #1e6ba3;
-}
-
-.json-viewer-button.view-toggle-button.tree-active:hover {
-  background-color: #7d3c98;
-}
+/* 视图切换按钮样式已移除 */
 
 /* Dropdown styles */
 .json-viewer-dropdown-container {
@@ -206,38 +182,10 @@
   margin-top: 4px;
 }
 
-/* Customizing react-json-tree styles */
-.json-tree-container ul {
-  background-color: #f8f9fa !important;
-  margin: 0;
-  padding-top: 4px;
-  padding-bottom: 4px;
-}
-
-/* react-json-tree custom styling */
+/* Removed react-json-tree styling */
+/* General styling for json container */
 .json-tree-container span {
   line-height: 1.5;
 }
 
-/* Improving key readability */
-.json-tree-container .object-key {
-  color: #2e7db5;
-  font-weight: bold;
-}
-
-/* Custom highlight styles */
-.json-tree-container .string-value {
-  color: #288c28 !important;
-}
-
-.json-tree-container .number-value {
-  color: #b5622e !important;
-}
-
-.json-tree-container .boolean-value {
-  color: #9e40b5 !important;
-}
-
-.json-tree-container .null-value {
-  color: #b5404a !important;
-}
+/* Removed react-json-tree custom highlight styles */

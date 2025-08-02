@@ -1,12 +1,8 @@
 /**
- * JSON Viewer Component with switchable view between react-json-tree and react-json-view
+ * JSON Viewer Component using react-json-view
  * 
- * 1. react-json-tree from Redux DevTools
- *    See: https://github.com/reduxjs/redux-devtools/tree/master/packages/react-json-tree
- *    Lightweight and focused on display only
- * 
- * 2. @microlink/react-json-view
- *    Feature-rich JSON editor and viewer
+ * @microlink/react-json-view
+ * Feature-rich JSON editor and viewer
  * 
  * Other alternative libraries:
  * 1. @textea/json-viewer - https://github.com/TexteaInc/json-viewer
@@ -17,15 +13,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { JSONTree } from 'react-json-tree';
 import ReactJson from '@microlink/react-json-view';
 import { 
-  formatJsonSize, 
-  getDefaultViewType, 
-  getAutoSwitchRules,
-  determineViewTypeByContent, 
-  JsonViewType,
-  AutoSwitchRule
+  formatJsonSize
 } from '../utils/jsonViewer';
 import { addToHistory } from '../utils/jsonHistory';
 import { 
@@ -55,66 +45,11 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
   const [expanded, setExpanded] = useState<boolean>(true);
   const [jsonSize, setJsonSize] = useState<string>('');
   const [showHistory, setShowHistory] = useState<boolean>(false);
-  // 添加视图类型状态，初始值会在 useEffect 中被覆盖
-  const [viewType, setViewType] = useState<JsonViewType>('react-json-view');
-  // 添加自动切换规则状态
-  const [autoSwitchRules, setAutoSwitchRules] = useState<AutoSwitchRule[]>([]);
   // 添加内部组件 ID 用于强制重新渲染
   const [instanceId] = useState<string>(`json-viewer-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
   // 添加导航按钮状态
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
   const [canGoForward, setCanGoForward] = useState<boolean>(false);
-
-  // 加载默认视图类型和自动切换规则
-  useEffect(() => {
-    // 获取默认视图类型
-    const loadSettings = async () => {
-      const defaultViewType = await getDefaultViewType();
-      const rules = await getAutoSwitchRules();
-      setAutoSwitchRules(rules);
-      
-      // 如果有自动切换规则，根据JSON内容决定视图类型
-      const jsonString = JSON.stringify(jsonData);
-      const determinedType = determineViewTypeByContent(jsonString, defaultViewType, rules);
-      setViewType(determinedType);
-    };
-    
-    loadSettings();
-  }, [jsonData]);
-
-  // 监听视图类型和自动切换规则更新事件
-  useEffect(() => {
-    const handleViewTypeUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent<{viewType: JsonViewType}>;
-      if (customEvent.detail && customEvent.detail.viewType) {
-        setViewType(customEvent.detail.viewType);
-      }
-    };
-    
-    const handleAutoSwitchRulesUpdate = (event: Event) => {
-      const customEvent = event as CustomEvent<{rules: AutoSwitchRule[]}>;
-      if (customEvent.detail && customEvent.detail.rules) {
-        setAutoSwitchRules(customEvent.detail.rules);
-        
-        // 重新根据规则评估视图类型
-        getDefaultViewType().then((defaultViewType) => {
-          const jsonString = JSON.stringify(jsonData);
-          const determinedType = determineViewTypeByContent(jsonString, defaultViewType, customEvent.detail.rules);
-          setViewType(determinedType);
-        });
-      }
-    };
-    
-    // 添加事件监听器
-    document.addEventListener('json-view-type-updated', handleViewTypeUpdate);
-    document.addEventListener('json-auto-switch-rules-updated', handleAutoSwitchRulesUpdate);
-    
-    // 清理函数
-    return () => {
-      document.removeEventListener('json-view-type-updated', handleViewTypeUpdate);
-      document.removeEventListener('json-auto-switch-rules-updated', handleAutoSwitchRulesUpdate);
-    };
-  }, [jsonData]);
 
   // 确保组件初始化时记录日志
   useEffect(() => {
@@ -223,10 +158,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
     setExpanded(!expanded);
   };
   
-  // Toggle between JSON view implementations
-  const toggleViewType = () => {
-    setViewType(viewType === 'react-json-view' ? 'react-json-tree' : 'react-json-view');
-  };
+  // 视图类型切换功能已移除
 
   // Handle navigation back
   const handleNavigateBack = () => {
@@ -398,14 +330,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
                 {copySuccess ? '✓ Copied' : 'Copy JSON'}
               </button>
               
-              {/* Toggle view type button */}
-              <button
-                className={`json-viewer-button view-toggle-button ${viewType === 'react-json-tree' ? 'tree-active' : 'json-active'}`}
-                onClick={toggleViewType}
-                title={`Switch to ${viewType === 'react-json-view' ? 'react-json-tree' : 'react-json-view'}`}
-              >
-                {viewType === 'react-json-view' ? 'Tree View' : 'JSON View'}
-              </button>
+              {/* 视图切换按钮已移除 */}
               
               {/* History dropdown */}
               <div className="json-viewer-dropdown-container">
@@ -452,50 +377,20 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
             </div>
           </div>
 
-          {/* JSON Viewer components - conditionally render based on viewType */}
+          {/* JSON Viewer component */}
           <div className="json-tree-container">
-            {viewType === 'react-json-tree' ? (
-              <JSONTree
-                data={jsonData}
-                theme={{
-                  scheme: 'default',
-                  base00: 'transparent', // background
-                  base01: '#f5f5f5',     // lines
-                  base02: '#e0e0e0',     // borders
-                  base03: '#999999',     // punctuation
-                  base04: '#777777',     // comments
-                  base05: '#333333',     // text
-                  base06: '#222222',     // highlights
-                  base07: '#111111',     // value text
-                  base08: '#b5404a',     // null
-                  base09: '#b5622e',     // number
-                  base0A: '#9e40b5',     // boolean
-                  base0B: '#288c28',     // string
-                  base0C: '#0086b3',     // date
-                  base0D: '#2e7db5',     // key
-                  base0E: '#9e40b5',     // regex
-                  base0F: '#777777'      // function
-                }}
-                invertTheme={false}
-                getItemString={() => null}
-                shouldExpandNodeInitially={() => expanded}
-                hideRoot={false}
-                sortObjectKeys={false}
-              />
-            ) : (
-              <ReactJson
-                src={jsonData}
-                theme="rjv-default"
-                style={{ backgroundColor: 'transparent' }}
-                collapsed={!expanded}
-                collapseStringsAfterLength={false}
-                displayDataTypes={false}
-                displayObjectSize={true}
-                enableClipboard={true}
-                escapeStrings={false}
-                name={null}
-              />
-            )}
+            <ReactJson
+              src={jsonData}
+              theme="rjv-default"
+              style={{ backgroundColor: 'transparent' }}
+              collapsed={!expanded}
+              collapseStringsAfterLength={false}
+              displayDataTypes={false}
+              displayObjectSize={true}
+              enableClipboard={true}
+              escapeStrings={false}
+              name={null}
+            />
           </div>
         </>
       )}

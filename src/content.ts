@@ -13,19 +13,9 @@ console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_
 
 // 导入工具函数
 import { isValidNestedJson } from './utils/nestedJsonHandler';
-import { getDefaultViewType, JsonViewType } from './utils/jsonViewer';
 
 // 是否启用悬停检测
 let enableHoverDetection = true;
-
-// 当前使用的 JSON 视图类型
-let currentViewType: JsonViewType = 'react-json-view';
-
-// 初始化加载默认视图类型
-getDefaultViewType().then(viewType => {
-    currentViewType = viewType;
-    console.log(`Default JSON view type: ${currentViewType}`);
-});
 
 // 我们将不再使用直接的键盘事件监听器
 // 而是通过Chrome命令 (chrome://extensions/shortcuts) 和background script的消息来处理
@@ -517,25 +507,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         // 返回当前悬停检测状态
         sendResponse({ enabled: enableHoverDetection });
         
-    } else if (request.action === 'updateDefaultViewType') {
-        // 更新视图类型
-        currentViewType = request.viewType;
-        console.log(`Updated JSON view type: ${currentViewType}`);
-        
-        // 通知 JsonViewer 组件更新视图类型
-        const event = new CustomEvent('json-view-type-updated', {
-            detail: { viewType: currentViewType }
-        });
-        document.dispatchEvent(event);
-        
-        // 显示状态变化通知
-        showNotification(
-            `JSON视图类型已更新: ${currentViewType === 'react-json-view' ? 'JSON View' : 'Tree View'}`,
-            'info'
-        );
-        
-        // 发送响应
-        sendResponse({ success: true });
     } else if (request.action === 'showJsonFromPopup') {
         // 处理来自弹出窗口的JSON格式化请求
         console.log('Received showJsonFromPopup message with JSON length:', request.jsonString?.length);
