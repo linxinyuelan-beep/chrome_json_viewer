@@ -313,6 +313,103 @@ const App: React.FC = () => {
     setJsonFormatError(null);
   };
 
+  // JSON压缩/最小化
+  const minifyJson = () => {
+    try {
+      if (!jsonInput.trim()) {
+        setJsonFormatError('请输入JSON文本');
+        return;
+      }
+
+      if (!isValidNestedJson(jsonInput)) {
+        setJsonFormatError('无效的JSON格式');
+        return;
+      }
+
+      // 解析并压缩JSON (没有缩进和空白)
+      const parsedJson = JSON.parse(jsonInput);
+      const minifiedJson = JSON.stringify(parsedJson);
+      
+      // 直接更新输入框中的内容
+      setJsonInput(minifiedJson);
+      setJsonFormatError('JSON已压缩');
+      
+      // 复制到剪贴板
+      navigator.clipboard.writeText(minifiedJson)
+        .then(() => {
+          setJsonFormatError('JSON已压缩并复制到剪贴板');
+        })
+        .catch(err => {
+          console.log('剪贴板复制失败，但JSON已压缩:', err);
+        });
+    } catch (error) {
+      setJsonFormatError(`解析JSON出错：${(error as Error).message}`);
+    }
+  };
+
+  // 转义JSON字符串
+  const escapeJsonString = () => {
+    try {
+      if (!jsonInput.trim()) {
+        setJsonFormatError('请输入需要转义的文本');
+        return;
+      }
+
+      // 如果输入是有效的JSON，则先格式化它
+      let inputToEscape = jsonInput;
+      if (isValidNestedJson(jsonInput)) {
+        const parsedJson = JSON.parse(jsonInput);
+        inputToEscape = JSON.stringify(parsedJson);
+      }
+      
+      // 转义字符串 (对字符串进行JSON序列化后去掉首尾引号)
+      const escapedString = JSON.stringify(inputToEscape).slice(1, -1);
+      
+      // 更新输入框中的内容
+      setJsonInput(escapedString);
+      setJsonFormatError('文本已转义');
+      
+      // 复制到剪贴板
+      navigator.clipboard.writeText(escapedString)
+        .then(() => {
+          setJsonFormatError('文本已转义并复制到剪贴板');
+        })
+        .catch(err => {
+          console.log('剪贴板复制失败，但文本已转义:', err);
+        });
+    } catch (error) {
+      setJsonFormatError(`转义出错：${(error as Error).message}`);
+    }
+  };
+
+  // 反转义JSON字符串
+  const unescapeJsonString = () => {
+    try {
+      if (!jsonInput.trim()) {
+        setJsonFormatError('请输入需要反转义的文本');
+        return;
+      }
+
+      // 为字符串添加引号并解析
+      const unescapedString = JSON.parse(`"${jsonInput}"`);
+      
+      // 更新输入框中的内容
+      setJsonInput(unescapedString);
+      setJsonFormatError('文本已反转义');
+      
+      // 复制到剪贴板
+      navigator.clipboard.writeText(unescapedString)
+        .then(() => {
+          setJsonFormatError('文本已反转义并复制到剪贴板');
+        })
+        .catch(err => {
+          console.log('剪贴板复制失败，但文本已反转义:', err);
+        });
+    } catch (error) {
+      setJsonFormatError(`反转义出错：${(error as Error).message}`);
+    }
+  };
+
   return (
     <div className="popup">
       <div className="header">
@@ -472,19 +569,33 @@ const App: React.FC = () => {
               )}
             </div>
             <div className="json-input-actions">
-              <button className="json-button format" onClick={formatJsonInput}>
-                格式化并查看
-              </button>
-              <button className="json-button convert" onClick={convertJsonDates}>
-                格式化并转换
-              </button>
-              <button className="json-button clear" onClick={clearJsonInput}>
-                清空
-              </button>
+              <div className="action-row">
+                <button className="json-button format" onClick={formatJsonInput}>
+                  格式化并查看
+                </button>
+                <button className="json-button convert" onClick={convertJsonDates}>
+                  格式化并转换
+                </button>
+                <button className="json-button clear" onClick={clearJsonInput}>
+                  清空
+                </button>
+              </div>
+              <div className="action-row">
+                <button className="json-button minify" onClick={minifyJson}>
+                  JSON压缩
+                </button>
+                <button className="json-button escape" onClick={escapeJsonString}>
+                  转义字符串
+                </button>
+                <button className="json-button unescape" onClick={unescapeJsonString}>
+                  反转义字符串
+                </button>
+              </div>
             </div>
             <div className="json-input-help">
               <p>将JSON文本粘贴在上方，然后点击"格式化并查看"以显示格式化后的JSON</p>
               <p>点击"格式化并转换"可将特殊日期格式 <code>/Date(timestamp)/</code> 转换为可读日期并显示</p>
+              <p>点击"JSON压缩"可将JSON压缩为单行，"转义字符串"和"反转义字符串"用于处理特殊字符</p>
             </div>
           </div>
         )}

@@ -332,6 +332,12 @@ input:checked + .toggle-slider:before {
 
 .json-input-actions {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.action-row {
+    display: flex;
     gap: 8px;
 }
 
@@ -340,7 +346,7 @@ input:checked + .toggle-slider:before {
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     color: white;
     flex: 1;
     transition: background-color 0.2s;
@@ -362,20 +368,44 @@ input:checked + .toggle-slider:before {
     background-color: #7B1FA2;
 }
 
-.json-input-help code {
-    background-color: #f0f0f0;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-family: monospace;
-    font-size: 11px;
-}
-
 .json-button.clear {
     background-color: #f44336;
 }
 
 .json-button.clear:hover {
     background-color: #d32f2f;
+}
+
+.json-button.minify {
+    background-color: #FF9800;
+}
+
+.json-button.minify:hover {
+    background-color: #F57C00;
+}
+
+.json-button.escape {
+    background-color: #4CAF50;
+}
+
+.json-button.escape:hover {
+    background-color: #388E3C;
+}
+
+.json-button.unescape {
+    background-color: #607D8B;
+}
+
+.json-button.unescape:hover {
+    background-color: #455A64;
+}
+
+.json-input-help code {
+    background-color: #f0f0f0;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
 }
 
 .json-error-message {
