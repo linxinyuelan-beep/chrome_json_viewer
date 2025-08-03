@@ -22,8 +22,16 @@
             color: #1a73e8;
             margin-top: 30px;
         }
+        h3 {
+            color: #1a73e8;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
         p {
             margin: 15px 0;
+        }
+        strong {
+            color: #0d47a1;
         }
         .updated {
             color: #666;
@@ -47,54 +55,82 @@
 </head>
 <body>
     <h1>Privacy Policy for JSON Formatter & Viewer</h1>
-    <p class="updated">Last updated: August 2, 2025</p>
+    <p class="updated">Last updated: August 3, 2025</p>
 
-    <p>At JSON Formatter & Viewer, we take your privacy seriously. This Privacy Policy describes how your personal information is collected, used, and shared when you use our Chrome extension.</p>
+    <p>At JSON Formatter & Viewer, your privacy is our highest priority. This Privacy Policy explains our commitment to protecting your data and outlines how our extension handles information when you use it.</p>
 
-    <h2>Information Collection</h2>
-    <p>JSON Formatter & Viewer is designed with privacy in mind. Here's what you should know about data collection:</p>
+    <h2>Our Privacy Commitment</h2>
+    <p>JSON Formatter & Viewer is built with a "privacy-first" philosophy. We believe your data belongs to you alone:</p>
     <ul>
-        <li><strong>We do not collect any personal information</strong> from you when you use our extension.</li>
-        <li><strong>We do not track your browsing activity</strong> across websites.</li>
-        <li><strong>We do not send any data</strong> to external servers or third parties.</li>
+        <li><strong>Zero Data Collection:</strong> We do not collect any personal information from you.</li>
+        <li><strong>No Tracking:</strong> We do not monitor or track your browsing activity across websites.</li>
+        <li><strong>No External Transmissions:</strong> We do not send any data to external servers or third parties.</li>
+        <li><strong>No Data Sharing:</strong> We do not share any information with third parties under any circumstances.</li>
     </ul>
 
-    <h2>Local Storage Usage</h2>
-    <p>Our extension does use Chrome's storage API to store certain data locally on your device:</p>
+    <h2>Local Storage: Your Data Stays on Your Device</h2>
+    <p>Our extension uses Chrome's storage API to enhance your experience while keeping your data under your control:</p>
     <ul>
-        <li><strong>JSON History:</strong> The extension saves a history of recently viewed JSON data to enhance your experience by allowing you to quickly access previously viewed JSON content.</li>
-        <li><strong>User Preferences:</strong> Settings such as your preferred view mode and feature toggles are saved locally.</li>
+        <li><strong>JSON History:</strong> For your convenience, we save recently viewed JSON data, allowing you to quickly access your viewing history.</li>
+        <li><strong>User Preferences:</strong> Your settings (such as view mode and feature toggles) are saved locally to personalize your experience.</li>
     </ul>
-    <p>All this data is stored exclusively on your local device using Chrome's built-in storage capabilities. It never leaves your browser and is not transmitted to us or any third parties.</p>
+    <p>All this data is stored <em>exclusively</em> on your local device using Chrome's built-in storage capabilities. <strong>Your data never leaves your browser</strong>, is not transmitted to our servers, and is <strong>never shared with any third-party companies, services, or individuals</strong> under any circumstances.</p>
 
-    <h2>Permissions</h2>
-    <p>Our extension requires certain permissions to function correctly:</p>
+    <h2>Required Permissions: Transparency and Purpose</h2>
+    <p>Our extension requires specific permissions to provide its functionality. Here's what each permission is used for and why it's necessary:</p>
     <ul>
-        <li><strong>activeTab:</strong> To access and detect JSON in the current tab you're viewing</li>
-        <li><strong>scripting:</strong> To format and enhance the display of detected JSON</li>
-        <li><strong>contextMenus:</strong> To provide right-click menu options for JSON formatting</li>
-        <li><strong>storage:</strong> To save your settings and JSON history locally</li>
-        <li><strong>host permissions:</strong> To detect and format JSON across websites you visit</li>
+        <li><strong>activeTab:</strong> Enables JSON detection in your current tab</li>
+        <li><strong>scripting:</strong> Powers the formatting and enhanced display of JSON content</li>
+        <li><strong>contextMenus:</strong> Provides convenient right-click menu options for JSON formatting</li>
+        <li><strong>storage:</strong> Allows saving your settings and JSON history locally on your device</li>
+        <li><strong>host permissions:</strong> Enables JSON detection across different websites</li>
     </ul>
-    <p>These permissions are used solely for the purpose of providing the extension's core functionality of detecting, formatting, and visualizing JSON data.</p>
+    <p>These permissions are used <em>exclusively</em> for delivering the extension's core functionality: detecting, formatting, and visualizing JSON data.</p>
+    
+    <h3>Understanding the &lt;all_urls&gt; Permission</h3>
+    <p>Our extension uses the <code>&lt;all_urls&gt;</code> permission in the manifest file. We believe in complete transparency about why this broad permission is necessary:</p>
+    <ul>
+        <li><strong>Automatic JSON Detection:</strong> To instantly identify and format JSON content on any webpage</li>
+        <li><strong>Seamless User Experience:</strong> To provide formatting capabilities without requiring manual activation on each website</li>
+        <li><strong>Universal Content Support:</strong> To properly handle JSON data regardless of how websites serve it</li>
+    </ul>
+    <p>While this permission gives our extension access to the pages you visit, we maintain strict privacy safeguards:</p>
+    <ul>
+        <li>We <strong>only process JSON content</strong> - no other page content is analyzed</li>
+        <li>We <strong>never collect or transmit</strong> any data from these pages</li>
+        <li>All processing happens <strong>exclusively within your browser</strong></li>
+        <li>The extension <strong>only activates</strong> when valid JSON content is detected</li>
+        <li>We <strong>never share any information</strong> with third parties, advertisers, or data brokers</li>
+    </ul>
 
-    <h2>Data Removal</h2>
-    <p>You can clear all locally stored data at any time by:</p>
+    <h2>Local Processing: Your Data Never Leaves Your Device</h2>
+    <p>We believe in complete transparency regarding how and where your data is processed:</p>
+    <ul>
+        <li><strong>100% Local Processing:</strong> All data processing is performed locally in your browser on your device</li>
+        <li><strong>Zero External Transmission:</strong> No information is ever sent outside your device</li>
+        <li><strong>No Server Dependency:</strong> Our extension operates without any external servers for processing</li>
+        <li><strong>End-to-End Local Operation:</strong> JSON detection, formatting, and visualization all occur directly on your device</li>
+    </ul>
+    <p>This local-only approach guarantees maximum privacy and security for your information, as your data never leaves the boundary of your own device.</p>
+
+    <h2>Your Control: Data Removal Options</h2>
+    <p>You maintain complete control over your data and can easily remove it at any time:</p>
     <ol>
-        <li>Opening the extension popup</li>
-        <li>Accessing the history panel</li>
-        <li>Clicking the "Clear History" button</li>
+        <li>Open the extension popup in your browser</li>
+        <li>Navigate to the history panel</li>
+        <li>Click the "Clear History" button to remove all saved data</li>
     </ol>
-    <p>Alternatively, you can remove all data associated with the extension by uninstalling it from Chrome.</p>
+    <p>For a complete removal of all extension data, you can simply uninstall the extension from Chrome, which will eliminate all locally stored information.</p>
 
-    <h2>Updates to This Policy</h2>
-    <p>We may update this Privacy Policy from time to time to reflect changes in our practices or for other operational, legal, or regulatory reasons. We encourage you to review this Privacy Policy periodically.</p>
+    <h2>Policy Updates</h2>
+    <p>We may update this Privacy Policy periodically to reflect changes in our practices, features, or regulatory requirements. We encourage you to review this policy occasionally to stay informed about how we protect your information.</p>
 
     <div class="contact">
         <h2>Contact Us</h2>
-        <p>If you have any questions about this Privacy Policy or our privacy practices, please contact us at:</p>
+        <p>We value transparency and are here to address any questions or concerns about our privacy practices:</p>
         <p>Email: <a href="mailto:linxinyuelan@gmail.com">linxinyuelan@gmail.com</a></p>
         <p>GitHub: <a href="https://github.com/linxinyuelan-beep/chrome_json_viewer" target="_blank">https://github.com/linxinyuelan-beep/chrome_json_viewer</a></p>
+        <p>We welcome your feedback and are committed to protecting your privacy.</p>
     </div>
 
     <footer>
