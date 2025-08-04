@@ -53,8 +53,6 @@ export async function addToHistory(jsonData: string, url: string): Promise<strin
     // Save history
     await saveHistory(history);
     
-    console.log(`Added JSON to history, id: ${id}, size: ${historyItem.size} bytes`);
-    
     // Return the ID of the added item
     return id;
   } catch (e) {

@@ -53,11 +53,9 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
 
   // 确保组件初始化时记录日志
   useEffect(() => {
-    console.log(`JSON Viewer mounted: ${instanceId}`, { dataSize: JSON.stringify(jsonData).length });
-    
     // 清理函数
     return () => {
-      console.log(`JSON Viewer unmounted: ${instanceId}`);
+      // console.log(`JSON Viewer unmounted: ${instanceId}`);
     };
   }, []);
   
@@ -65,14 +63,12 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
     // Calculate JSON size
     const size = new TextEncoder().encode(JSON.stringify(jsonData)).length;
     setJsonSize(formatJsonSize(size));
-    console.log(`JSON size calculated: ${size} bytes`);
     
     // Add to history when JSON data is loaded
     // Use current URL as source
     const jsonString = JSON.stringify(jsonData);
     const currentUrl = window.location.href;
     addToHistory(jsonString, currentUrl)
-      .then(id => console.log(`Added to history with ID: ${id}`))
       .catch(err => console.error('Error adding to history:', err));
     
     // 添加到导航历史

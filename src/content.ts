@@ -236,12 +236,10 @@ function findBalancedPatterns(text: string, openChar: string, closeChar: string)
 
 // 在抽屉中显示JSON - 使用React JSON Viewer组件
 async function showJsonInDrawer(jsonString: string): Promise<void> {
-    console.log(`Displaying JSON in drawer, length: ${jsonString.length}`);
     
     try {
         // 导入React渲染器 - 使用动态导入确保只在需要时加载
         const { showJsonInDrawerWithReact } = await import('./utils/reactJsonDrawer');
-        console.log('React JSON drawer module loaded successfully');
         
         // 使用React组件显示JSON
         showJsonInDrawerWithReact(jsonString, EXTENSION_VERSION);
@@ -527,7 +525,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 监听来自背景脚本的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('Content script received message:', request.action);
     
     if (request.action === 'formatSelectedJson' && request.selectedText) {
         // 尝试格式化选中的 JSON

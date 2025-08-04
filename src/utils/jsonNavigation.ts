@@ -49,7 +49,6 @@ export function addToNavigationHistory(jsonString: string): void {
   // 更新按钮状态
   updateNavigationButtonsState();
   
-  console.log(`Added to navigation history, now at position ${navigationState.currentIndex + 1}/${navigationState.history.length}`);
 }
 
 /**

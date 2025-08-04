@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom';
 import React from 'react';
 import JsonViewerComponent from '../components/JsonViewer';
 
+// Store React root references for proper cleanup
+const reactRoots = new Map<HTMLElement, any>();
+
 // 用于检查元素是否属于JSON查看器的函数
 function isJsonViewerElement(element: Element): boolean {
   // 检查常见的react-json-view类名和属性
@@ -56,25 +59,49 @@ function isJsonViewerElement(element: Element): boolean {
 // Function to create and mount the JSON viewer React component in the drawer
 export function mountJsonViewer(jsonData: any, container: HTMLElement, version: string): void {
   try {
+    // Clean up any existing React root
+    if (reactRoots.has(container)) {
+      const existingRoot = reactRoots.get(container);
+      if (existingRoot && existingRoot.unmount) {
+        existingRoot.unmount();
+      }
+      reactRoots.delete(container);
+    }
+    
     // Ensure we have a clean container
     if (container.childNodes.length > 0) {
       console.warn('Container is not empty before mounting React component');
+      container.innerHTML = '';
     }
     
     // Create a unique key for this render to force re-rendering
     const renderKey = Date.now().toString();
     
-    // Render with key prop for better React reconciliation
-    ReactDOM.render(
-      React.createElement(JsonViewerComponent, { 
-        jsonData, 
-        version, 
-        key: renderKey 
-      }),
-      container
-    );
+    // Check if createRoot is available (React 18+)
+    if ('createRoot' in ReactDOM) {
+      // Use React 18+ createRoot API
+      const root = (ReactDOM as any).createRoot(container);
+      reactRoots.set(container, root);
+      
+      root.render(
+        React.createElement(JsonViewerComponent, { 
+          jsonData, 
+          version, 
+          key: renderKey 
+        })
+      );
+    } else {
+      // Fallback to legacy ReactDOM.render for older React versions
+      ReactDOM.render(
+        React.createElement(JsonViewerComponent, { 
+          jsonData, 
+          version, 
+          key: renderKey 
+        }),
+        container
+      );
+    }
     
-    console.log('React component mounted with key:', renderKey);
   } catch (e) {
     console.error('Error mounting JSON viewer:', e);
     container.innerHTML = `
@@ -83,6 +110,31 @@ export function mountJsonViewer(jsonData: any, container: HTMLElement, version: 
         Error rendering JSON: ${(e as Error).message}
       </div>
     `;
+  }
+}
+
+// Helper function to safely unmount React component
+function unmountReactComponent(container: HTMLElement): void {
+  try {
+    // Check if we have a React 18+ root stored
+    if (reactRoots.has(container)) {
+      const root = reactRoots.get(container);
+      if (root && root.unmount) {
+        root.unmount();
+        reactRoots.delete(container);
+        return;
+      }
+    }
+    
+    // Fallback: try legacy unmount (will only work if component was mounted with legacy render)
+    if ('unmountComponentAtNode' in ReactDOM) {
+      ReactDOM.unmountComponentAtNode(container);
+    }
+  } catch (e) {
+    console.warn('Error during React component unmount:', e);
+  } finally {
+    // Always clear the container to ensure clean state
+    container.innerHTML = '';
   }
 }
 
@@ -140,10 +192,9 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
       // Unmount React component before closing drawer
       const drawerContent = drawer.querySelector('.json-drawer-content');
       if (drawerContent) {
-        try {
-          ReactDOM.unmountComponentAtNode(drawerContent);
-        } catch (e) {
-          console.error('Error unmounting React component:', e);
+        const reactRoot = drawerContent.querySelector('.json-viewer-react-root') as HTMLElement;
+        if (reactRoot) {
+          unmountReactComponent(reactRoot);
         }
       }
       drawer.classList.remove('open');
@@ -246,7 +297,6 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
       const width = parseInt(savedWidth, 10);
       if (width >= 300 && width <= window.innerWidth * 0.9) { // 更新到90%
         drawer.style.width = `${width}px`;
-        console.log('恢复保存的抽屉宽度', { width });
       }
     }
   } catch (error) {
@@ -279,13 +329,11 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
     }
     
     // 如果点击在抽屉外部，关闭抽屉
-    console.log('Click outside drawer, closing');
     const drawerContent = drawer.querySelector('.json-drawer-content');
     if (drawerContent) {
-      try {
-        ReactDOM.unmountComponentAtNode(drawerContent);
-      } catch (e) {
-        console.error('Error unmounting React component:', e);
+      const reactRoot = drawerContent.querySelector('.json-viewer-react-root') as HTMLElement;
+      if (reactRoot) {
+        unmountReactComponent(reactRoot);
       }
     }
     drawer.classList.remove('open');
@@ -311,13 +359,6 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
     // Get drawer content container
     const drawerContent = drawer.querySelector('.json-drawer-content');
     if (!drawerContent) return;
-
-    // Unmount any existing React component
-    try {
-      ReactDOM.unmountComponentAtNode(drawerContent);
-    } catch (e) {
-      console.log('No React component to unmount');
-    }
 
     // Clear previous content and create a fresh container for React
     drawerContent.innerHTML = '';
@@ -370,13 +411,11 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
       }
       
       // 如果点击在抽屉外部，关闭抽屉
-      console.log('Click outside drawer, closing');
       const drawerContent = drawer.querySelector('.json-drawer-content');
       if (drawerContent) {
-        try {
-          ReactDOM.unmountComponentAtNode(drawerContent);
-        } catch (e) {
-          console.error('Error unmounting React component:', e);
+        const reactRoot = drawerContent.querySelector('.json-viewer-react-root') as HTMLElement;
+        if (reactRoot) {
+          unmountReactComponent(reactRoot);
         }
       }
       drawer.classList.remove('open');
@@ -404,10 +443,6 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
     drawer.setAttribute('data-click-handler-id', handlerId);
     (window as any)[`jsonDrawerClickHandler_${handlerId}`] = clickOutsideHandler;
     
-    console.log('JSON viewer mounted successfully', { 
-      jsonSize: jsonString.length,
-      drawerOpenedAt: drawer.dataset.openedAt
-    });
   } catch (e) {
     console.error('Error showing JSON in drawer:', e);
   }
