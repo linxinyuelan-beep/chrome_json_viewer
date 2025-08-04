@@ -1,7 +1,7 @@
 {
   "name": "chrome-extension",
   "version": "1.0.2",
-  "description": "A simple Chrome extension.",
+  "description": "Json Formatter Viewer",
   "main": "src/background.ts",
   "scripts": {
     "version-sync": "node scripts/version-sync.js",
@@ -32,6 +32,6 @@
     "chrome",
     "extension"
   ],
-  "author": "Your Name",
+  "author": "xinyue",
   "license": "MIT"
 }
