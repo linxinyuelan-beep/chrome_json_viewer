@@ -35,7 +35,10 @@ function formatSelectedJson(): void {
     // 验证并格式化JSON
     if (isValidJson(selectedText)) {
         // 显示格式化后的JSON
-        showJsonInDrawer(selectedText);
+        showJsonInDrawer(selectedText).catch(error => {
+            console.error('Error showing JSON in drawer:', error);
+            showNotification('无法显示JSON抽屉', 'error');
+        });
     } else {
         showNotification('所选文本不是有效的JSON', 'error');
     }
@@ -232,16 +235,17 @@ function findBalancedPatterns(text: string, openChar: string, closeChar: string)
 }
 
 // 在抽屉中显示JSON - 使用React JSON Viewer组件
-function showJsonInDrawer(jsonString: string): void {
+async function showJsonInDrawer(jsonString: string): Promise<void> {
     console.log(`Displaying JSON in drawer, length: ${jsonString.length}`);
     
-    // 导入React渲染器 - 使用动态导入确保只在需要时加载
-    import('./utils/reactJsonDrawer').then(({ showJsonInDrawerWithReact }) => {
+    try {
+        // 导入React渲染器 - 使用动态导入确保只在需要时加载
+        const { showJsonInDrawerWithReact } = await import('./utils/reactJsonDrawer');
         console.log('React JSON drawer module loaded successfully');
         
         // 使用React组件显示JSON
         showJsonInDrawerWithReact(jsonString, EXTENSION_VERSION);
-    }).catch(e => {
+    } catch (e) {
         console.error('Error importing React JSON drawer:', e);
         
         // Create a simple error message if React component fails to load
@@ -263,7 +267,8 @@ function showJsonInDrawer(jsonString: string): void {
         `;
         
         drawer.classList.add('open');
-    });
+        throw e; // 重新抛出错误以便调用者处理
+    }
 }
 
 // These JSON rendering functions were removed as they are not used.
@@ -275,6 +280,7 @@ function createJsonDrawer(): HTMLElement {
     const drawer = document.createElement('div');
     drawer.className = 'json-drawer';
     drawer.innerHTML = `
+        <div class="json-drawer-resize-handle" title="拖动调整宽度"></div>
         <div class="json-drawer-header">
             <div class="json-drawer-title">JSON Viewer</div>
             <button class="json-drawer-close">&times;</button>
@@ -322,6 +328,93 @@ function createJsonDrawer(): HTMLElement {
         closeBtn.addEventListener('click', () => {
             drawer.classList.remove('open');
         });
+    }
+    
+    // 添加拖动调整宽度功能
+    const resizeHandle = drawer.querySelector('.json-drawer-resize-handle') as HTMLElement;
+    if (resizeHandle) {
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+
+        const handleMouseDown = (e: MouseEvent) => {
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = drawer.offsetWidth;
+            
+            // 添加拖动状态样式
+            drawer.classList.add('resizing');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            
+            // 阻止默认行为和事件冒泡
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isResizing) return;
+
+            const deltaX = startX - e.clientX; // 向左拖动为正值
+            const newWidth = startWidth + deltaX;
+            
+            // 限制最小和最大宽度
+            const minWidth = 300;
+            const maxWidth = Math.min(window.innerWidth * 0.9, 1600); // 增加到90%和1600px
+            const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+            
+            // 应用新宽度
+            drawer.style.width = `${constrainedWidth}px`;
+            
+            // 阻止默认行为
+            e.preventDefault();
+        };
+
+        const handleMouseUp = (e: MouseEvent) => {
+            if (!isResizing) return;
+            
+            isResizing = false;
+            
+            // 移除拖动状态样式
+            drawer.classList.remove('resizing');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            
+            // 保存用户设置的宽度到localStorage
+            const finalWidth = drawer.offsetWidth;
+            try {
+                localStorage.setItem('jsonDrawerWidth', finalWidth.toString());
+            } catch (error) {
+                console.warn('无法保存抽屉宽度设置到localStorage:', error);
+            }
+            
+            // 阻止默认行为
+            e.preventDefault();
+        };
+
+        // 绑定拖动事件
+        resizeHandle.addEventListener('mousedown', handleMouseDown);
+        
+        // 全局鼠标事件
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        
+        // 防止选中文本
+        resizeHandle.addEventListener('selectstart', (e) => e.preventDefault());
+        resizeHandle.addEventListener('dragstart', (e) => e.preventDefault());
+    }
+
+    // 从localStorage恢复保存的宽度设置
+    try {
+        const savedWidth = localStorage.getItem('jsonDrawerWidth');
+        if (savedWidth) {
+            const width = parseInt(savedWidth, 10);
+            if (width >= 300 && width <= window.innerWidth * 0.9) { // 更新到90%
+                drawer.style.width = `${width}px`;
+            }
+        }
+    } catch (error) {
+        console.warn('无法从localStorage恢复抽屉宽度设置:', error);
     }
     
     // 点击抽屉外部关闭
@@ -439,10 +532,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'formatSelectedJson' && request.selectedText) {
         // 尝试格式化选中的 JSON
         if (isValidJson(request.selectedText)) {
-            showJsonInDrawer(request.selectedText);
+            showJsonInDrawer(request.selectedText)
+                .then(() => {
+                    sendResponse({ success: true });
+                })
+                .catch((error) => {
+                    console.error('Error showing JSON in drawer:', error);
+                    sendResponse({ success: false, error: (error as Error).message });
+                });
         } else {
             showNotification('所选文本不是有效的JSON', 'error');
+            sendResponse({ success: false, error: 'Invalid JSON format' });
         }
+        return true; // 支持异步响应
+        
     } else if (request.action === 'toggleHoverDetection') {
         // 切换悬停检测状态
         enableHoverDetection = !enableHoverDetection;
@@ -460,31 +563,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         
         // 发送响应
         sendResponse({ enabled: enableHoverDetection });
+        return true; // 支持异步响应
         
     } else if (request.action === 'getHoverDetectionState') {
         // 返回当前悬停检测状态
         sendResponse({ enabled: enableHoverDetection });
+        return true; // 支持异步响应
         
     } else if (request.action === 'showJsonFromPopup') {
         // 处理来自弹出窗口的JSON格式化请求
         console.log('Received showJsonFromPopup message with JSON length:', request.jsonString?.length);
         if (request.jsonString) {
-            try {
-                showJsonInDrawer(request.jsonString);
-                console.log('JSON drawer should be displayed now');
-                sendResponse({ success: true });
-            } catch (error) {
-                console.error('Error showing JSON in drawer:', error);
-                sendResponse({ success: false, error: (error as Error).message });
-            }
+            showJsonInDrawer(request.jsonString)
+                .then(() => {
+                    console.log('JSON drawer should be displayed now');
+                    sendResponse({ success: true });
+                })
+                .catch((error) => {
+                    console.error('Error showing JSON in drawer:', error);
+                    sendResponse({ success: false, error: (error as Error).message });
+                });
         } else {
             console.error('No JSON string provided in popup request');
             sendResponse({ success: false, error: 'No JSON string provided' });
         }
+        return true; // 支持异步响应
     }
     
-    // 必须返回 true 以支持异步响应
-    return true;
+    // 对于不识别的action，返回false表示不需要异步响应
+    return false;
 });
 
 window.addEventListener('load', () => {
@@ -594,7 +701,10 @@ window.addEventListener('load', () => {
                                                 mouseEvent.stopPropagation();
 
                                                 // 只显示当前双击的JSON
-                                                showJsonInDrawer(jsonString);
+                                                showJsonInDrawer(jsonString).catch(error => {
+                                                    console.error('Error showing JSON in drawer:', error);
+                                                    showNotification('无法显示JSON抽屉', 'error');
+                                                });
                                             })(json);
 
                                             // 为当前jsonSpan添加双击处理

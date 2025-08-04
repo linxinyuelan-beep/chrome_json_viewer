@@ -91,6 +91,7 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
   const drawer = document.createElement('div');
   drawer.className = 'json-drawer';
   drawer.innerHTML = `
+    <div class="json-drawer-resize-handle" title="拖动调整宽度"></div>
     <div class="json-drawer-header">
       <div class="json-drawer-title">JSON Viewer</div>
       <button class="json-drawer-close">&times;</button>
@@ -147,6 +148,109 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
       }
       drawer.classList.remove('open');
     });
+  }
+
+  // 添加拖动调整宽度功能
+  const resizeHandle = drawer.querySelector('.json-drawer-resize-handle') as HTMLElement;
+  if (resizeHandle) {
+    let isResizing = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = drawer.offsetWidth;
+      
+      // 添加拖动状态样式
+      drawer.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+      
+      // 阻止默认行为和事件冒泡
+      e.preventDefault();
+      e.stopPropagation();
+
+      console.log('开始拖动调整宽度', { startX, startWidth });
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+
+      const deltaX = startX - e.clientX; // 向左拖动为正值
+      const newWidth = startWidth + deltaX;
+      
+      // 限制最小和最大宽度
+      const minWidth = 300;
+      const maxWidth = Math.min(window.innerWidth * 0.9, 1600); // 增加到90%和1600px
+      const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+      
+      // 计算宽度百分比
+      const widthPercentage = (constrainedWidth / window.innerWidth) * 100;
+      
+      // 应用新宽度
+      drawer.style.width = `${constrainedWidth}px`;
+      
+      console.log('拖动中', { 
+        deltaX, 
+        newWidth, 
+        constrainedWidth, 
+        widthPercentage: widthPercentage.toFixed(1) + '%' 
+      });
+      
+      // 阻止默认行为
+      e.preventDefault();
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      if (!isResizing) return;
+      
+      isResizing = false;
+      
+      // 移除拖动状态样式
+      drawer.classList.remove('resizing');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      
+      // 保存用户设置的宽度到localStorage
+      const finalWidth = drawer.offsetWidth;
+      try {
+        localStorage.setItem('jsonDrawerWidth', finalWidth.toString());
+        console.log('保存抽屉宽度设置', { finalWidth });
+      } catch (error) {
+        console.warn('无法保存抽屉宽度设置到localStorage:', error);
+      }
+      
+      console.log('结束拖动调整宽度', { finalWidth });
+      
+      // 阻止默认行为
+      e.preventDefault();
+    };
+
+    // 绑定拖动事件
+    resizeHandle.addEventListener('mousedown', handleMouseDown);
+    
+    // 全局鼠标事件（在document上监听以确保在快速拖动时也能捕获）
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    // 防止选中文本
+    resizeHandle.addEventListener('selectstart', (e) => e.preventDefault());
+    resizeHandle.addEventListener('dragstart', (e) => e.preventDefault());
+  }
+
+  // 从localStorage恢复保存的宽度设置
+  try {
+    const savedWidth = localStorage.getItem('jsonDrawerWidth');
+    if (savedWidth) {
+      const width = parseInt(savedWidth, 10);
+      if (width >= 300 && width <= window.innerWidth * 0.9) { // 更新到90%
+        drawer.style.width = `${width}px`;
+        console.log('恢复保存的抽屉宽度', { width });
+      }
+    }
+  } catch (error) {
+    console.warn('无法从localStorage恢复抽屉宽度设置:', error);
   }
 
   // Click outside to close - with check to prevent closing when clicking inside the JSON tree
