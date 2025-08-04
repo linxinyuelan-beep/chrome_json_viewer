@@ -55,7 +55,7 @@
 </head>
 <body>
     <h1>Privacy Policy for JSON Formatter & Viewer</h1>
-    <p class="updated">Last updated: August 3, 2025</p>
+    <p class="updated">Last updated: August 4, 2025</p>
 
     <p>At JSON Formatter & Viewer, your privacy is our highest priority. This Privacy Policy explains our commitment to protecting your data and outlines how our extension handles information when you use it.</p>
 
@@ -83,24 +83,25 @@
         <li><strong>scripting:</strong> Powers the formatting and enhanced display of JSON content</li>
         <li><strong>contextMenus:</strong> Provides convenient right-click menu options for JSON formatting</li>
         <li><strong>storage:</strong> Allows saving your settings and JSON history locally on your device</li>
-        <li><strong>host permissions:</strong> Enables JSON detection across different websites</li>
+        <li><strong>host permissions (HTTP/HTTPS):</strong> Enables JSON detection on standard web protocols only</li>
     </ul>
     <p>These permissions are used <em>exclusively</em> for delivering the extension's core functionality: detecting, formatting, and visualizing JSON data.</p>
     
-    <h3>Understanding the &lt;all_urls&gt; Permission</h3>
-    <p>Our extension uses the <code>&lt;all_urls&gt;</code> permission in the manifest file. We believe in complete transparency about why this broad permission is necessary:</p>
+    <h3>Understanding Web Access Permissions</h3>
+    <p>Our extension uses host permissions for <code>http://*/*</code> and <code>https://*/*</code> in the manifest file. We believe in complete transparency about why these permissions are necessary:</p>
     <ul>
-        <li><strong>Automatic JSON Detection:</strong> To instantly identify and format JSON content on any webpage</li>
+        <li><strong>Automatic JSON Detection:</strong> To instantly identify and format JSON content on HTTP and HTTPS webpages</li>
         <li><strong>Seamless User Experience:</strong> To provide formatting capabilities without requiring manual activation on each website</li>
-        <li><strong>Universal Content Support:</strong> To properly handle JSON data regardless of how websites serve it</li>
+        <li><strong>Web Content Support:</strong> To properly handle JSON data from standard web protocols</li>
     </ul>
-    <p>While this permission gives our extension access to the pages you visit, we maintain strict privacy safeguards:</p>
+    <p>These permissions are specifically limited to standard web protocols (HTTP and HTTPS) for enhanced security and privacy:</p>
     <ul>
-        <li>We <strong>only process JSON content</strong> - no other page content is analyzed</li>
-        <li>We <strong>never collect or transmit</strong> any data from these pages</li>
-        <li>All processing happens <strong>exclusively within your browser</strong></li>
-        <li>The extension <strong>only activates</strong> when valid JSON content is detected</li>
-        <li>We <strong>never share any information</strong> with third parties, advertisers, or data brokers</li>
+        <li><strong>Limited Scope:</strong> We only access standard HTTP and HTTPS websites, not local files or browser internal pages</li>
+        <li><strong>JSON-Only Processing:</strong> We only process JSON content - no other page content is analyzed</li>
+        <li><strong>Zero Data Collection:</strong> We never collect or transmit any data from these pages</li>
+        <li><strong>Local Processing Only:</strong> All processing happens exclusively within your browser</li>
+        <li><strong>Selective Activation:</strong> The extension only activates when valid JSON content is detected</li>
+        <li><strong>No Data Sharing:</strong> We never share any information with third parties, advertisers, or data brokers</li>
     </ul>
 
     <h2>Local Processing: Your Data Never Leaves Your Device</h2>
