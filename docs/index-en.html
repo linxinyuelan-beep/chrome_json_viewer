@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Formatter & Viewer - Chrome Extension</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .logo img {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .download-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Language Switcher */
+        .language-switcher {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-left: 1rem;
+        }
+
+        .language-dropdown {
+            position: relative;
+        }
+
+        .language-current {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #667eea;
+            text-decoration: none;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #667eea;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            min-width: 100px;
+            justify-content: space-between;
+        }
+
+        .language-current:hover {
+            background: #f8f9fa;
+            transform: translateY(-1px);
+        }
+
+        .language-current.open {
+            background: #667eea;
+            color: white;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        .language-dropdown-icon {
+            transition: transform 0.3s;
+            font-size: 0.7rem;
+        }
+
+        .language-current.open .language-dropdown-icon {
+            transform: rotate(180deg);
+        }
+
+        .language-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .language-options.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .language-option {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #333;
+            text-decoration: none;
+            padding: 0.5rem 0.8rem;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+            border-bottom: 1px solid #eee;
+        }
+
+        .language-option:last-child {
+            border-bottom: none;
+            border-radius: 0 0 14px 14px;
+        }
+
+        .language-option:hover {
+            background: #f8f9fa;
+        }
+
+        .language-option.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 0 80px;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Content Sections */
+        .section {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .section:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .section h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+        }
+
+        /* Demo Section */
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .demo-content {
+            background: #1e1e1e;
+            border-radius: 10px;
+            padding: 1.5rem;
+            color: #f8f8f2;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            position: relative;
+        }
+
+        .demo-content::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            width: 12px;
+            height: 12px;
+            background: #ff5f56;
+            border-radius: 50%;
+            box-shadow: 20px 0 #ffbd2e, 40px 0 #27ca3f;
+        }
+
+        .demo-content pre {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .demo-content code {
+            word-break: break-all;
+        }
+
+        /* Installation Steps */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .step {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 1rem;
+        }
+
+        .step h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .step p {
+            color: #666;
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #667eea;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .demo-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .demo-content {
+                padding: 1rem;
+            }
+
+            .demo-content pre {
+                font-size: 0.8rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .language-switcher {
+                margin-left: 0;
+            }
+
+            .language-current {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.6rem;
+                min-width: 85px;
+            }
+
+            .language-option {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.6rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* JSON Syntax Highlighting */
+        .json-key { color: #92c5f8; }
+        .json-string { color: #a5c261; }
+        .json-number { color: #ff6347; }
+        .json-boolean { color: #f92672; }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">
+                <img src="../src/assets/images/icon48.png" alt="JSON Formatter & Viewer">
+                JSON Formatter & Viewer
+            </div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#demo">Demo</a></li>
+                <li><a href="#installation">Install</a></li>
+                <li><a href="#usage">Usage</a></li>
+            </ul>
+            <div style="display: flex; align-items: center;">
+                <a href="#installation" class="download-btn">Install Now</a>
+                <div class="language-switcher">
+                    <div class="language-dropdown">
+                        <div class="language-current" onclick="toggleLanguageDropdown()">
+                            <span>🇺🇸 English</span>
+                            <span class="language-dropdown-icon">▼</span>
+                        </div>
+                        <div class="language-options" id="languageOptions">
+                            <a href="./index.html" class="language-option">🇨🇳 中文</a>
+                            <a href="#" class="language-option active">🇺🇸 English</a>
+                            <!-- Reserved for future languages -->
+                            <!-- <a href="./index-ja.html" class="language-option">🇯🇵 日本語</a> -->
+                            <!-- <a href="./index-ko.html" class="language-option">🇰🇷 한국어</a> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="fade-in-up">JSON Formatter & Viewer</h1>
+            <p class="fade-in-up">Smart Chrome extension that automatically detects, formats, and visualizes JSON on web pages</p>
+            <div class="hero-buttons fade-in-up">
+                <a href="#installation" class="btn btn-primary">
+                    📥 Free Install
+                </a>
+                <a href="#demo" class="btn btn-secondary">
+                    🎮 View Demo
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="section">
+        <div class="container">
+            <h2>Powerful Features</h2>
+            <div class="features-grid">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Smart Detection</h3>
+                    <p>Automatically identifies JSON content on web pages with hover detection and double-click to open</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">✨</div>
+                    <h3>Format & Beautify</h3>
+                    <p>One-click formatting of selected JSON text with syntax highlighting and tree view</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">👁️</div>
+                    <h3>Visual Viewer</h3>
+                    <p>Slide-out drawer JSON viewer with expandable/collapsible nodes and interactive browsing</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">📝</div>
+                    <h3>Manual Input</h3>
+                    <p>Direct JSON input and formatting through popup interface with compression and beautification</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">🔧</div>
+                    <h3>Utility Tools</h3>
+                    <p>JSON minification, string escaping/unescaping, date format conversion, and more</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">📚</div>
+                    <h3>History Tracking</h3>
+                    <p>Records viewed JSON with back/forward navigation and searchable history</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">📋</div>
+                    <h3>Quick Copy</h3>
+                    <p>One-click copy of formatted JSON to clipboard for improved productivity</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">⌨️</div>
+                    <h3>Keyboard Shortcuts</h3>
+                    <p>Customizable shortcuts for quick access to formatting and detection features</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="section">
+        <div class="container">
+            <h2>Feature Demo</h2>
+            <div class="demo-container">
+                <div>
+                    <h3>Raw JSON Data</h3>
+                    <div class="demo-content">
+                        <pre><code>{"user":{"id":123,"name":"John Doe","email":"john@example.com","theme":"dark","active":true,"tags":["dev","admin"]}}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <h3>Formatted Result</h3>
+                    <div class="demo-content">
+                        <pre><code>{
+  <span class="json-key">"user"</span>: {
+    <span class="json-key">"id"</span>: <span class="json-number">123</span>,
+    <span class="json-key">"name"</span>: <span class="json-string">"John Doe"</span>,
+    <span class="json-key">"email"</span>: <span class="json-string">"john@example.com"</span>,
+    <span class="json-key">"theme"</span>: <span class="json-string">"dark"</span>,
+    <span class="json-key">"active"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"tags"</span>: [<span class="json-string">"dev"</span>, <span class="json-string">"admin"</span>]
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section id="installation" class="section">
+        <div class="container">
+            <h2>Installation Steps</h2>
+            <div class="steps">
+                <div class="step fade-in-up">
+                    <div class="step-number">1</div>
+                    <h3>Download Extension</h3>
+                    <p>Search for "JSON Formatter & Viewer" in Chrome Web Store or download from the project repository</p>
+                </div>
+                <div class="step fade-in-up">
+                    <div class="step-number">2</div>
+                    <h3>Enable Developer Mode</h3>
+                    <p>Go to Chrome extensions page (chrome://extensions/) and toggle "Developer mode" in the top right</p>
+                </div>
+                <div class="step fade-in-up">
+                    <div class="step-number">3</div>
+                    <h3>Load Extension</h3>
+                    <p>Click "Load unpacked" and select the project's public directory</p>
+                </div>
+                <div class="step fade-in-up">
+                    <div class="step-number">4</div>
+                    <h3>Start Using</h3>
+                    <p>Visit web pages with JSON content and enjoy smart detection and formatting features</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Usage Section -->
+    <section id="usage" class="section">
+        <div class="container">
+            <h2>How to Use</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🎯 Auto Detection</h3>
+                    <p>The extension automatically detects and highlights JSON content on web pages. Double-click to open in viewer</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🖱️ Hover Detection</h3>
+                    <p>Use <code>Ctrl+Shift+H</code> (Mac: <code>Cmd+Shift+H</code>) to toggle hover detection mode</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⌨️ Quick Format</h3>
+                    <p>Select any text and press <code>Ctrl+Shift+E</code> (Mac: <code>Cmd+Shift+E</code>) to format as JSON</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔧 Popup Tools</h3>
+                    <p>Click the extension icon to open popup for direct JSON input, formatting, minification, and more</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📖 Viewer Features</h3>
+                    <p>In the JSON viewer, expand/collapse nodes, copy content, and browse through history</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🕐 History Navigation</h3>
+                    <p>The viewer supports back/forward navigation to easily browse previously viewed JSON data</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/linxinyuelan-beep/chrome_json_viewer">GitHub Repository</a>
+                <a href="./privacy-policy.html">Privacy Policy</a>
+                <a href="mailto:linxinyuelan@gmail.com">Contact Author</a>
+            </div>
+            <p>&copy; 2025 JSON Formatter & Viewer. MIT License.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in-up');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all feature cards and steps
+        document.querySelectorAll('.feature-card, .step').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Language switcher functionality
+        function toggleLanguageDropdown() {
+            const options = document.getElementById('languageOptions');
+            const current = document.querySelector('.language-current');
+            
+            options.classList.toggle('show');
+            current.classList.toggle('open');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.language-dropdown');
+            const options = document.getElementById('languageOptions');
+            const current = document.querySelector('.language-current');
+            
+            if (dropdown && !dropdown.contains(e.target)) {
+                options.classList.remove('show');
+                current.classList.remove('open');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Close dropdown when clicking on a language option
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    if (this.href && !this.href.includes('#')) {
+                        // Allow navigation to other pages
+                        return;
+                    }
+                    e.preventDefault();
+                    
+                    const options = document.getElementById('languageOptions');
+                    const current = document.querySelector('.language-current');
+                    options.classList.remove('show');
+                    current.classList.remove('open');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

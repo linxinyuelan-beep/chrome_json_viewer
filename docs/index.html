@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Formatter & Viewer - Chrome 扩展</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .logo img {
+            width: 32px;
+            height: 32px;
+            margin-right: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .download-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Language Switcher */
+        .language-switcher {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-left: 1rem;
+        }
+
+        .language-dropdown {
+            position: relative;
+        }
+
+        .language-current {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #667eea;
+            text-decoration: none;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #667eea;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            min-width: 100px;
+            justify-content: space-between;
+        }
+
+        .language-current:hover {
+            background: #f8f9fa;
+            transform: translateY(-1px);
+        }
+
+        .language-current.open {
+            background: #667eea;
+            color: white;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        .language-dropdown-icon {
+            transition: transform 0.3s;
+            font-size: 0.7rem;
+        }
+
+        .language-current.open .language-dropdown-icon {
+            transform: rotate(180deg);
+        }
+
+        .language-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .language-options.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .language-option {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #333;
+            text-decoration: none;
+            padding: 0.5rem 0.8rem;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+            border-bottom: 1px solid #eee;
+        }
+
+        .language-option:last-child {
+            border-bottom: none;
+            border-radius: 0 0 14px 14px;
+        }
+
+        .language-option:hover {
+            background: #f8f9fa;
+        }
+
+        .language-option.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 0 80px;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Content Sections */
+        .section {
+            padding: 80px 0;
+            background: white;
+        }
+
+        .section:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .section h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+        }
+
+        /* Demo Section */
+        .demo-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        .demo-content {
+            background: #1e1e1e;
+            border-radius: 10px;
+            padding: 1.5rem;
+            color: #f8f8f2;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            position: relative;
+        }
+
+        .demo-content::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            width: 12px;
+            height: 12px;
+            background: #ff5f56;
+            border-radius: 50%;
+            box-shadow: 20px 0 #ffbd2e, 40px 0 #27ca3f;
+        }
+
+        .demo-content pre {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .demo-content code {
+            word-break: break-all;
+        }
+
+        /* Screenshots */
+        .screenshots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .screenshot {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+
+        .screenshot:hover {
+            transform: scale(1.05);
+        }
+
+        .screenshot img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Installation Steps */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .step {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 1rem;
+        }
+
+        .step h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .step p {
+            color: #666;
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #667eea;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .demo-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .demo-content {
+                padding: 1rem;
+            }
+
+            .demo-content pre {
+                font-size: 0.8rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .language-switcher {
+                margin-left: 0;
+            }
+
+            .language-current {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.6rem;
+                min-width: 85px;
+            }
+
+            .language-option {
+                font-size: 0.75rem;
+                padding: 0.4rem 0.6rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* JSON Syntax Highlighting */
+        .json-key { color: #92c5f8; }
+        .json-string { color: #a5c261; }
+        .json-number { color: #ff6347; }
+        .json-boolean { color: #f92672; }
+        .json-null { color: #ae81ff; }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">
+                <img src="../src/assets/images/icon48.png" alt="JSON Formatter & Viewer">
+                JSON Formatter & Viewer
+            </div>
+            <ul class="nav-links">
+                <li><a href="#features">功能特性</a></li>
+                <li><a href="#demo">演示</a></li>
+                <li><a href="#installation">安装</a></li>
+                <li><a href="#usage">使用方法</a></li>
+            </ul>
+            <div style="display: flex; align-items: center;">
+                <a href="#installation" class="download-btn">立即安装</a>
+                <div class="language-switcher">
+                    <div class="language-dropdown">
+                        <div class="language-current" onclick="toggleLanguageDropdown()">
+                            <span>🇨🇳 中文</span>
+                            <span class="language-dropdown-icon">▼</span>
+                        </div>
+                        <div class="language-options" id="languageOptions">
+                            <a href="#" class="language-option active">🇨🇳 中文</a>
+                            <a href="./index-en.html" class="language-option">🇺🇸 English</a>
+                            <!-- 预留扩展位置 -->
+                            <!-- <a href="./index-ja.html" class="language-option">🇯🇵 日本語</a> -->
+                            <!-- <a href="./index-ko.html" class="language-option">🇰🇷 한국어</a> -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="fade-in-up">JSON Formatter & Viewer</h1>
+            <p class="fade-in-up">智能的 Chrome 扩展，自动检测、格式化和可视化网页中的 JSON 数据</p>
+            <div class="hero-buttons fade-in-up">
+                <a href="#installation" class="btn btn-primary">
+                    📥 免费安装
+                </a>
+                <a href="#demo" class="btn btn-secondary">
+                    🎮 查看演示
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="section">
+        <div class="container">
+            <h2>强大功能特性</h2>
+            <div class="features-grid">
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">🔍</div>
+                    <h3>智能检测</h3>
+                    <p>自动识别网页中的 JSON 内容，支持悬停检测和双击打开</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">✨</div>
+                    <h3>格式化美化</h3>
+                    <p>一键格式化选中的 JSON 文本，支持语法高亮和树形展示</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">👁️</div>
+                    <h3>可视化查看器</h3>
+                    <p>侧滑抽屉式 JSON 查看器，支持展开/折叠和交互式浏览</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">📝</div>
+                    <h3>手动输入</h3>
+                    <p>通过弹窗直接输入和格式化 JSON，支持压缩和美化</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">🔧</div>
+                    <h3>实用工具</h3>
+                    <p>JSON 压缩、字符串转义/反转义、日期格式转换等工具</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">📚</div>
+                    <h3>历史记录</h3>
+                    <p>记录浏览过的 JSON，支持前进/后退导航和历史搜索</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">📋</div>
+                    <h3>快速复制</h3>
+                    <p>一键复制格式化后的 JSON 到剪贴板，提高工作效率</p>
+                </div>
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">⌨️</div>
+                    <h3>快捷键</h3>
+                    <p>支持自定义快捷键，快速访问格式化和检测功能</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="section">
+        <div class="container">
+            <h2>功能演示</h2>
+            <div class="demo-container">
+                <div>
+                    <h3>原始 JSON 数据</h3>
+                    <div class="demo-content">
+                        <pre><code>{"user":{"id":123,"name":"张三","email":"zhang@example.com","theme":"dark","active":true,"tags":["dev","admin"]}}</code></pre>
+                    </div>
+                </div>
+                <div>
+                    <h3>格式化后效果</h3>
+                    <div class="demo-content">
+                        <pre><code>{
+  <span class="json-key">"user"</span>: {
+    <span class="json-key">"id"</span>: <span class="json-number">123</span>,
+    <span class="json-key">"name"</span>: <span class="json-string">"张三"</span>,
+    <span class="json-key">"email"</span>: <span class="json-string">"zhang@example.com"</span>,
+    <span class="json-key">"theme"</span>: <span class="json-string">"dark"</span>,
+    <span class="json-key">"active"</span>: <span class="json-boolean">true</span>,
+    <span class="json-key">"tags"</span>: [<span class="json-string">"dev"</span>, <span class="json-string">"admin"</span>]
+  }
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section id="installation" class="section">
+        <div class="container">
+            <h2>安装步骤</h2>
+            <div class="steps">
+                <div class="step fade-in-up">
+                    <div class="step-number">1</div>
+                    <h3>下载扩展</h3>
+                    <p>从 Chrome 网上应用店搜索 "JSON Formatter & Viewer" 或直接从项目仓库下载</p>
+                </div>
+                <div class="step fade-in-up">
+                    <div class="step-number">2</div>
+                    <h3>开启开发者模式</h3>
+                    <p>在 Chrome 扩展管理页面 (chrome://extensions/) 开启右上角的"开发者模式"</p>
+                </div>
+                <div class="step fade-in-up">
+                    <div class="step-number">3</div>
+                    <h3>加载扩展</h3>
+                    <p>点击"加载已解压的扩展程序"，选择项目的 public 目录</p>
+                </div>
+                <div class="step fade-in-up">
+                    <div class="step-number">4</div>
+                    <h3>开始使用</h3>
+                    <p>访问包含 JSON 的网页，享受智能检测和格式化功能</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Usage Section -->
+    <section id="usage" class="section">
+        <div class="container">
+            <h2>使用方法</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🎯 自动检测</h3>
+                    <p>扩展会自动检测并高亮显示网页中的 JSON 内容，双击即可在查看器中打开</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🖱️ 悬停检测</h3>
+                    <p>使用 <code>Ctrl+Shift+H</code> (Mac: <code>Cmd+Shift+H</code>) 切换悬停检测模式</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⌨️ 快捷格式化</h3>
+                    <p>选中任意文本后按 <code>Ctrl+Shift+E</code> (Mac: <code>Cmd+Shift+E</code>) 尝试格式化为 JSON</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔧 弹窗工具</h3>
+                    <p>点击扩展图标打开弹窗，可以直接输入 JSON 进行格式化、压缩等操作</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📖 查看器功能</h3>
+                    <p>在 JSON 查看器中可以展开/折叠节点、复制内容、浏览历史记录</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🕐 历史导航</h3>
+                    <p>查看器支持前进/后退导航，轻松浏览之前查看过的 JSON 数据</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section class="section">
+        <div class="container">
+            <h2>界面预览</h2>
+            <div class="screenshots">
+                <div class="screenshot">
+                    <img src="./screenshot-detection.png" alt="JSON 检测功能" onerror="this.style.display='none'">
+                    <p style="text-align: center; padding: 1rem;">JSON 智能检测</p>
+                </div>
+                <div class="screenshot">
+                    <img src="./screenshot-viewer.png" alt="JSON 查看器" onerror="this.style.display='none'">
+                    <p style="text-align: center; padding: 1rem;">JSON 可视化查看器</p>
+                </div>
+                <div class="screenshot">
+                    <img src="./screenshot-popup.png" alt="扩展弹窗" onerror="this.style.display='none'">
+                    <p style="text-align: center; padding: 1rem;">扩展弹窗工具</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/linxinyuelan-beep/chrome_json_viewer">GitHub 仓库</a>
+                <a href="./privacy-policy.html">隐私政策</a>
+                <a href="mailto:linxinyuelan@gmail.com">联系作者</a>
+            </div>
+            <p>&copy; 2025 JSON Formatter & Viewer. MIT License.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in-up');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all feature cards and steps
+        document.querySelectorAll('.feature-card, .step').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Language switcher functionality
+        function toggleLanguageDropdown() {
+            const options = document.getElementById('languageOptions');
+            const current = document.querySelector('.language-current');
+            
+            options.classList.toggle('show');
+            current.classList.toggle('open');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.language-dropdown');
+            const options = document.getElementById('languageOptions');
+            const current = document.querySelector('.language-current');
+            
+            if (dropdown && !dropdown.contains(e.target)) {
+                options.classList.remove('show');
+                current.classList.remove('open');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Close dropdown when clicking on a language option
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    if (this.href && !this.href.includes('#')) {
+                        // Allow navigation to other pages
+                        return;
+                    }
+                    e.preventDefault();
+                    
+                    const options = document.getElementById('languageOptions');
+                    const current = document.querySelector('.language-current');
+                    options.classList.remove('show');
+                    current.classList.remove('open');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
