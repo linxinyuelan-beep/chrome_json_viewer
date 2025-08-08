@@ -179,6 +179,31 @@ input:checked + .toggle-slider:before {
     font-weight: bold;
 }
 
+/* Language selection */
+.language-select-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.language-select {
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 13px;
+    margin-left: 10px;
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.language-select:focus {
+    outline: none;
+    border-color: #2e7db5;
+    box-shadow: 0 0 0 2px rgba(46, 125, 181, 0.2);
+}
+
 /* Settings actions (buttons row) */
 .settings-actions {
     margin-top: 8px;

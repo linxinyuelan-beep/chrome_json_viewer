@@ -1,0 +1,198 @@
+// Language configuration for the JSON Formatter & Viewer Extension
+
+// Define language codes
+export type LanguageCode = 'en' | 'zh';
+
+// Default language
+export const DEFAULT_LANGUAGE: LanguageCode = 'en';
+
+// Interface for translations
+export interface Translations {
+  // General UI
+  appName: string;
+  settings: string;
+  version: string;
+
+  // Tabs
+  jsonFormat: string;
+  settingsTab: string;
+
+  // JSON Input section
+  pasteJsonHere: string;
+  formatAndView: string;
+  formatAndConvert: string;
+  clear: string;
+  minifyJson: string;
+  escapeString: string;
+  unescapeString: string;
+  jsonInputHelp1: string;
+  jsonInputHelp2: string;
+  jsonInputHelp3: string;
+
+  // Settings section
+  keyboardShortcuts: string;
+  formatSelectedJson: string;
+  toggleHoverDetection: string;
+  configureShortcuts: string;
+  howToUse: string;
+  hoverOverJson: string;
+  doubleClickJson: string;
+  rightClickMenu: string;
+  useKeyboardShortcuts: string;
+  settingsHeading: string;
+  hoverDetection: string;
+  language: string;
+
+  // Messages
+  enterJsonText: string;
+  invalidJsonFormat: string;
+  processing: string;
+  jsonMinified: string;
+  jsonMinifiedAndCopied: string;
+  noJsonToConvert: string;
+  textEscaped: string;
+  textEscapedAndCopied: string;
+  enterTextToEscape: string;
+  escapeError: string;
+  textUnescaped: string;
+  textUnescapedAndCopied: string;
+  enterTextToUnescape: string;
+  unescapeError: string;
+}
+
+// Language definitions
+export const translations: Record<LanguageCode, Translations> = {
+  en: {
+    // General UI
+    appName: 'JSON Formatter & Viewer',
+    settings: 'Settings',
+    version: 'v',
+
+    // Tabs
+    jsonFormat: 'JSON Format',
+    settingsTab: 'Settings',
+
+    // JSON Input section
+    pasteJsonHere: 'Paste JSON text here...',
+    formatAndView: 'Format & View',
+    formatAndConvert: 'Format & Convert',
+    clear: 'Clear',
+    minifyJson: 'Minify JSON',
+    escapeString: 'Escape String',
+    unescapeString: 'Unescape String',
+    jsonInputHelp1: 'Paste JSON text above and click "Format & View" to display formatted JSON',
+    jsonInputHelp2: 'Click "Format & Convert" to convert special date format /Date(timestamp)/ to readable dates',
+    jsonInputHelp3: '"Minify JSON" compresses JSON to a single line, "Escape String" and "Unescape String" handle special characters',
+
+    // Settings section
+    keyboardShortcuts: 'Keyboard Shortcuts',
+    formatSelectedJson: 'Format selected JSON',
+    toggleHoverDetection: 'Toggle hover detection',
+    configureShortcuts: 'Configure Shortcuts',
+    howToUse: 'How to Use',
+    hoverOverJson: 'Hover over text that might contain JSON',
+    doubleClickJson: 'Double click detected JSON to view formatted',
+    rightClickMenu: 'Right click and select "Format JSON" menu item',
+    useKeyboardShortcuts: 'Use keyboard shortcuts with selected JSON text',
+    settingsHeading: 'Settings',
+    hoverDetection: 'Hover Detection',
+    language: 'Language',
+
+    // Messages
+    enterJsonText: 'Please enter JSON text',
+    invalidJsonFormat: 'Invalid JSON format',
+    processing: 'Processing...',
+    jsonMinified: 'JSON minified',
+    jsonMinifiedAndCopied: 'JSON minified and copied to clipboard',
+    noJsonToConvert: 'No JSON to convert',
+    textEscaped: 'Text escaped',
+    textEscapedAndCopied: 'Text escaped and copied to clipboard',
+    enterTextToEscape: 'Please enter text to escape',
+    escapeError: 'Escape error: ',
+    textUnescaped: 'Text unescaped',
+    textUnescapedAndCopied: 'Text unescaped and copied to clipboard',
+    enterTextToUnescape: 'Please enter text to unescape',
+    unescapeError: 'Unescape error: ',
+  },
+  zh: {
+    // General UI
+    appName: 'JSON 格式化与查看器',
+    settings: '设置',
+    version: 'v',
+
+    // Tabs
+    jsonFormat: 'JSON格式化',
+    settingsTab: '设置',
+
+    // JSON Input section
+    pasteJsonHere: '在此粘贴JSON文本...',
+    formatAndView: '格式化并查看',
+    formatAndConvert: '格式化并转换',
+    clear: '清空',
+    minifyJson: 'JSON压缩',
+    escapeString: '转义字符串',
+    unescapeString: '反转义字符串',
+    jsonInputHelp1: '将JSON文本粘贴在上方，然后点击"格式化并查看"以显示格式化后的JSON',
+    jsonInputHelp2: '点击"格式化并转换"可将特殊日期格式 /Date(timestamp)/ 转换为可读日期并显示',
+    jsonInputHelp3: '点击"JSON压缩"可将JSON压缩为单行，"转义字符串"和"反转义字符串"用于处理特殊字符',
+
+    // Settings section
+    keyboardShortcuts: '键盘快捷键',
+    formatSelectedJson: '格式化选中的JSON',
+    toggleHoverDetection: '切换悬停检测',
+    configureShortcuts: '设置快捷键',
+    howToUse: '使用方式',
+    hoverOverJson: '将鼠标悬停在可能包含JSON的文本上',
+    doubleClickJson: '双击检测到的JSON以查看格式化视图',
+    rightClickMenu: '右键点击并选择"格式化 JSON"菜单项',
+    useKeyboardShortcuts: '选择JSON文本后使用键盘快捷键',
+    settingsHeading: '设置',
+    hoverDetection: '悬停检测',
+    language: '语言',
+
+    // Messages
+    enterJsonText: '请输入JSON文本',
+    invalidJsonFormat: '无效的JSON格式',
+    processing: '正在处理中...',
+    jsonMinified: 'JSON已压缩',
+    jsonMinifiedAndCopied: 'JSON已压缩并复制到剪贴板',
+    noJsonToConvert: '没有JSON可转换',
+    textEscaped: '文本已转义',
+    textEscapedAndCopied: '文本已转义并复制到剪贴板',
+    enterTextToEscape: '请输入需要转义的文本',
+    escapeError: '转义出错：',
+    textUnescaped: '文本已反转义',
+    textUnescapedAndCopied: '文本已反转义并复制到剪贴板',
+    enterTextToUnescape: '请输入需要反转义的文本',
+    unescapeError: '反转义出错：',
+  },
+};
+
+// Function to get translations
+export function getTranslations(lang: LanguageCode): Translations {
+  return translations[lang] || translations[DEFAULT_LANGUAGE];
+}
+
+// Language options for dropdown
+export const languageOptions = [
+  { code: 'en', label: 'English', flag: '🇺🇸' },
+  { code: 'zh', label: '中文', flag: '🇨🇳' },
+];
+
+// Function to get stored language or default
+export async function getCurrentLanguage(): Promise<LanguageCode> {
+  return new Promise((resolve) => {
+    chrome.storage.local.get('language', (result) => {
+      resolve((result.language as LanguageCode) || DEFAULT_LANGUAGE);
+    });
+  });
+}
+
+// Function to save selected language
+export async function saveLanguage(lang: LanguageCode): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ language: lang }, () => {
+      resolve();
+    });
+  });
+}

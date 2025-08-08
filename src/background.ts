@@ -1,13 +1,23 @@
 // background.ts - Background service worker for JSON Formatter & Viewer
 
+// Initialize default language
+const DEFAULT_LANGUAGE = 'en';
+
 chrome.runtime.onInstalled.addListener(() => {
     console.log('JSON Formatter & Viewer extension installed');
     
-    // 创建右键菜单项
+    // Create context menu item
     chrome.contextMenus.create({
         id: 'formatSelectedJson',
-        title: '格式化 JSON',
-        contexts: ['selection'], // 仅在文本选中时显示
+        title: '格式化 JSON', // Will be updated based on language
+        contexts: ['selection'], // Only show when text is selected
+    });
+    
+    // Initialize language settings if not already set
+    chrome.storage.local.get('language', (result) => {
+        if (!result.language) {
+            chrome.storage.local.set({ language: DEFAULT_LANGUAGE });
+        }
     });
 });
 

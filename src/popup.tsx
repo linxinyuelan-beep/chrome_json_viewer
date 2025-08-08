@@ -7,20 +7,36 @@ import {
 } from './utils/jsonViewer';
 import { isValidNestedJson } from './utils/nestedJsonHandler';
 import { processJsonDates } from './utils/dateConverter';
+import { 
+  LanguageCode,
+  DEFAULT_LANGUAGE, 
+  getTranslations, 
+  getCurrentLanguage, 
+  saveLanguage,
+  languageOptions,
+  Translations
+} from './utils/i18n';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<'settings' | 'json-input'>('json-input');
   const [jsonHoverEnabled, setJsonHoverEnabled] = React.useState(true);
   const [jsonInput, setJsonInput] = React.useState('');
   const [jsonFormatError, setJsonFormatError] = React.useState<string | null>(null);
+  const [language, setLanguage] = React.useState<LanguageCode>(DEFAULT_LANGUAGE);
+  const [translations, setTranslations] = React.useState<Translations>(getTranslations(DEFAULT_LANGUAGE));
   const version = VERSION;
 
   // Load saved settings when popup opens
   React.useEffect(() => {
-    // 获取所有保存的设置
+    // Load all saved settings
     const loadSettings = async () => {
       try {
-        // 检查悬停检测是否启用
+        // Get the current language setting
+        const currentLang = await getCurrentLanguage();
+        setLanguage(currentLang);
+        setTranslations(getTranslations(currentLang));
+        
+        // Check if hover detection is enabled
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           if (tabs[0]?.id) {
             chrome.tabs.sendMessage(tabs[0].id, { action: 'getHoverDetectionState' })
@@ -52,6 +68,14 @@ const App: React.FC = () => {
     });
     setJsonHoverEnabled(!jsonHoverEnabled);
   };
+  
+  // Change language
+  const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value as LanguageCode;
+    await saveLanguage(newLang);
+    setLanguage(newLang);
+    setTranslations(getTranslations(newLang));
+  };
 
   // 新增：打开 Chrome 快捷键设置页面
   const openShortcutsPage = () => {
@@ -62,27 +86,27 @@ const App: React.FC = () => {
     }
   };
 
-  // 格式化JSON输入的函数
+  // Format JSON input function
   const formatJsonInput = () => {
     try {
       if (!jsonInput.trim()) {
-        setJsonFormatError('请输入JSON文本');
+        setJsonFormatError(translations.enterJsonText);
         return;
       }
 
       if (!isValidNestedJson(jsonInput)) {
-        setJsonFormatError('无效的JSON格式');
+        setJsonFormatError(translations.invalidJsonFormat);
         return;
       }
 
-      // 解析并格式化JSON
+      // Parse and format JSON
       const parsedJson = JSON.parse(jsonInput);
       const formattedJson = JSON.stringify(parsedJson, null, 2);
       setJsonInput(formattedJson);
       setJsonFormatError(null);
       
-      // 添加一个状态指示
-      setJsonFormatError('正在处理中...');
+      // Add a status indication
+      setJsonFormatError(translations.processing);
       
       // 先通过background.js发送消息（这样可以处理跨域问题）
       chrome.runtime.sendMessage(
@@ -141,31 +165,31 @@ const App: React.FC = () => {
     chrome.tabs.create({ url });
   };
   
-  // 格式化并转换JSON中的日期格式，然后显示在抽屉中
+  // Format and convert JSON date formats, then display in drawer
   const convertJsonDates = () => {
     try {
       if (!jsonInput.trim()) {
-        setJsonFormatError('没有JSON可转换');
+        setJsonFormatError(translations.noJsonToConvert);
         return;
       }
 
       if (!isValidNestedJson(jsonInput)) {
-        setJsonFormatError('无效的JSON格式');
+        setJsonFormatError(translations.invalidJsonFormat);
         return;
       }
 
-      // 解析JSON
+      // Parse JSON
       const parsedJson = JSON.parse(jsonInput);
       
-      // 处理并转换日期格式
+      // Process and convert date formats
       const convertedJson = processJsonDates(parsedJson);
       
-      // 格式化转换后的JSON
+      // Format the converted JSON
       const formattedJson = JSON.stringify(convertedJson, null, 2);
       
-      // 更新文本框中的内容
+      // Update content in the text box
       setJsonInput(formattedJson);
-      setJsonFormatError('正在处理中...');
+      setJsonFormatError(translations.processing);
       
       // 复制到剪贴板
       navigator.clipboard.writeText(formattedJson)
@@ -229,114 +253,114 @@ const App: React.FC = () => {
     }
   };
 
-  // 清空JSON输入
+  // Clear JSON input
   const clearJsonInput = () => {
     setJsonInput('');
     setJsonFormatError(null);
   };
 
-  // JSON压缩/最小化
+  // JSON minification
   const minifyJson = () => {
     try {
       if (!jsonInput.trim()) {
-        setJsonFormatError('请输入JSON文本');
+        setJsonFormatError(translations.enterJsonText);
         return;
       }
 
       if (!isValidNestedJson(jsonInput)) {
-        setJsonFormatError('无效的JSON格式');
+        setJsonFormatError(translations.invalidJsonFormat);
         return;
       }
 
-      // 解析并压缩JSON (没有缩进和空白)
+      // Parse and compress JSON (no indentation or whitespace)
       const parsedJson = JSON.parse(jsonInput);
       const minifiedJson = JSON.stringify(parsedJson);
       
-      // 直接更新输入框中的内容
+      // Directly update the content in the input field
       setJsonInput(minifiedJson);
-      setJsonFormatError('JSON已压缩');
+      setJsonFormatError(translations.jsonMinified);
       
-      // 复制到剪贴板
+      // Copy to clipboard
       navigator.clipboard.writeText(minifiedJson)
         .then(() => {
-          setJsonFormatError('JSON已压缩并复制到剪贴板');
+          setJsonFormatError(translations.jsonMinifiedAndCopied);
         })
         .catch(err => {
-          console.log('剪贴板复制失败，但JSON已压缩:', err);
+          console.log('Clipboard copy failed, but JSON is minified:', err);
         });
     } catch (error) {
-      setJsonFormatError(`解析JSON出错：${(error as Error).message}`);
+      setJsonFormatError(`${translations.invalidJsonFormat}: ${(error as Error).message}`);
     }
   };
 
-  // 转义JSON字符串
+  // Escape JSON string
   const escapeJsonString = () => {
     try {
       if (!jsonInput.trim()) {
-        setJsonFormatError('请输入需要转义的文本');
+        setJsonFormatError(translations.enterTextToEscape);
         return;
       }
 
-      // 如果输入是有效的JSON，则先格式化它
+      // If input is valid JSON, format it first
       let inputToEscape = jsonInput;
       if (isValidNestedJson(jsonInput)) {
         const parsedJson = JSON.parse(jsonInput);
         inputToEscape = JSON.stringify(parsedJson);
       }
       
-      // 转义字符串 (对字符串进行JSON序列化后去掉首尾引号)
+      // Escape string (JSON serialize the string and remove the quotes)
       const escapedString = JSON.stringify(inputToEscape).slice(1, -1);
       
-      // 更新输入框中的内容
+      // Update content in the input field
       setJsonInput(escapedString);
-      setJsonFormatError('文本已转义');
+      setJsonFormatError(translations.textEscaped);
       
-      // 复制到剪贴板
+      // Copy to clipboard
       navigator.clipboard.writeText(escapedString)
         .then(() => {
-          setJsonFormatError('文本已转义并复制到剪贴板');
+          setJsonFormatError(translations.textEscapedAndCopied);
         })
         .catch(err => {
-          console.log('剪贴板复制失败，但文本已转义:', err);
+          console.log('Clipboard copy failed, but text is escaped:', err);
         });
     } catch (error) {
-      setJsonFormatError(`转义出错：${(error as Error).message}`);
+      setJsonFormatError(`${translations.escapeError}${(error as Error).message}`);
     }
   };
 
-  // 反转义JSON字符串
+  // Unescape JSON string
   const unescapeJsonString = () => {
     try {
       if (!jsonInput.trim()) {
-        setJsonFormatError('请输入需要反转义的文本');
+        setJsonFormatError(translations.enterTextToUnescape);
         return;
       }
 
-      // 为字符串添加引号并解析
+      // Add quotes to the string and parse
       const unescapedString = JSON.parse(`"${jsonInput}"`);
       
-      // 更新输入框中的内容
+      // Update the content in the input field
       setJsonInput(unescapedString);
-      setJsonFormatError('文本已反转义');
+      setJsonFormatError(translations.textUnescaped);
       
-      // 复制到剪贴板
+      // Copy to clipboard
       navigator.clipboard.writeText(unescapedString)
         .then(() => {
-          setJsonFormatError('文本已反转义并复制到剪贴板');
+          setJsonFormatError(translations.textUnescapedAndCopied);
         })
         .catch(err => {
-          console.log('剪贴板复制失败，但文本已反转义:', err);
+          console.log('Clipboard copy failed, but text is unescaped:', err);
         });
     } catch (error) {
-      setJsonFormatError(`反转义出错：${(error as Error).message}`);
+      setJsonFormatError(`${translations.unescapeError}${(error as Error).message}`);
     }
   };
 
   return (
     <div className="popup">
       <div className="header">
-        <h1>JSON Formatter & Viewer</h1>
-        <div className="version">v{version}</div>
+        <h1>{translations.appName}</h1>
+        <div className="version">{translations.version}{version}</div>
       </div>
       
       <div className="tabs">
@@ -344,13 +368,13 @@ const App: React.FC = () => {
           className={`tab ${activeTab === 'json-input' ? 'active' : ''}`}
           onClick={() => setActiveTab('json-input')}
         >
-          JSON格式化
+          {translations.jsonFormat}
         </button>
         <button 
           className={`tab ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
         >
-          设置
+          {translations.settingsTab}
         </button>
       </div>
       
@@ -358,30 +382,30 @@ const App: React.FC = () => {
         {activeTab === 'settings' ? (
           <>
             <div className="section">
-              <h2>键盘快捷键</h2>
+              <h2>{translations.keyboardShortcuts}</h2>
               <ul className="shortcut-list">
-                <li><kbd>Ctrl+Shift+E</kbd> 格式化选中的JSON</li>
-                <li><kbd>Ctrl+Shift+H</kbd> 切换悬停检测</li>
+                <li><kbd>Ctrl+Shift+E</kbd> {translations.formatSelectedJson}</li>
+                <li><kbd>Ctrl+Shift+H</kbd> {translations.toggleHoverDetection}</li>
               </ul>
               <div className="settings-actions">
-                <button className="button" onClick={openShortcutsPage} aria-label="打开Chrome快捷键设置">
-                  设置快捷键
+                <button className="button" onClick={openShortcutsPage} aria-label="Open Chrome shortcuts settings">
+                  {translations.configureShortcuts}
                 </button>
               </div>
             </div>
             
             <div className="section">
-              <h2>使用方式</h2>
+              <h2>{translations.howToUse}</h2>
               <ul className="feature-list">
-                <li>将鼠标悬停在可能包含JSON的文本上</li>
-                <li>双击检测到的JSON以查看格式化视图</li>
-                <li>右键点击并选择"格式化 JSON"菜单项</li>
-                <li>选择JSON文本后使用键盘快捷键</li>
+                <li>{translations.hoverOverJson}</li>
+                <li>{translations.doubleClickJson}</li>
+                <li>{translations.rightClickMenu}</li>
+                <li>{translations.useKeyboardShortcuts}</li>
               </ul>
             </div>
 
             <div className="section">
-              <h2>设置</h2>
+              <h2>{translations.settingsHeading}</h2>
               <div className="settings-group">
                 <label className="toggle-switch">
                   <input 
@@ -390,7 +414,24 @@ const App: React.FC = () => {
                     onChange={toggleHoverDetection}
                   />
                   <span className="toggle-slider"></span>
-                  <span className="toggle-label">悬停检测</span>
+                  <span className="toggle-label">{translations.hoverDetection}</span>
+                </label>
+              </div>
+              
+              <div className="settings-group">
+                <label className="language-select-label">
+                  {translations.language}:
+                  <select 
+                    className="language-select"
+                    value={language}
+                    onChange={handleLanguageChange}
+                  >
+                    {languageOptions.map(option => (
+                      <option key={option.code} value={option.code}>
+                        {option.flag} {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </label>
               </div>
             </div>
@@ -402,12 +443,12 @@ const App: React.FC = () => {
                 className="json-textarea"
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
-                placeholder="在此粘贴JSON文本..."
+                placeholder={translations.pasteJsonHere}
                 rows={10}
                 autoFocus
               />
               {jsonFormatError && (
-                <div className={`json-error-message ${jsonFormatError === '复制成功！' || jsonFormatError === '正在处理中...' ? 'success' : ''}`}>
+                <div className={`json-error-message ${jsonFormatError === translations.processing ? 'success' : ''}`}>
                   {jsonFormatError}
                 </div>
               )}
@@ -415,38 +456,38 @@ const App: React.FC = () => {
             <div className="json-input-actions">
               <div className="action-row">
                 <button className="json-button format" onClick={formatJsonInput}>
-                  格式化并查看
+                  {translations.formatAndView}
                 </button>
                 <button className="json-button convert" onClick={convertJsonDates}>
-                  格式化并转换
+                  {translations.formatAndConvert}
                 </button>
                 <button className="json-button clear" onClick={clearJsonInput}>
-                  清空
+                  {translations.clear}
                 </button>
               </div>
               <div className="action-row">
                 <button className="json-button minify" onClick={minifyJson}>
-                  JSON压缩
+                  {translations.minifyJson}
                 </button>
                 <button className="json-button escape" onClick={escapeJsonString}>
-                  转义字符串
+                  {translations.escapeString}
                 </button>
                 <button className="json-button unescape" onClick={unescapeJsonString}>
-                  反转义字符串
+                  {translations.unescapeString}
                 </button>
               </div>
             </div>
             <div className="json-input-help">
-              <p>将JSON文本粘贴在上方，然后点击"格式化并查看"以显示格式化后的JSON</p>
-              <p>点击"格式化并转换"可将特殊日期格式 <code>/Date(timestamp)/</code> 转换为可读日期并显示</p>
-              <p>点击"JSON压缩"可将JSON压缩为单行，"转义字符串"和"反转义字符串"用于处理特殊字符</p>
+              <p>{translations.jsonInputHelp1}</p>
+              <p>{translations.jsonInputHelp2} <code>/Date(timestamp)/</code></p>
+              <p>{translations.jsonInputHelp3}</p>
             </div>
           </div>
         )}
       </div>
       
       <div className="footer">
-        <div>JSON Formatter & Viewer</div>
+        <div>{translations.appName}</div>
       </div>
     </div>
   );
