@@ -1,110 +1,166 @@
 /* JSON History styles */
 .json-history {
-  padding: 8px;
-  background-color: #f8f9fa;
+  padding: 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   height: 100%;
   display: flex;
   flex-direction: column;
-  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .json-history-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
-  background-color: #e9f0f8;
-  margin-bottom: 8px;
-  border-radius: 4px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  margin: -24px -24px 24px -24px;
+  border-radius: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .json-history-header h3 {
   margin: 0;
-  font-size: 14px;
-  color: #2e7db5;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.json-history-header h3::before {
+  content: '📋';
+  font-size: 20px;
 }
 
 .json-history-actions {
   display: flex;
-  gap: 8px;
+  gap: 12px;
 }
 
 .json-history-close {
-  background: none;
+  background: rgba(148, 163, 184, 0.1);
   border: none;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
-  color: #666;
-  padding: 0;
+  color: #64748b;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.json-history-close:hover {
+  background: rgba(148, 163, 184, 0.2);
+  color: #475569;
 }
 
 .json-history-loading,
 .json-history-empty {
-  padding: 16px;
+  padding: 40px 20px;
   text-align: center;
-  color: #888;
+  color: #94a3b8;
   font-style: italic;
+  font-size: 14px;
 }
 
 .json-history-clear {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   display: flex;
   justify-content: flex-end;
 }
 
 .json-history-button {
-  padding: 4px 8px;
-  font-size: 12px;
-  border-radius: 3px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
   border: none;
 }
 
 .json-history-button.clear {
-  background-color: #f44336;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
 }
 
 .json-history-button.clear:hover {
-  background-color: #d32f2f;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
 }
 
 .json-history-button.confirm {
-  background-color: #f44336;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
 }
 
 .json-history-button.cancel {
-  background-color: #9e9e9e;
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
   color: white;
   margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(107, 114, 128, 0.2);
 }
 
 .json-history-confirm {
   display: flex;
   align-items: center;
-  font-size: 12px;
+  font-size: 13px;
+  color: #475569;
 }
 
 .json-history-list {
   overflow-y: auto;
   flex-grow: 1;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+.json-history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.json-history-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.json-history-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 3px;
+}
+
+.json-history-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
 }
 
 .json-history-item {
-  padding: 8px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 16px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .json-history-item:hover {
-  background-color: #edf3f9;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .json-history-item-content {
@@ -113,19 +169,21 @@
 }
 
 .json-history-item-preview {
-  font-size: 12px;
-  color: #333;
+  font-size: 13px;
+  color: #1e293b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-family: 'Fira Code', 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 }
 
 .json-history-item-details {
   display: flex;
-  font-size: 10px;
-  color: #888;
-  gap: 8px;
+  font-size: 11px;
+  color: #64748b;
+  gap: 12px;
 }
 
 .json-history-item-source {
@@ -141,22 +199,29 @@
 }
 
 .json-history-item-size {
-  color: #2e7db5;
+  color: #3b82f6;
+  font-weight: 500;
 }
 
 .json-history-item-delete {
-  background: none;
+  background: rgba(239, 68, 68, 0.1);
   border: none;
-  color: #f44336;
+  color: #ef4444;
   cursor: pointer;
-  padding: 0 5px;
+  padding: 6px 8px;
   font-size: 16px;
-  opacity: 0.5;
-  transition: opacity 0.2s;
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .json-history-item-delete:hover {
   opacity: 1;
+  background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.05);
 }
 
 /* Toggle button in drawer */

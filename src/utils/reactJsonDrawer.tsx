@@ -151,42 +151,11 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
     <div class="json-drawer-content"></div>
   `;
 
-  // Apply base styles
-  drawer.style.backgroundColor = '#f8f9fa';
-  drawer.style.color = '#333333';
-  drawer.style.boxShadow = '-5px 0 15px rgba(0, 0, 0, 0.1)';
-  drawer.style.padding = '0';
-
-  // Style header
-  const headerElement = drawer.querySelector('.json-drawer-header');
-  if (headerElement) {
-    (headerElement as HTMLElement).style.display = 'flex';
-    (headerElement as HTMLElement).style.justifyContent = 'space-between';
-    (headerElement as HTMLElement).style.alignItems = 'center';
-    (headerElement as HTMLElement).style.padding = '8px 12px';
-    (headerElement as HTMLElement).style.borderBottom = '1px solid #e0e0e0';
-    (headerElement as HTMLElement).style.color = '#333333';
-    (headerElement as HTMLElement).style.margin = '0';
-  }
-
-  // Style title
-  const titleElement = drawer.querySelector('.json-drawer-title');
-  if (titleElement) {
-    (titleElement as HTMLElement).style.fontWeight = 'bold';
-    (titleElement as HTMLElement).style.fontSize = '14px';
-    (titleElement as HTMLElement).style.color = '#2e7db5';
-  }
-
-  // Style close button
+  // 不设置内联样式，完全使用CSS文件控制样式
+  
+  // Style close button - 只保留事件处理
   const closeBtn = drawer.querySelector('.json-drawer-close');
   if (closeBtn) {
-    (closeBtn as HTMLElement).style.color = '#666';
-    (closeBtn as HTMLElement).style.fontSize = '18px';
-    (closeBtn as HTMLElement).style.background = 'none';
-    (closeBtn as HTMLElement).style.border = 'none';
-    (closeBtn as HTMLElement).style.cursor = 'pointer';
-    (closeBtn as HTMLElement).style.padding = '0 5px';
-
     // Close button click event
     closeBtn.addEventListener('click', () => {
       // Unmount React component before closing drawer
