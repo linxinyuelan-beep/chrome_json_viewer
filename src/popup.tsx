@@ -53,6 +53,15 @@ const App: React.FC = () => {
     setJsonHoverEnabled(!jsonHoverEnabled);
   };
 
+  // 新增：打开 Chrome 快捷键设置页面
+  const openShortcutsPage = () => {
+    try {
+      chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+    } catch (e) {
+      console.error('Failed to open shortcuts page', e);
+    }
+  };
+
   // 格式化JSON输入的函数
   const formatJsonInput = () => {
     try {
@@ -354,6 +363,11 @@ const App: React.FC = () => {
                 <li><kbd>Ctrl+Shift+E</kbd> 格式化选中的JSON</li>
                 <li><kbd>Ctrl+Shift+H</kbd> 切换悬停检测</li>
               </ul>
+              <div className="settings-actions">
+                <button className="button" onClick={openShortcutsPage} aria-label="打开Chrome快捷键设置">
+                  设置快捷键
+                </button>
+              </div>
             </div>
             
             <div className="section">
@@ -379,10 +393,6 @@ const App: React.FC = () => {
                   <span className="toggle-label">悬停检测</span>
                 </label>
               </div>
-              
-              {/* 默认视图类型设置已移除 */}
-              
-              {/* 自动切换视图类型相关代码已移除 */}
             </div>
           </>
         ) : (

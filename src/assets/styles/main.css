@@ -56,6 +56,10 @@ body {
 
 /* Section styles */
 .section {
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    padding: 12px;
     margin-bottom: 20px;
 }
 
@@ -63,6 +67,10 @@ body {
     font-size: 15px;
     margin-bottom: 10px;
     color: #333;
+}
+
+.section + .section {
+    margin-top: 12px;
 }
 
 /* Footer styles */
@@ -169,6 +177,29 @@ input:checked + .toggle-slider:before {
     margin-bottom: 8px;
     font-size: 13px;
     font-weight: bold;
+}
+
+/* Settings actions (buttons row) */
+.settings-actions {
+    margin-top: 8px;
+}
+
+.settings-actions .button {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #4a90e2, #2e7db5);
+    box-shadow: 0 6px 14px rgba(46, 125, 181, 0.25);
+}
+
+.settings-actions .button:hover {
+    background: linear-gradient(135deg, #3f7fc7, #236293);
+}
+
+.settings-actions .button:active {
+    transform: translateY(1px);
 }
 
 /* Radio button group */
@@ -330,6 +361,22 @@ input:checked + .toggle-slider:before {
     box-shadow: 0 0 0 2px rgba(46, 125, 181, 0.2);
 }
 
+/* 焦点样式增强 */
+.json-textarea:focus {
+    outline: none;
+    border-color: #2e7db5;
+    box-shadow: 0 0 0 2px rgba(46, 125, 181, 0.25);
+    transition: all 0.2s ease;
+}
+
+/* 突出显示当前活动的标签 */
+.tab.active {
+    color: #2e7db5;
+    border-bottom-color: #2e7db5;
+    font-weight: bold;
+    background-color: rgba(46, 125, 181, 0.05);
+}
+
 .json-input-actions {
     display: flex;
     flex-direction: column;
@@ -432,20 +479,4 @@ input:checked + .toggle-slider:before {
     padding: 8px;
     background-color: #f9f9f9;
     border-radius: 4px;
-}
-
-/* 焦点样式增强 */
-.json-textarea:focus {
-    outline: none;
-    border-color: #2e7db5;
-    box-shadow: 0 0 0 2px rgba(46, 125, 181, 0.25);
-    transition: all 0.2s ease;
-}
-
-/* 突出显示当前活动的标签 */
-.tab.active {
-    color: #2e7db5;
-    border-bottom-color: #2e7db5;
-    font-weight: bold;
-    background-color: rgba(46, 125, 181, 0.05);
 }
