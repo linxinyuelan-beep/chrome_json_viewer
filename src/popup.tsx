@@ -2,11 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './assets/styles/main.css';
 import { VERSION } from './config/version';
-import { 
-  formatJsonSize
-} from './utils/jsonViewer';
 import { isValidNestedJson } from './utils/nestedJsonHandler';
 import { processJsonDates } from './utils/dateConverter';
+import { parseJsonSafely } from './utils/jsonParser';
 import { 
   LanguageCode,
   DEFAULT_LANGUAGE, 
@@ -99,8 +97,8 @@ const App: React.FC = () => {
         return;
       }
 
-      // Parse and format JSON
-      const parsedJson = JSON.parse(jsonInput);
+      // 使用增强的 JSON 解析器处理大整数精度问题
+      const parsedJson = parseJsonSafely(jsonInput);
       const formattedJson = JSON.stringify(parsedJson, null, 2);
       setJsonInput(formattedJson);
       setJsonFormatError(null);
@@ -178,8 +176,8 @@ const App: React.FC = () => {
         return;
       }
 
-      // Parse JSON
-      const parsedJson = JSON.parse(jsonInput);
+      // 使用增强的 JSON 解析器处理大整数精度问题
+      const parsedJson = parseJsonSafely(jsonInput);
       
       // Process and convert date formats
       const convertedJson = processJsonDates(parsedJson);
@@ -273,7 +271,7 @@ const App: React.FC = () => {
       }
 
       // Parse and compress JSON (no indentation or whitespace)
-      const parsedJson = JSON.parse(jsonInput);
+      const parsedJson = parseJsonSafely(jsonInput);
       const minifiedJson = JSON.stringify(parsedJson);
       
       // Directly update the content in the input field
@@ -304,7 +302,7 @@ const App: React.FC = () => {
       // If input is valid JSON, format it first
       let inputToEscape = jsonInput;
       if (isValidNestedJson(jsonInput)) {
-        const parsedJson = JSON.parse(jsonInput);
+        const parsedJson = parseJsonSafely(jsonInput);
         inputToEscape = JSON.stringify(parsedJson);
       }
       

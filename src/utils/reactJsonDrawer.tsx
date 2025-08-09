@@ -2,6 +2,7 @@
 import ReactDOM from 'react-dom';
 import React from 'react';
 import JsonViewerComponent from '../components/JsonViewer';
+import { parseJsonSafely } from './jsonParser';
 
 // Store React root references for proper cleanup
 const reactRoots = new Map<HTMLElement, any>();
@@ -316,9 +317,9 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
   if (!jsonString) return;
 
   try {
-    // Parse JSON data
-    const jsonData = JSON.parse(jsonString);
-    
+    // 使用增强的 JSON 解析器处理大整数精度问题
+    const jsonData = parseJsonSafely(jsonString);
+
     // Get or create drawer
     const drawer = document.querySelector('.json-drawer') as HTMLElement || createJsonDrawerWithReactMount();
     if (!document.body.contains(drawer)) {
