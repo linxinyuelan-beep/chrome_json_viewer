@@ -58,7 +58,7 @@ function isJsonViewerElement(element: Element): boolean {
 }
 
 // Function to create and mount the JSON viewer React component in the drawer
-export function mountJsonViewer(jsonData: any, container: HTMLElement, version: string): void {
+export function mountJsonViewer(jsonData: any, container: HTMLElement, version: string, onClose: () => void): void {
   try {
     // Clean up any existing React root
     if (reactRoots.has(container)) {
@@ -87,7 +87,8 @@ export function mountJsonViewer(jsonData: any, container: HTMLElement, version: 
       root.render(
         React.createElement(JsonViewerComponent, { 
           jsonData, 
-          version, 
+          version,
+          onClose,
           key: renderKey 
         })
       );
@@ -97,6 +98,7 @@ export function mountJsonViewer(jsonData: any, container: HTMLElement, version: 
         React.createElement(JsonViewerComponent, { 
           jsonData, 
           version, 
+          onClose,
           key: renderKey 
         }),
         container
@@ -145,31 +147,8 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
   drawer.className = 'json-drawer';
   drawer.innerHTML = `
     <div class="json-drawer-resize-handle" title="拖动调整宽度"></div>
-    <div class="json-drawer-header">
-      <div class="json-drawer-title">JSON Viewer</div>
-      <button class="json-drawer-close">&times;</button>
-    </div>
     <div class="json-drawer-content"></div>
   `;
-
-  // 不设置内联样式，完全使用CSS文件控制样式
-  
-  // Style close button - 只保留事件处理
-  const closeBtn = drawer.querySelector('.json-drawer-close');
-  if (closeBtn) {
-    // Close button click event
-    closeBtn.addEventListener('click', () => {
-      // Unmount React component before closing drawer
-      const drawerContent = drawer.querySelector('.json-drawer-content');
-      if (drawerContent) {
-        const reactRoot = drawerContent.querySelector('.json-viewer-react-root') as HTMLElement;
-        if (reactRoot) {
-          unmountReactComponent(reactRoot);
-        }
-      }
-      drawer.classList.remove('open');
-    });
-  }
 
   // 添加拖动调整宽度功能
   const resizeHandle = drawer.querySelector('.json-drawer-resize-handle') as HTMLElement;
@@ -343,8 +322,19 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
     
     drawerContent.appendChild(reactRoot);
     
+    const onClose = () => {
+      const drawerContent = drawer.querySelector('.json-drawer-content');
+      if (drawerContent) {
+        const reactRoot = drawerContent.querySelector('.json-viewer-react-root') as HTMLElement;
+        if (reactRoot) {
+          unmountReactComponent(reactRoot);
+        }
+      }
+      drawer.classList.remove('open');
+    };
+    
     // Mount React component in drawer
-    mountJsonViewer(jsonData, reactRoot, version);
+    mountJsonViewer(jsonData, reactRoot, version, onClose);
     
     // Open drawer
     drawer.classList.add('open');

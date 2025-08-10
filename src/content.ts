@@ -279,55 +279,12 @@ function createJsonDrawer(): HTMLElement {
     drawer.className = 'json-drawer';
     drawer.innerHTML = `
         <div class="json-drawer-resize-handle" title="拖动调整宽度"></div>
-        <div class="json-drawer-header">
-            <div class="json-drawer-title">JSON Viewer</div>
-            <button class="json-drawer-close">&times;</button>
-        </div>
         <div class="json-drawer-content"></div>
     `;
-    
-    // Apply light theme styles
-    drawer.style.backgroundColor = '#f8f9fa';
-    drawer.style.color = '#333333';
-    drawer.style.boxShadow = '-5px 0 15px rgba(0, 0, 0, 0.1)';
-    drawer.style.padding = '0';
-    
-    // Style header
-    const headerElement = drawer.querySelector('.json-drawer-header');
-    if (headerElement) {
-        (headerElement as HTMLElement).style.display = 'flex';
-        (headerElement as HTMLElement).style.justifyContent = 'space-between';
-        (headerElement as HTMLElement).style.alignItems = 'center';
-        (headerElement as HTMLElement).style.padding = '8px 12px';
-        (headerElement as HTMLElement).style.borderBottom = '1px solid #e0e0e0';
-        (headerElement as HTMLElement).style.backgroundColor = '#e9f0f8';
-        (headerElement as HTMLElement).style.margin = '0';
-    }
-    
-    // Style title
-    const titleElement = drawer.querySelector('.json-drawer-title');
-    if (titleElement) {
-        (titleElement as HTMLElement).style.fontWeight = 'bold';
-        (titleElement as HTMLElement).style.fontSize = '14px';
-        (titleElement as HTMLElement).style.color = '#2e7db5';
-    }
-    
-    // Style close button
-    const closeBtn = drawer.querySelector('.json-drawer-close');
-    if (closeBtn) {
-        (closeBtn as HTMLElement).style.color = '#666';
-        (closeBtn as HTMLElement).style.fontSize = '18px';
-        (closeBtn as HTMLElement).style.background = 'none';
-        (closeBtn as HTMLElement).style.border = 'none';
-        (closeBtn as HTMLElement).style.cursor = 'pointer';
-        (closeBtn as HTMLElement).style.padding = '0 5px';
-        
-        // Close button click event
-        closeBtn.addEventListener('click', () => {
-            drawer.classList.remove('open');
-        });
-    }
-    
+
+    // The close button is removed from here as the main UI is handled by React.
+    // The fallback can be closed by clicking outside.
+
     // 添加拖动调整宽度功能
     const resizeHandle = drawer.querySelector('.json-drawer-resize-handle') as HTMLElement;
     if (resizeHandle) {
@@ -549,7 +506,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         
         // 显示状态变化通知
         showNotification(
-            `JSON悬停检测: ${enableHoverDetection ? '已启用' : '已禁用'}`,
+            `JSON悬停检测: ${enableHoverDetection ? '已启用' : '已禁用'}`, 
             enableHoverDetection ? 'success' : 'info'
         );
         

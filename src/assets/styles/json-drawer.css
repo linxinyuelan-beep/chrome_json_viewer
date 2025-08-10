@@ -136,7 +136,7 @@
 
 .json-drawer-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: 5px 10px;
   border-bottom: none;
@@ -175,10 +175,10 @@
 }
 
 .json-drawer-close {
-  background: rgba(255, 255, 255, 0.2);
+  background: transparent;
   border: none;
-  color: white;
-  font-size: 20px;
+  color: #475569; /* Changed from white to dark gray */
+  font-size: 18px;
   cursor: pointer;
   padding: 8px 10px;
   border-radius: 8px;
@@ -187,12 +187,12 @@
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10px);
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
 }
 
 .json-drawer-close:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.1);
   transform: scale(1.05);
 }
 

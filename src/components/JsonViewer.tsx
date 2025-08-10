@@ -38,10 +38,11 @@ declare global {
 interface JsonViewerProps {
   jsonData: any;
   version: string;
+  onClose?: () => void;
   key?: string; // 添加可选的 key 属性
 }
 
-const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) => {
+const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onClose }) => {
   const [expanded, setExpanded] = useState<boolean>(true);
   const [jsonSize, setJsonSize] = useState<string>('');
   const [showHistory, setShowHistory] = useState<boolean>(false);
@@ -326,8 +327,6 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
                 {copySuccess ? '✓ Copied' : 'Copy JSON'}
               </button>
               
-              {/* 视图切换按钮已移除 */}
-              
               {/* History dropdown */}
               <div className="json-viewer-dropdown-container">
                 <button 
@@ -370,6 +369,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version }) =
                   </div>
                 )}
               </div>
+              <button className="json-drawer-close" onClick={onClose}>&times;</button>
             </div>
           </div>
 
