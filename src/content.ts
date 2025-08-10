@@ -13,38 +13,10 @@ console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_
 
 // 导入工具函数
 import { isValidNestedJson } from './utils/nestedJsonHandler';
+import {getCurrentLanguage, getTranslations} from "./utils/i18n";
 
 // 是否启用悬停检测
 let enableHoverDetection = true;
-
-// 我们将不再使用直接的键盘事件监听器
-// 而是通过Chrome命令 (chrome://extensions/shortcuts) 和background script的消息来处理
-
-// 格式化选中的JSON文本
-function formatSelectedJson(): void {
-    // 获取选中的文本
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-        showNotification('没有选中任何文本', 'error');
-        return;
-    }
-    
-    // 获取选中的文本内容
-    const selectedText = selection.toString();
-    
-    // 验证并格式化JSON
-    if (isValidJson(selectedText)) {
-        // 显示格式化后的JSON
-        showJsonInDrawer(selectedText).catch(error => {
-            console.error('Error showing JSON in drawer:', error);
-            showNotification('无法显示JSON抽屉', 'error');
-        });
-    } else {
-        showNotification('所选文本不是有效的JSON', 'error');
-    }
-}
-
-
 
 // 显示通知
 function showNotification(message: string, type: 'success' | 'error' | 'info' = 'info'): void {
@@ -481,8 +453,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 监听来自背景脚本的消息
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+    const lang = await getCurrentLanguage();
+    const i18n = getTranslations(lang);
+
     if (request.action === 'formatSelectedJson' && request.selectedText) {
         // 尝试格式化选中的 JSON
         if (isValidJson(request.selectedText)) {
@@ -495,7 +469,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                     sendResponse({ success: false, error: (error as Error).message });
                 });
         } else {
-            showNotification('所选文本不是有效的JSON', 'error');
+            showNotification(i18n.invalidJsonFormat, 'error');
             sendResponse({ success: false, error: 'Invalid JSON format' });
         }
         return true; // 支持异步响应
@@ -506,7 +480,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         
         // 显示状态变化通知
         showNotification(
-            `JSON悬停检测: ${enableHoverDetection ? '已启用' : '已禁用'}`, 
+            `${i18n.hoverDetection}: ${enableHoverDetection ? i18n.statusEnabled : i18n.statusDisabled}`,
             enableHoverDetection ? 'success' : 'info'
         );
         

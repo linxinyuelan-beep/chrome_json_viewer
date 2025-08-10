@@ -58,6 +58,8 @@ export interface Translations {
   textUnescapedAndCopied: string;
   enterTextToUnescape: string;
   unescapeError: string;
+  statusEnabled: string;
+  statusDisabled: string;
 }
 
 // Language definitions
@@ -113,6 +115,8 @@ export const translations: Record<LanguageCode, Translations> = {
     textUnescapedAndCopied: 'Text unescaped and copied to clipboard',
     enterTextToUnescape: 'Please enter text to unescape',
     unescapeError: 'Unescape error: ',
+    statusEnabled: 'Enabled',
+    statusDisabled: 'Disabled',
   },
   zh: {
     // General UI
@@ -134,7 +138,7 @@ export const translations: Record<LanguageCode, Translations> = {
     unescapeString: '反转义字符串',
     jsonInputHelp1: '将JSON文本粘贴在上方，然后点击"格式化并查看"以显示格式化后的JSON',
     jsonInputHelp2: '点击"格式化并转换"可将特殊日期格式 /Date(timestamp)/ 转换为可读日期并显示',
-    jsonInputHelp3: '点击"JSON压缩"可将JSON压缩为单行，"转义字符串"和"反转义字符串"用于处理特殊字符',
+    jsonInputHelp3: '点击\"JSON压缩\"可将JSON压缩为单行，\"转义字符串\"和\"反转义字符串\"用于处理特殊字符',
 
     // Settings section
     keyboardShortcuts: '键盘快捷键',
@@ -144,7 +148,7 @@ export const translations: Record<LanguageCode, Translations> = {
     howToUse: '使用方式',
     hoverOverJson: '将鼠标悬停在可能包含JSON的文本上',
     doubleClickJson: '双击检测到的JSON以查看格式化视图',
-    rightClickMenu: '右键点击并选择"格式化 JSON"菜单项',
+    rightClickMenu: '右键点击并选择\"格式化 JSON\"菜单项',
     useKeyboardShortcuts: '选择JSON文本后使用键盘快捷键',
     settingsHeading: '设置',
     hoverDetection: '悬停检测',
@@ -165,6 +169,8 @@ export const translations: Record<LanguageCode, Translations> = {
     textUnescapedAndCopied: '文本已反转义并复制到剪贴板',
     enterTextToUnescape: '请输入需要反转义的文本',
     unescapeError: '反转义出错：',
+    statusEnabled: '已启用',
+    statusDisabled: '已禁用',
   },
 };
 

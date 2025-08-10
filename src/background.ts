@@ -1,24 +1,45 @@
 // background.ts - Background service worker for JSON Formatter & Viewer
+import {DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations} from "./utils/i18n";
 
-// Initialize default language
-const DEFAULT_LANGUAGE = 'en';
+const CONTEXT_MENU_ID = 'formatSelectedJson';
+
+// Function to create or update the context menu
+async function setupContextMenu() {
+    const lang = await getCurrentLanguage();
+    const i18n = getTranslations(lang);
+
+    // Use remove and create to handle both installation and updates
+    chrome.contextMenus.remove(CONTEXT_MENU_ID, () => {
+        // Ignore error in case the item doesn't exist (e.g., first install)
+        void chrome.runtime.lastError;
+
+        chrome.contextMenus.create({
+            id: CONTEXT_MENU_ID,
+            title: i18n.formatSelectedJson,
+            contexts: ['selection'],
+        });
+    });
+}
 
 chrome.runtime.onInstalled.addListener(() => {
     console.log('JSON Formatter & Viewer extension installed');
-    
-    // Create context menu item
-    chrome.contextMenus.create({
-        id: 'formatSelectedJson',
-        title: '格式化 JSON', // Will be updated based on language
-        contexts: ['selection'], // Only show when text is selected
-    });
-    
+
+    // Setup context menu
+    setupContextMenu();
+
     // Initialize language settings if not already set
     chrome.storage.local.get('language', (result) => {
         if (!result.language) {
             chrome.storage.local.set({ language: DEFAULT_LANGUAGE });
         }
     });
+});
+
+// Listen for language changes to update the context menu title
+chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.language) {
+        setupContextMenu();
+    }
 });
 
 // 处理右键菜单点击
