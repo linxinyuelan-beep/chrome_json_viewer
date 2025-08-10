@@ -178,17 +178,17 @@
   background: transparent;
   border: none;
   color: #475569; /* Changed from white to dark gray */
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 0;
+  border-radius: 6px;
   transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(10px);
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
 }
 
 .json-drawer-close:hover {
