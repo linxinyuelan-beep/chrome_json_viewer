@@ -7,20 +7,19 @@
  */
 export function parseJsonSafely(jsonString: string): any {
   if (!jsonString) return null;
-
+  
+  // 预处理：使用正则表达式将大整数转换为字符串
+  // 匹配键值对中的大整数（超过15位数字的整数，这是JS安全整数的大致范围）
+  const bigIntPattern = /("[\w\d_-]+"\s*:\s*)(\d{16,}\b)/g;
+  const processedJson = jsonString.replace(bigIntPattern, '$1"$2"');
+  
   try {
-    // 使用 reviver 函数来处理大整数，但保留浮点数原样
-    return JSON.parse(jsonString, (key, value) => {
-      // 检查值是否是数字且不是安全整数，并且不是浮点数
-      if (typeof value === 'number' && !Number.isSafeInteger(value) && Number.isInteger(value)) {
-        // 尝试从原始 JSON 字符串中提取该键对应的原始值
-        const originalValue = jsonString.match(new RegExp(`"${key}"\\s*:\\s*(\\d+)`, 'g'));
-        if (originalValue && originalValue.length > 0) {
-          const matches = originalValue[0].match(/:\s*(\d+)/);
-          if (matches && matches[1]) {
-            return matches[1]; // 返回原始字符串表示
-          }
-        }
+    // 使用处理后的JSON字符串进行解析
+    return JSON.parse(processedJson, (key, value) => {
+      // 检查值是否是字符串，且只包含数字
+      if (typeof value === 'string' && /^\d+$/.test(value) && value.length >= 16) {
+        // 这里已经是字符串形式的大整数，直接返回即可
+        return value;
       }
       return value;
     });
