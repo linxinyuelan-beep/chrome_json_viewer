@@ -9,10 +9,10 @@ export function parseJsonSafely(jsonString: string): any {
   if (!jsonString) return null;
 
   try {
-    // 使用 reviver 函数来处理大整数
+    // 使用 reviver 函数来处理大整数，但保留浮点数原样
     return JSON.parse(jsonString, (key, value) => {
-      // 检查值是否可能是大整数（是数字且不是安全整数）
-      if (typeof value === 'number' && !Number.isSafeInteger(value)) {
+      // 检查值是否是数字且不是安全整数，并且不是浮点数
+      if (typeof value === 'number' && !Number.isSafeInteger(value) && Number.isInteger(value)) {
         // 尝试从原始 JSON 字符串中提取该键对应的原始值
         const originalValue = jsonString.match(new RegExp(`"${key}"\\s*:\\s*(\\d+)`, 'g'));
         if (originalValue && originalValue.length > 0) {

@@ -1,6 +1,6 @@
 {
   "name": "chrome-extension",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Json Formatter Viewer",
   "main": "src/background.ts",
   "scripts": {
