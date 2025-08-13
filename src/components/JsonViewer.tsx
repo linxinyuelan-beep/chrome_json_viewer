@@ -176,6 +176,117 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   // Copy success state
   const [copySuccess, setCopySuccess] = useState(false);
 
+  // JSON path state
+  const [currentJsonPath, setCurrentJsonPath] = useState<string>('');
+  const [pathCopySuccess, setPathCopySuccess] = useState(false);
+
+  // Handle JSON path selection and display
+  const handleJsonPathSelect = (selectInfo: any) => {
+    try {
+      console.log('Select info:', selectInfo); // Debug log to see what we get
+      
+      // Build JSON path from namespace and current key
+      let pathParts: (string | number)[] = [];
+      
+      // Add namespace parts if available
+      if (selectInfo.namespace && selectInfo.namespace.length > 0) {
+        pathParts = [...selectInfo.namespace];
+      }
+      
+      // Add current key name if available and not null
+      if (selectInfo.name !== null && selectInfo.name !== undefined) {
+        pathParts.push(selectInfo.name);
+      }
+      
+      let path = '';
+      if (pathParts.length > 0) {
+        // Convert path parts array to dot notation
+        path = pathParts.map((key: any) => {
+          // Handle array indices and object keys
+          if (typeof key === 'number') {
+            return `[${key}]`;
+          } else if (typeof key === 'string') {
+            // Check if key contains special characters that need bracket notation
+            if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) {
+              return `.${key}`;
+            } else {
+              return `["${key}"]`;
+            }
+          }
+          return `.${key}`;
+        }).join('');
+        
+        // Remove leading dot if present
+        if (path.startsWith('.')) {
+          path = path.substring(1);
+        }
+        
+        // Add root prefix if needed
+        if (path) {
+          path = `$${path.startsWith('[') ? '' : '.'}${path}`;
+        } else {
+          path = '$';
+        }
+      } else {
+        path = '$';
+      }
+
+      // Update current path display
+      setCurrentJsonPath(path);
+      
+      // Log the path for debugging
+      console.log('JSON Path selected:', path);
+      console.log('Path parts:', pathParts);
+    } catch (err: unknown) {
+      console.error('Failed to process JSON path:', err);
+      setCurrentJsonPath('Error getting path');
+    }
+  };
+
+  // Copy current path to clipboard
+  const copyCurrentPath = async () => {
+    if (!currentJsonPath) {
+      return;
+    }
+
+    try {
+      // Copy path to clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(currentJsonPath);
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = currentJsonPath;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        if (!successful) {
+          throw new Error('Failed to copy using execCommand');
+        }
+        
+        document.body.removeChild(textArea);
+      }
+
+      // Show success feedback
+      setPathCopySuccess(true);
+      setTimeout(() => setPathCopySuccess(false), 2000);
+
+      console.log('JSON Path copied:', currentJsonPath);
+    } catch (err: unknown) {
+      console.error('Failed to copy JSON path:', err);
+      let errorMessage = 'Unknown error';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      alert('Failed to copy path: ' + errorMessage);
+    }
+  };
+
   // State for history dropdown
   const [historyItems, setHistoryItems] = useState<Array<{id: string, preview: string, timestamp: number}>>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -313,6 +424,19 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                 <span className="json-viewer-size">Size: {jsonSize}</span>
               </div>
             </div>
+            {/* JSON Path display */}
+              {currentJsonPath && (
+                <div className="json-viewer-path-display">
+                  <code className="json-viewer-path-value">{currentJsonPath}</code>
+                  <button 
+                    className={`json-viewer-path-copy-btn ${pathCopySuccess ? 'success' : ''}`}
+                    onClick={copyCurrentPath}
+                    title="Copy path to clipboard"
+                  >
+                    {pathCopySuccess ? '✓' : '📋'}
+                  </button>
+                </div>
+              )}
             <div className="json-viewer-actions">
               <button 
                 className="json-viewer-button" 
@@ -386,6 +510,10 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
               enableClipboard={true}
               escapeStrings={false}
               name={null}
+              onSelect={(select) => {
+                // Handle JSON path display functionality
+                handleJsonPathSelect(select);
+              }}
             />
           </div>
         </>

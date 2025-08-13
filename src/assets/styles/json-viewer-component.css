@@ -290,3 +290,104 @@
 }
 
 /* Removed react-json-tree custom highlight styles */
+
+/* JSON Path hint styles */
+.json-viewer-path-hint {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+}
+
+.json-viewer-path-status {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 8px;
+  background: rgba(148, 163, 184, 0.1);
+  color: #64748b;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  cursor: help;
+  transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.json-viewer-path-status:hover {
+  background: rgba(148, 163, 184, 0.2);
+  color: #475569;
+  border-color: rgba(148, 163, 184, 0.3);
+}
+
+.json-viewer-path-status.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.json-viewer-path-status.success:hover {
+  background: rgba(16, 185, 129, 0.2);
+  color: #047857;
+}
+
+/* JSON Path display styles */
+.json-viewer-path-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(148, 163, 184, 0.05);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin-left: 8px;
+  max-width: 300px;
+}
+
+.json-viewer-path-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.json-viewer-path-value {
+  font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+  font-size: 11px;
+  background: rgba(148, 163, 184, 0.1);
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.json-viewer-path-copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #64748b;
+  transition: all 0.2s ease;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+}
+
+.json-viewer-path-copy-btn:hover {
+  background: rgba(148, 163, 184, 0.1);
+  color: #475569;
+}
+
+.json-viewer-path-copy-btn.success {
+  color: #059669;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.json-viewer-path-copy-btn.success:hover {
+  background: rgba(16, 185, 129, 0.2);
+  color: #047857;
+}

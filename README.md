@@ -105,6 +105,8 @@ The JSON viewer provides:
 - Expandable/collapsible tree view of JSON data
 - Back/Forward navigation through viewed JSON
 - Copy formatted JSON to clipboard
+- **JSON Path Display**: Click any JSON value to see its path in dot notation
+- Copy JSON paths to clipboard for easy reference
 - History dropdown to access recently viewed JSON
 
 ### Popup Interface
