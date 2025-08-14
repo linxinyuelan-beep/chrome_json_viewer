@@ -21,7 +21,6 @@ body {
     width: 100%;
     min-height: 100%;
     padding: 20px;
-    border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
     display: flex;
@@ -552,23 +551,6 @@ input:checked + .toggle-slider:before {
     color: white;
     flex: 1;
     transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.json-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-}
-
-.json-button:hover::before {
-    left: 100%;
 }
 
 .json-button.format {
