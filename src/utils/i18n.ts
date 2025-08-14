@@ -25,9 +25,11 @@ export interface Translations {
   minifyJson: string;
   escapeString: string;
   unescapeString: string;
+  convertKeyValue: string;
   jsonInputHelp1: string;
   jsonInputHelp2: string;
   jsonInputHelp3: string;
+  jsonInputHelp4: string;
 
   // Settings section
   keyboardShortcuts: string;
@@ -58,6 +60,10 @@ export interface Translations {
   textUnescapedAndCopied: string;
   enterTextToUnescape: string;
   unescapeError: string;
+  keyValueConverted: string;
+  keyValueConvertedAndCopied: string;
+  enterTextToConvert: string;
+  convertError: string;
   statusEnabled: string;
   statusDisabled: string;
 }
@@ -82,9 +88,11 @@ export const translations: Record<LanguageCode, Translations> = {
     minifyJson: 'Minify JSON',
     escapeString: 'Escape String',
     unescapeString: 'Unescape String',
+    convertKeyValue: 'Convert Key-Value',
     jsonInputHelp1: 'Paste JSON text above and click "Format & View" to display formatted JSON',
     jsonInputHelp2: 'Click "Format & Convert" to convert special date format /Date(timestamp)/ to readable dates',
     jsonInputHelp3: '"Minify JSON" compresses JSON to a single line, "Escape String" and "Unescape String" handle special characters',
+    jsonInputHelp4: '"Convert Key-Value" converts semicolon-separated key-value format (key1=value1,key2=value2;key3=value3,key4=value4) to JSON array',
 
     // Settings section
     keyboardShortcuts: 'Keyboard Shortcuts',
@@ -115,6 +123,10 @@ export const translations: Record<LanguageCode, Translations> = {
     textUnescapedAndCopied: 'Text unescaped and copied to clipboard',
     enterTextToUnescape: 'Please enter text to unescape',
     unescapeError: 'Unescape error: ',
+    keyValueConverted: 'Key-value format converted to JSON',
+    keyValueConvertedAndCopied: 'Key-value format converted to JSON and copied to clipboard',
+    enterTextToConvert: 'Please enter key-value text to convert',
+    convertError: 'Convert error: ',
     statusEnabled: 'Enabled',
     statusDisabled: 'Disabled',
   },
@@ -136,9 +148,11 @@ export const translations: Record<LanguageCode, Translations> = {
     minifyJson: 'JSON压缩',
     escapeString: '转义字符串',
     unescapeString: '反转义字符串',
+    convertKeyValue: '转换键值对',
     jsonInputHelp1: '将JSON文本粘贴在上方，然后点击"格式化并查看"以显示格式化后的JSON',
     jsonInputHelp2: '点击"格式化并转换"可将特殊日期格式 /Date(timestamp)/ 转换为可读日期并显示',
     jsonInputHelp3: '点击\"JSON压缩\"可将JSON压缩为单行，\"转义字符串\"和\"反转义字符串\"用于处理特殊字符',
+    jsonInputHelp4: '"转换键值对"可将分号分隔的键值对格式 (key1=value1,key2=value2;key3=value3,key4=value4) 转换为JSON数组',
 
     // Settings section
     keyboardShortcuts: '键盘快捷键',
@@ -169,6 +183,10 @@ export const translations: Record<LanguageCode, Translations> = {
     textUnescapedAndCopied: '文本已反转义并复制到剪贴板',
     enterTextToUnescape: '请输入需要反转义的文本',
     unescapeError: '反转义出错：',
+    keyValueConverted: '键值对格式已转换为JSON',
+    keyValueConvertedAndCopied: '键值对格式已转换为JSON并复制到剪贴板',
+    enterTextToConvert: '请输入需要转换的键值对文本',
+    convertError: '转换出错：',
     statusEnabled: '已启用',
     statusDisabled: '已禁用',
   },

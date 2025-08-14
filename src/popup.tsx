@@ -354,6 +354,142 @@ const App: React.FC = () => {
     }
   };
 
+  // Convert key-value format to JSON
+  const convertKeyValueToJson = () => {
+    try {
+      if (!jsonInput.trim()) {
+        setJsonFormatError(translations.enterTextToConvert);
+        return;
+      }
+
+      // Split by semicolons to get individual groups
+      const groups = jsonInput.split(';').filter(group => group.trim());
+      
+      if (groups.length === 0) {
+        setJsonFormatError(translations.convertError + '没有找到有效的数据组');
+        return;
+      }
+
+      const jsonArray: any[] = [];
+
+      for (const group of groups) {
+        const trimmedGroup = group.trim();
+        if (!trimmedGroup) continue;
+
+        // Split by commas to get key-value pairs
+        const pairs = trimmedGroup.split(',').filter(pair => pair.trim());
+        const obj: any = {};
+
+        for (const pair of pairs) {
+          const trimmedPair = pair.trim();
+          if (!trimmedPair) continue;
+
+          // Split by equals sign to get key and value
+          const equalIndex = trimmedPair.indexOf('=');
+          if (equalIndex === -1) {
+            setJsonFormatError(translations.convertError + `无效的键值对格式: ${trimmedPair}`);
+            return;
+          }
+
+          const key = trimmedPair.substring(0, equalIndex).trim();
+          const value = trimmedPair.substring(equalIndex + 1).trim();
+
+          if (!key) {
+            setJsonFormatError(translations.convertError + `空的键名: ${trimmedPair}`);
+            return;
+          }
+
+          // Try to convert value to appropriate type
+          let convertedValue: any = value;
+          
+          // Check if it's a number
+          if (/^-?\d+$/.test(value)) {
+            convertedValue = parseInt(value, 10);
+          } else if (/^-?\d*\.\d+$/.test(value)) {
+            convertedValue = parseFloat(value);
+          } else if (value.toLowerCase() === 'true') {
+            convertedValue = true;
+          } else if (value.toLowerCase() === 'false') {
+            convertedValue = false;
+          } else if (value.toLowerCase() === 'null') {
+            convertedValue = null;
+          }
+
+          obj[key] = convertedValue;
+        }
+
+        jsonArray.push(obj);
+      }
+
+      // Format the converted JSON
+      const formattedJson = JSON.stringify(jsonArray, null, 2);
+      
+      // Update content in the input field
+      setJsonInput(formattedJson);
+      setJsonFormatError(translations.processing);
+      
+      // 复制到剪贴板
+      navigator.clipboard.writeText(formattedJson)
+        .then(() => {
+          console.log('键值对格式转换成功并已复制到剪贴板');
+          // 剪贴板操作成功，但不显示消息，因为我们要关闭弹窗
+        })
+        .catch(err => {
+          console.log('剪贴板复制失败，但转换已完成:', err);
+        })
+        .finally(() => {
+          // 无论剪贴板操作成功与否，都发送转换后的JSON到内容脚本并打开抽屉
+          // 先通过background.js发送消息（这样可以处理跨域问题）
+          chrome.runtime.sendMessage(
+            { 
+              action: 'showJsonFromPopup',
+              jsonString: formattedJson,
+              version: version
+            },
+            (response) => {
+              if (chrome.runtime.lastError) {
+                console.log('Error sending message through background:', chrome.runtime.lastError);
+                
+                // 尝试直接发送到当前标签页
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                  if (tabs[0]?.id) {
+                    chrome.tabs.sendMessage(
+                      tabs[0].id,
+                      { 
+                        action: 'showJsonFromPopup',
+                        jsonString: formattedJson,
+                        version: version
+                      },
+                      (tabResponse) => {
+                        if (chrome.runtime.lastError) {
+                          console.log('Error sending JSON directly to tab:', chrome.runtime.lastError);
+                          // 所有尝试都失败，打开新标签页显示JSON
+                          openJsonInNewTab(formattedJson);
+                        } else {
+                          console.log('Message sent successfully to tab:', tabResponse);
+                          // 关闭弹出窗口
+                          window.close();
+                        }
+                      }
+                    );
+                  } else {
+                    // 如果没有活动标签页，打开新标签页显示JSON
+                    openJsonInNewTab(formattedJson);
+                  }
+                });
+              } else {
+                console.log('Message sent successfully through background:', response);
+                // 关闭弹出窗口
+                window.close();
+              }
+            }
+          );
+        });
+    } catch (error) {
+      setJsonFormatError(`${translations.convertError}${(error as Error).message}`);
+    }
+  };
+
   return (
     <div className="popup">
       <div className="header">
@@ -474,11 +610,17 @@ const App: React.FC = () => {
                   {translations.unescapeString}
                 </button>
               </div>
+              <div className="action-row">
+                <button className="json-button convert-kv" onClick={convertKeyValueToJson}>
+                  {translations.convertKeyValue}
+                </button>
+              </div>
             </div>
             <div className="json-input-help">
               <p>{translations.jsonInputHelp1}</p>
               <p>{translations.jsonInputHelp2} <code>/Date(timestamp)/</code></p>
               <p>{translations.jsonInputHelp3}</p>
+              <p>{translations.jsonInputHelp4}</p>
             </div>
           </div>
         )}
