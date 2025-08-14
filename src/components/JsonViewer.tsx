@@ -206,6 +206,10 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
           if (typeof key === 'number') {
             return `[${key}]`;
           } else if (typeof key === 'string') {
+            // 如果是数字字符串，则作为数组索引处理
+            if (/^\d+$/.test(key)) {
+              return `[${key}]`;
+            }
             // Check if key contains special characters that need bracket notation
             if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) {
               return `.${key}`;
@@ -420,7 +424,6 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                   ▶
                 </button>
 
-                <span className="json-viewer-version">v{version}</span>
                 <span className="json-viewer-size">Size: {jsonSize}</span>
               </div>
             </div>
