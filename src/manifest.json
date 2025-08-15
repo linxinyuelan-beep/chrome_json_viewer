@@ -2,7 +2,7 @@
   "author": "linxinyuelan@gmail.com",
   "manifest_version": 3,
   "name": "JSON Formatter & Viewer",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "A Chrome extension that detects, formats and visualizes JSON on web pages.",
   "permissions": [
     "activeTab",

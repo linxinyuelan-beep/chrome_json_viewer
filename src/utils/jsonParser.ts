@@ -10,7 +10,7 @@ export function parseJsonSafely(jsonString: string): any {
   
   // 预处理：使用正则表达式将大整数转换为字符串
   // 匹配键值对中的大整数（超过15位数字的整数，这是JS安全整数的大致范围）
-  const bigIntPattern = /("[\w\d_-]+"\s*:\s*)(\d{16,}\b)/g;
+  const bigIntPattern = /("[\w\d_-]+"\s*:\s*)(\d{17,}\b)/g;
   const processedJson = jsonString.replace(bigIntPattern, '$1"$2"');
   
   try {
