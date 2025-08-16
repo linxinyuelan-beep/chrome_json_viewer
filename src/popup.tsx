@@ -5,6 +5,7 @@ import { VERSION } from './config/version';
 import { isValidNestedJson } from './utils/nestedJsonHandler';
 import { processJsonDates } from './utils/dateConverter';
 import { parseJsonSafely } from './utils/jsonParser';
+import { extractJsonFromString } from './utils/jsonExtractor';
 import { 
   LanguageCode,
   DEFAULT_LANGUAGE, 
@@ -87,21 +88,36 @@ const App: React.FC = () => {
   // Format JSON input function
   const formatJsonInput = () => {
     try {
-      if (!jsonInput.trim()) {
+      let jsonToFormat = jsonInput.trim();
+      
+      if (!jsonToFormat) {
         setJsonFormatError(translations.enterJsonText);
         return;
       }
 
-      if (!isValidNestedJson(jsonInput)) {
+      // 尝试从输入文本中提取 JSON
+      const extractedJson = extractJsonFromString(jsonToFormat);
+      if (extractedJson) {
+        jsonToFormat = extractedJson;
+      }
+
+      if (!isValidNestedJson(jsonToFormat)) {
         setJsonFormatError(translations.invalidJsonFormat);
         return;
       }
 
       // 使用增强的 JSON 解析器处理大整数精度问题
-      const parsedJson = parseJsonSafely(jsonInput);
+      const parsedJson = parseJsonSafely(jsonToFormat);
       const formattedJson = JSON.stringify(parsedJson, null, 2);
-      setJsonInput(formattedJson);
-      setJsonFormatError(null);
+      
+      // 如果提取了 JSON，则更新输入框并显示提示
+      if (extractedJson && extractedJson !== jsonInput) {
+        setJsonInput(formattedJson);
+        setJsonFormatError(translations.jsonExtracted);
+      } else {
+        setJsonInput(formattedJson);
+        setJsonFormatError(null);
+      }
       
       // Add a status indication
       setJsonFormatError(translations.processing);
@@ -166,18 +182,26 @@ const App: React.FC = () => {
   // Format and convert JSON date formats, then display in drawer
   const convertJsonDates = () => {
     try {
-      if (!jsonInput.trim()) {
+      let jsonToConvert = jsonInput.trim();
+      
+      if (!jsonToConvert) {
         setJsonFormatError(translations.noJsonToConvert);
         return;
       }
 
-      if (!isValidNestedJson(jsonInput)) {
+      // 尝试从输入文本中提取 JSON
+      const extractedJson = extractJsonFromString(jsonToConvert);
+      if (extractedJson) {
+        jsonToConvert = extractedJson;
+      }
+
+      if (!isValidNestedJson(jsonToConvert)) {
         setJsonFormatError(translations.invalidJsonFormat);
         return;
       }
 
       // 使用增强的 JSON 解析器处理大整数精度问题
-      const parsedJson = parseJsonSafely(jsonInput);
+      const parsedJson = parseJsonSafely(jsonToConvert);
       
       // Process and convert date formats
       const convertedJson = processJsonDates(parsedJson);
@@ -185,9 +209,15 @@ const App: React.FC = () => {
       // Format the converted JSON
       const formattedJson = JSON.stringify(convertedJson, null, 2);
       
-      // Update content in the text box
-      setJsonInput(formattedJson);
-      setJsonFormatError(translations.processing);
+      // 如果提取了 JSON，则更新输入框并显示提示
+      if (extractedJson && extractedJson !== jsonInput) {
+        setJsonInput(formattedJson);
+        setJsonFormatError(translations.jsonExtracted);
+      } else {
+        // Update content in the text box
+        setJsonInput(formattedJson);
+        setJsonFormatError(translations.processing);
+      }
       
       // 复制到剪贴板
       navigator.clipboard.writeText(formattedJson)

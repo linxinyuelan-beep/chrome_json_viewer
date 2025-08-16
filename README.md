@@ -25,6 +25,7 @@ A powerful Chrome extension that automatically detects, highlights, formats, and
 - **History Tracking**: Navigate through previously viewed JSON
 - **Copy to Clipboard**: Easily copy formatted JSON
 - **Keyboard Shortcuts**: Quick access to features
+- **Automatic JSON Extraction**: Automatically extract JSON from log files and mixed content
 
 ## Project Structure
 
@@ -115,6 +116,8 @@ The extension popup offers:
 - JSON minification (compression to single line)
 - String escaping and unescaping tools
 - Date format conversion for Microsoft-style dates (/Date(timestamp)/)
+- Key-value pair to JSON conversion
+- Automatic JSON extraction from log files and mixed content
 - Quick access to extension settings
 
 ### Keyboard Shortcuts

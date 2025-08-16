@@ -1,5 +1,18 @@
 # JSON Viewer Implementation Updates
 
+## Changes Made in Version 1.3.0
+
+### 1. Added Automatic JSON Extraction
+- Added new feature to automatically extract JSON content from text input
+- Supports extracting JSON from log files and other text formats
+- Improved user experience when working with mixed content
+- Added new translation strings for extraction notifications
+
+### 2. Enhanced JSON Processing Functions
+- Updated format, convert, and minify functions to use automatic JSON extraction
+- Better error handling and user feedback
+- Maintained backward compatibility with direct JSON input
+
 ## Changes Made in Version 1.2.4
 
 ### 1. Fixed Button Visibility Issues

@@ -66,6 +66,7 @@ export interface Translations {
   convertError: string;
   statusEnabled: string;
   statusDisabled: string;
+  jsonExtracted: string;
 }
 
 // Language definitions
@@ -129,6 +130,7 @@ export const translations: Record<LanguageCode, Translations> = {
     convertError: 'Convert error: ',
     statusEnabled: 'Enabled',
     statusDisabled: 'Disabled',
+    jsonExtracted: 'JSON content extracted and formatted',
   },
   zh: {
     // General UI
@@ -189,6 +191,7 @@ export const translations: Record<LanguageCode, Translations> = {
     convertError: '转换出错：',
     statusEnabled: '已启用',
     statusDisabled: '已禁用',
+    jsonExtracted: 'JSON内容已提取并格式化',
   },
 };
 
