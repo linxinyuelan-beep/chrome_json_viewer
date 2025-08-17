@@ -7,11 +7,17 @@ This directory contains the documentation and demo pages for the JSON Formatter 
 ### Main Pages
 - **`index.html`** - 中文介绍主页 (Chinese homepage)
 - **`index-en.html`** - English homepage
+- **`changelog.html`** - 版本更新日志 (Version changelog)
 - **`privacy-policy.html`** - Privacy policy page
 
 ### Test Pages
 - **`json-test-page.html`** - Test page with various JSON examples for development
 - **`json-input-test.html`** - Input testing page
+
+### Screenshots
+- **`demo1.png`** - JSON smart detection interface
+- **`demo2.png`** - JSON visual viewer interface
+- **`demo3.png`** - Extension popup tools interface
 
 ## Features Highlighted
 

@@ -450,6 +450,32 @@
             }
         }
 
+        /* Screenshots */
+        .screenshots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .screenshot {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+            text-align: center;
+        }
+
+        .screenshot:hover {
+            transform: scale(1.05);
+        }
+
+        .screenshot img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
         /* JSON Syntax Highlighting */
         .json-key {
             color: #92c5f8;
@@ -493,15 +519,16 @@
                  alt="JSON Formatter & Viewer">
             JSON Formatter & Viewer
         </div>
-        <ul class="nav-links">
-            <li><a href="#features">Features</a></li>
-            <li><a href="#demo">Demo</a></li>
-            <li><a href="#installation">Install</a></li>
-            <li><a href="#usage">Usage</a></li>
-        </ul>
+                    <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#demo">Demo</a></li>
+                <li><a href="#installation">Install</a></li>
+                <li><a href="#usage">Usage</a></li>
+                <li><a href="./changelog.html">Changelog</a></li>
+            </ul>
         <div style="display: flex; align-items: center;">
-            <a href="#installation" class="download-btn">Install Now</a>
-            <div class="language-switcher">
+                <a href="https://chromewebstore.google.com/detail/json-formatter-viewer/bfdhcpkfeafgoaadcpeompdndamdlgfj" target="_blank" class="download-btn">Install Now</a>
+                <div class="language-switcher">
                 <div class="language-dropdown">
                     <div class="language-current" onclick="toggleLanguageDropdown()">
                         <span>🇺🇸 English</span>
@@ -624,21 +651,16 @@
         <div class="steps">
             <div class="step fade-in-up">
                 <div class="step-number">1</div>
-                <h3>Download Extension</h3>
-                <p>Search for "JSON Formatter & Viewer" in Chrome Web Store or download from the project repository</p>
+                <h3>Install from Chrome Web Store (Recommended)</h3>
+                <p>Visit the <a href="https://chromewebstore.google.com/detail/json-formatter-viewer/bfdhcpkfeafgoaadcpeompdndamdlgfj" target="_blank">Chrome Web Store page</a> and click the "Add to Chrome" button to install the extension</p>
             </div>
             <div class="step fade-in-up">
                 <div class="step-number">2</div>
-                <h3>Enable Developer Mode</h3>
-                <p>Go to Chrome extensions page (chrome://extensions/) and toggle "Developer mode" in the top right</p>
+                <h3>Install from Source Code (Developer Option)</h3>
+                <p>Download the source code from the project repository, enable "Developer mode" on the Chrome extensions page (chrome://extensions/), click "Load unpacked", and select the project's public directory</p>
             </div>
             <div class="step fade-in-up">
                 <div class="step-number">3</div>
-                <h3>Load Extension</h3>
-                <p>Click "Load unpacked" and select the project's public directory</p>
-            </div>
-            <div class="step fade-in-up">
-                <div class="step-number">4</div>
                 <h3>Start Using</h3>
                 <p>Visit web pages with JSON content and enjoy smart detection and formatting features</p>
             </div>
@@ -676,6 +698,33 @@
             <div class="feature-card">
                 <h3>🕐 History Navigation</h3>
                 <p>The viewer supports back/forward navigation to easily browse previously viewed JSON data</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Screenshots Section -->
+<section class="section">
+    <div class="container">
+        <h2>Interface Preview</h2>
+        <div class="screenshots">
+            <div class="screenshot">
+                <p style="text-align: center; padding: 1rem;">JSON Smart Detection</p>
+                <a href="./demo1.png" target="_blank">
+                    <img src="./demo1.png" alt="JSON Detection">
+                </a>
+            </div>
+            <div class="screenshot">
+                <p style="text-align: center; padding: 1rem;">JSON Visual Viewer</p>
+                <a href="./demo2.png" target="_blank">
+                    <img src="./demo2.png" alt="JSON Viewer">
+                </a>
+            </div>
+            <div class="screenshot">
+                <p style="text-align: center; padding: 1rem;">Extension Popup Tools</p>
+                <a href="./demo3.png" target="_blank">
+                    <img src="./demo3.png" alt="Extension Popup">
+                </a>
             </div>
         </div>
     </div>
