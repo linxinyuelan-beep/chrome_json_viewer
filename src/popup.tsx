@@ -647,10 +647,12 @@ const App: React.FC = () => {
               </div>
             </div>
             <div className="json-input-help">
-              <p>{translations.jsonInputHelp1}</p>
-              <p>{translations.jsonInputHelp2} <code>/Date(timestamp)/</code></p>
-              <p>{translations.jsonInputHelp3}</p>
-              <p>{translations.jsonInputHelp4}</p>
+              <ul>
+                <li>{translations.jsonInputHelp1}</li>
+                <li>{translations.jsonInputHelp2}</li>
+                <li>{translations.jsonInputHelp3}</li>
+                <li>{translations.jsonInputHelp4}</li>
+              </ul>
             </div>
           </div>
         )}

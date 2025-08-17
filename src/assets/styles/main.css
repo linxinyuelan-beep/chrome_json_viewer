@@ -706,10 +706,34 @@ input:checked + .toggle-slider:before {
     margin-top: 16px;
     font-size: 12px;
     color: #64748b;
-    text-align: center;
+    text-align: left;
     padding: 12px;
     background: linear-gradient(145deg, #f8fafc, #f1f5f9);
     border-radius: 8px;
     border: 1px solid rgba(102, 126, 234, 0.1);
     line-height: 1.5;
+}
+
+.json-input-help ul {
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+.json-input-help li {
+    padding: 8px 0;
+    font-size: 12px;
+    color: #475569;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.json-input-help li::before {
+    content: '→';
+    color: #667eea;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-top: 2px;
 }
