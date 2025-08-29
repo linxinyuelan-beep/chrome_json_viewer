@@ -108,6 +108,40 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   // "solarized", "summerfruit", "summerfruit:inverted", "threezerotwofour", "tomorrow",
   // "tube", "twilight"
 
+  // Open JSON in new window
+  const openInNewWindow = () => {
+    try {
+      // 准备JSON数据用于URL传递
+      const jsonString = JSON.stringify(jsonData);
+      const encodedJson = encodeURIComponent(jsonString);
+      
+      // 发送消息给background script来打开新窗口
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({
+          action: 'openJsonWindow',
+          jsonData: encodedJson
+        }, () => {
+          if (chrome.runtime.lastError) {
+            console.error('Error opening new window:', chrome.runtime.lastError);
+            // 回退到普通窗口打开
+            fallbackOpenWindow(encodedJson);
+          }
+        });
+      } else {
+        // 如果chrome API不可用，使用回退方案
+        fallbackOpenWindow(encodedJson);
+      }
+    } catch (error) {
+      console.error('Error preparing JSON for new window:', error);
+    }
+  };
+
+  // 回退方案：使用window.open
+  const fallbackOpenWindow = (encodedJson: string) => {
+    const windowUrl = chrome.runtime.getURL(`json-window.html?json=${encodedJson}`);
+    window.open(windowUrl, '_blank', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+  };
+
   // Copy JSON to clipboard
   const copyJson = async () => {
     try {
@@ -299,7 +333,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   const loadHistoryForDropdown = async () => {
     try {
       // Import dynamically to avoid circular dependency
-      const { getHistory, formatTimestamp } = await import('../utils/jsonHistory');
+      const { getHistory } = await import('../utils/jsonHistory');
       const items = await getHistory();
       // Format items for dropdown display
       const formattedItems = items.map(item => ({
@@ -329,7 +363,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   // Handle selecting JSON from history (full history panel)
   const handleSelectFromHistory = (jsonString: string) => {
     try {
-      const parsedJson = JSON.parse(jsonString);
+      JSON.parse(jsonString); // Validate JSON
       // Replace the current JSON with the selected one from history
       if (window.showJsonInDrawerWithReact) {
         window.showJsonInDrawerWithReact(jsonString, version);
@@ -452,6 +486,13 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                 onClick={copyJson}
               >
                 {copySuccess ? '✓ Copied' : 'Copy JSON'}
+              </button>
+              <button 
+                className="json-viewer-button"
+                onClick={openInNewWindow}
+                title="Open JSON in new window"
+              >
+                Open in Window
               </button>
               
               {/* History dropdown */}

@@ -7,6 +7,7 @@ module.exports = {
         background: './src/background.ts',
         content: './src/content.ts',
         popup: './src/popup.tsx',
+        'json-window': './src/json-window.tsx',
     },
     output: {
         filename: '[name].bundle.js',
@@ -35,7 +36,8 @@ module.exports = {
             patterns: [
                 { from: 'src/assets/images', to: 'images' },
                 { from: 'src/manifest.json', to: 'manifest.json' },
-                { from: 'src/popup.html', to: 'popup.html' }
+                { from: 'src/popup.html', to: 'popup.html' },
+                { from: 'src/json-window.html', to: 'json-window.html' }
             ],
         }),
     ],
