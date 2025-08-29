@@ -492,7 +492,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                 onClick={openInNewWindow}
                 title="Open JSON in new window"
               >
-                Open in Window
+                New Win
               </button>
               
               {/* History dropdown */}
