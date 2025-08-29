@@ -347,8 +347,8 @@ function createJsonDrawer(): HTMLElement {
     // 点击抽屉外部关闭
     const clickOutsideHandler = (event: MouseEvent) => {
         if (drawer.classList.contains('open') && 
-            !drawer.contains(event.target as Node) &&
-            !(event.target as Element).classList.contains('json-text-hover')) {
+            !drawer.contains(event.target as Node)) {
+            // 不再排除点击在 json-text-hover 上的情况，允许点击高亮的JSON文本时关闭抽屉
             drawer.classList.remove('open');
         }
     };
