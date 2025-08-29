@@ -44,6 +44,9 @@ export interface Translations {
   settingsHeading: string;
   hoverDetection: string;
   language: string;
+  jsonDisplayMode: string;
+  jsonDisplayModeDrawer: string;
+  jsonDisplayModeWindow: string;
 
   // Messages
   enterJsonText: string;
@@ -108,6 +111,9 @@ export const translations: Record<LanguageCode, Translations> = {
     settingsHeading: 'Settings',
     hoverDetection: 'Hover Detection',
     language: 'Language',
+    jsonDisplayMode: 'JSON Display Mode',
+    jsonDisplayModeDrawer: 'Show in Drawer',
+    jsonDisplayModeWindow: 'Open in New Popup Window',
 
     // Messages
     enterJsonText: 'Please enter JSON text',
@@ -169,6 +175,9 @@ export const translations: Record<LanguageCode, Translations> = {
     settingsHeading: '设置',
     hoverDetection: '悬停检测',
     language: '语言',
+    jsonDisplayMode: 'JSON显示方式',
+    jsonDisplayModeDrawer: '在抽屉中显示',
+    jsonDisplayModeWindow: '在新弹出窗口中打开',
 
     // Messages
     enterJsonText: '请输入JSON文本',

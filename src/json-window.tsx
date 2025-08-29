@@ -43,6 +43,7 @@ const JsonWindowApp: React.FC = () => {
     }
   }, []);
 
+
   // 切换展开/折叠
   const [expanded, setExpanded] = useState(true);
   const toggleExpand = () => {
@@ -63,6 +64,7 @@ const JsonWindowApp: React.FC = () => {
       alert('Failed to copy JSON to clipboard');
     }
   };
+
 
   // 如果没有JSON数据
   if (!jsonData) {

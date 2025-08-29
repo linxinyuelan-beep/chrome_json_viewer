@@ -206,6 +206,45 @@ function findBalancedPatterns(text: string, openChar: string, closeChar: string)
     return results;
 }
 
+// 在新窗口中打开JSON
+async function openJsonInWindow(jsonString: string): Promise<void> {
+    try {
+        // 通过 background script 打开新标签页，避免弹窗拦截
+        const response = await chrome.runtime.sendMessage({
+            action: 'openJsonInTab',
+            jsonString: jsonString
+        });
+        
+        if (!response || !response.success) {
+            throw new Error(response?.error || 'Failed to open JSON in new tab');
+        }
+    } catch (error) {
+        console.error('Error opening JSON in window:', error);
+        showNotification('无法打开JSON窗口', 'error');
+        // 回退到抽屉显示
+        await showJsonInDrawer(jsonString);
+    }
+}
+
+// 根据用户设置显示JSON
+async function showJsonByPreference(jsonString: string): Promise<void> {
+    try {
+        // 获取用户的显示偏好设置
+        const result = await chrome.storage.local.get('jsonDisplayMode');
+        const displayMode = result.jsonDisplayMode || 'drawer';
+        
+        if (displayMode === 'window') {
+            await openJsonInWindow(jsonString);
+        } else {
+            await showJsonInDrawer(jsonString);
+        }
+    } catch (error) {
+        console.error('Error showing JSON:', error);
+        // 如果出错，回退到抽屉显示
+        await showJsonInDrawer(jsonString);
+    }
+}
+
 // 在抽屉中显示JSON - 使用React JSON Viewer组件
 async function showJsonInDrawer(jsonString: string): Promise<void> {
     
@@ -628,10 +667,10 @@ window.addEventListener('load', () => {
                                                 mouseEvent.preventDefault();
                                                 mouseEvent.stopPropagation();
 
-                                                // 只显示当前双击的JSON
-                                                showJsonInDrawer(jsonString).catch(error => {
-                                                    console.error('Error showing JSON in drawer:', error);
-                                                    showNotification('无法显示JSON抽屉', 'error');
+                                                // 根据用户设置显示JSON
+                                                showJsonByPreference(jsonString).catch(error => {
+                                                    console.error('Error showing JSON:', error);
+                                                    showNotification('无法显示JSON', 'error');
                                                 });
                                             })(json);
 

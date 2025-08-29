@@ -103,6 +103,34 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // 保持消息通道开放
     }
     
+    if (request.action === 'openJsonInTab') {
+        console.log('Background script received openJsonInTab request');
+        try {
+            const encodedJson = encodeURIComponent(request.jsonString);
+            const windowUrl = chrome.runtime.getURL(`json-window.html?json=${encodedJson}`);
+            
+            chrome.windows.create({
+                url: windowUrl,
+                type: 'popup',
+                width: 1200,
+                height: 800,
+                focused: true
+            }, (window) => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error creating window:', chrome.runtime.lastError);
+                    sendResponse({ success: false, error: chrome.runtime.lastError.message });
+                } else {
+                    console.log('Window created successfully:', window?.id);
+                    sendResponse({ success: true, windowId: window?.id });
+                }
+            });
+        } catch (error) {
+            console.error('Error in openJsonInTab:', error);
+            sendResponse({ success: false, error: String(error) });
+        }
+        return true; // 保持消息通道开放
+    }
+    
     if (request.action === 'openJsonWindow') {
         console.log('Background script received openJsonWindow request');
         try {

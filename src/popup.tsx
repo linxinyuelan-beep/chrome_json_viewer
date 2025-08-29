@@ -19,6 +19,7 @@ import {
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<'settings' | 'json-input'>('json-input');
   const [jsonHoverEnabled, setJsonHoverEnabled] = React.useState(true);
+  const [jsonDisplayMode, setJsonDisplayMode] = React.useState<'drawer' | 'window'>('drawer');
   const [jsonInput, setJsonInput] = React.useState('');
   const [jsonFormatError, setJsonFormatError] = React.useState<string | null>(null);
   const [language, setLanguage] = React.useState<LanguageCode>(DEFAULT_LANGUAGE);
@@ -34,6 +35,12 @@ const App: React.FC = () => {
         const currentLang = await getCurrentLanguage();
         setLanguage(currentLang);
         setTranslations(getTranslations(currentLang));
+        
+        // Load JSON display mode setting
+        chrome.storage.local.get('jsonDisplayMode', (result) => {
+          const mode = result.jsonDisplayMode || 'drawer';
+          setJsonDisplayMode(mode);
+        });
         
         // Check if hover detection is enabled
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -74,6 +81,13 @@ const App: React.FC = () => {
     await saveLanguage(newLang);
     setLanguage(newLang);
     setTranslations(getTranslations(newLang));
+  };
+
+  // Change JSON display mode
+  const handleDisplayModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMode = e.target.value as 'drawer' | 'window';
+    setJsonDisplayMode(newMode);
+    chrome.storage.local.set({ jsonDisplayMode: newMode });
   };
 
   // 新增：打开 Chrome 快捷键设置页面
@@ -595,6 +609,20 @@ const App: React.FC = () => {
                         {option.flag} {option.label}
                       </option>
                     ))}
+                  </select>
+                </label>
+              </div>
+              
+              <div className="settings-group">
+                <label className="language-select-label">
+                  {translations.jsonDisplayMode}:
+                  <select 
+                    className="language-select"
+                    value={jsonDisplayMode}
+                    onChange={handleDisplayModeChange}
+                  >
+                    <option value="drawer">{translations.jsonDisplayModeDrawer}</option>
+                    <option value="window">{translations.jsonDisplayModeWindow}</option>
                   </select>
                 </label>
               </div>
