@@ -560,6 +560,25 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             sendResponse({ success: false, error: 'No JSON string provided' });
         }
         return true; // 支持异步响应
+        
+    } else if (request.action === 'showJsonInDrawer') {
+        // 处理来自background script的在抽屉中显示JSON的请求
+        console.log('Received showJsonInDrawer message with JSON length:', request.jsonString?.length);
+        if (request.jsonString) {
+            showJsonInDrawer(request.jsonString)
+                .then(() => {
+                    console.log('JSON drawer displayed successfully');
+                    sendResponse({ success: true });
+                })
+                .catch((error) => {
+                    console.error('Error showing JSON in drawer:', error);
+                    sendResponse({ success: false, error: (error as Error).message });
+                });
+        } else {
+            console.error('No JSON string provided in showJsonInDrawer request');
+            sendResponse({ success: false, error: 'No JSON string provided' });
+        }
+        return true; // 支持异步响应
     }
     
     // 对于不识别的action，返回false表示不需要异步响应

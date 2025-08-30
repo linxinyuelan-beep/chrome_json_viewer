@@ -1,5 +1,5 @@
 // background.ts - Background service worker for JSON Formatter & Viewer
-import {DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations} from "./utils/i18n";
+import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations } from "./utils/i18n";
 
 const CONTEXT_MENU_ID = 'formatSelectedJson';
 
@@ -47,18 +47,28 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 // 处理右键菜单点击
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === 'formatSelectedJson' && tab?.id) {
-        if (info.selectionText) {
-            // 保存选中文本到全局变量
+    if (info.menuItemId === 'formatSelectedJson') {
+        if (!tab || tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
+            // 保存选中文本到全局变量并打开新窗口
             (chrome as any).action.sJson = info.selectionText;
-            // 打开JSON窗口
             openJsonWindow();
-        } else {
-            // 如果没有选中文本，向内容脚本发送消息
-            chrome.tabs.sendMessage(tab.id, { 
-                action: 'formatSelectedJson'
-            });
+            return;
         }
+        // 读取用户设置，决定显示方式
+        chrome.storage.local.get('jsonDisplayMode', (result) => {
+            const displayMode = result.jsonDisplayMode || 'drawer';
+
+            if (displayMode === 'window') {
+                (chrome as any).action.sJson = info.selectionText;
+                openJsonWindow();
+            } else {
+                // 在当前页面的抽屉中显示
+                chrome.tabs.sendMessage(tab.id as number, {
+                    action: 'showJsonInDrawer',
+                    jsonString: info.selectionText
+                });
+            }
+        });
     }
 });
 
@@ -66,9 +76,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 function openJsonWindow() {
     const jsonH_url = chrome.runtime.getURL("json-window.html");
     chrome.windows.create({
-        url: jsonH_url, 
-        type: "popup", 
-        width: 1024, 
+        url: jsonH_url,
+        type: "popup",
+        width: 1024,
         height: 768
     });
 }
@@ -89,15 +99,15 @@ chrome.commands.onCommand.addListener(async (command) => {
         }).then(injectionResults => {
             const selectedText = injectionResults[0].result;
             if (selectedText) {
-                chrome.tabs.sendMessage(tab.id as number, { 
-                    action: 'formatSelectedJson', 
+                chrome.tabs.sendMessage(tab.id as number, {
+                    action: 'formatSelectedJson',
                     selectedText
                 });
             }
         });
     } else if (command === 'toggle-hover-detection') {
         // 发送切换悬停检测模式的消息
-        chrome.tabs.sendMessage(tab.id, { 
+        chrome.tabs.sendMessage(tab.id, {
             action: 'toggleHoverDetection'
         });
     }
@@ -106,7 +116,7 @@ chrome.commands.onCommand.addListener(async (command) => {
 // 监听来自各个页面的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Background script received message:', request);
-    
+
     // 处理获取JSON数据的请求（新的实现方式）
     if (request.cmd === 'getJson') {
         const jsonData = (chrome as any).action?.sJson || null;
@@ -117,7 +127,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         return true;
     }
-    
+
     // 处理设置JSON数据的请求（新的实现方式）
     if (request.action === 'setJsonData') {
         (chrome as any).action = (chrome as any).action || {};
@@ -125,7 +135,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: true });
         return true;
     }
-    
+
     // 处理打开JSON标签页的请求（新的实现方式）
     if (request.action === 'openJsonInTab') {
         try {
@@ -137,7 +147,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         return true;
     }
-    
+
     if (request.action === 'showJsonFromPopup') {
         console.log('Background script received showJsonFromPopup request');
         // 转发消息到当前活动标签页
@@ -153,7 +163,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         });
         return true; // 保持消息通道开放
     }
-    
+
     if (request.action === 'openJsonWindow') {
         console.log('Background script received openJsonWindow request');
         try {
