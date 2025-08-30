@@ -217,6 +217,60 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // 保持消息通道开放
     }
     
+    // 处理来自JSON窗口的最新数据请求（用于主动获取最新会话数据）
+    if (request.action === 'requestLatestJsonData') {
+        console.log('Background script received requestLatestJsonData');
+        try {
+            const storage = chrome.storage.session || chrome.storage.local;
+            // 获取所有存储的会话数据
+            storage.get(null, (result) => {
+                if (chrome.runtime.lastError) {
+                    console.error('Error retrieving all session data:', chrome.runtime.lastError);
+                    sendResponse({ success: false, error: chrome.runtime.lastError.message });
+                    return;
+                }
+                
+                // 查找最新的JSON会话数据
+                let latestSession: any = null;
+                let latestTimestamp = 0;
+                
+                for (const [key, value] of Object.entries(result)) {
+                    if (key.startsWith('json_session_') && value && typeof value === 'object') {
+                        const sessionData = value as any;
+                        if (sessionData.timestamp && sessionData.timestamp > latestTimestamp) {
+                            latestTimestamp = sessionData.timestamp;
+                            latestSession = {
+                                sessionId: key,
+                                data: sessionData
+                            };
+                        }
+                    }
+                }
+                
+                if (latestSession) {
+                    console.log('Found latest session:', latestSession.sessionId);
+                    sendResponse({ 
+                        success: true, 
+                        data: latestSession.data,
+                        sessionId: latestSession.sessionId
+                    });
+                    
+                    // 清理已使用的会话数据
+                    storage.remove(latestSession.sessionId, () => {
+                        console.log('Latest session data consumed and cleaned:', latestSession.sessionId);
+                    });
+                } else {
+                    console.log('No latest JSON session found');
+                    sendResponse({ success: false, error: 'No latest session data found' });
+                }
+            });
+        } catch (error) {
+            console.error('Error in requestLatestJsonData:', error);
+            sendResponse({ success: false, error: String(error) });
+        }
+        return true; // 保持消息通道开放
+    }
+    
     // 处理来自JSON窗口的数据请求
     if (request.action === 'requestJsonData') {
         console.log('Background script received requestJsonData for sessionId:', request.sessionId);

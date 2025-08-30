@@ -7,16 +7,44 @@ const JsonWindowApp: React.FC = () => {
   const [jsonData, setJsonData] = useState<any>(null);
   const [jsonSize, setJsonSize] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // 添加加载状态
+  const [loadingMessage, setLoadingMessage] = useState('Loading JSON data...'); // 加载提示消息
 
-  // 通过消息API从background script获取JSON数据（类似JSON-Handle）
-  const getJsonFromMessages = async (): Promise<any> => {
-    return new Promise((resolve) => {
-      // 首先尝试监听来自background script的消息
+  // 优化后的数据获取方法：并行处理多种数据源
+  const getJsonData = async (): Promise<any> => {
+    setIsLoading(true);
+    setLoadingMessage('Loading JSON data...');
+    
+    // 创建多个数据获取Promise
+    const promises: Promise<any>[] = [];
+    
+    // 1. 主动请求最新数据（对于刚创建的窗口）
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+      const activeRequestPromise = new Promise<any>((resolve) => {
+        chrome.runtime.sendMessage({
+          action: 'requestLatestJsonData'
+        }, (response) => {
+          if (response && response.success && response.data) {
+            try {
+              resolve(JSON.parse(response.data.jsonData));
+            } catch (e) {
+              console.error('Error parsing latest JSON data:', e);
+              resolve(null);
+            }
+          } else {
+            resolve(null);
+          }
+        });
+      });
+      promises.push(activeRequestPromise);
+    }
+    
+    // 2. 监听消息方式（缩短超时时间）
+    const messagePromise = new Promise<any>((resolve) => {
       const messageListener = (request: any, sender: any, sendResponse: any) => {
         if (request.action === 'loadJsonData' && request.sessionId) {
           console.log('Received loadJsonData message with sessionId:', request.sessionId);
           
-          // 请求对应的JSON数据
           chrome.runtime.sendMessage({
             action: 'requestJsonData',
             sessionId: request.sessionId
@@ -35,22 +63,41 @@ const JsonWindowApp: React.FC = () => {
             }
           });
           
-          // 移除监听器，避免重复处理
           chrome.runtime.onMessage.removeListener(messageListener);
           return true;
         }
       };
       
-      // 添加消息监听器
       chrome.runtime.onMessage.addListener(messageListener);
       
-      // 如果5秒内没有收到消息，回退到其他方法
+      // 缩短超时时间到1.5秒
       setTimeout(() => {
         chrome.runtime.onMessage.removeListener(messageListener);
-        console.log('No message received, falling back to storage methods');
-        getJsonFromStorage().then(resolve);
-      }, 5000);
+        resolve(null);
+      }, 1500);
     });
+    promises.push(messagePromise);
+    
+    // 3. 存储方法（直接并行执行）
+    promises.push(getJsonFromStorage());
+    
+    try {
+      // 并行执行所有方法，返回第一个成功的结果
+      const results = await Promise.allSettled(promises);
+      
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          console.log('Successfully loaded JSON data');
+          return result.value;
+        }
+      }
+      
+      console.warn('All data loading methods failed');
+      return null;
+    } catch (error) {
+      console.error('Error in getJsonData:', error);
+      return null;
+    }
   };
   
   // 从存储中获取JSON数据（回退方案）
@@ -128,23 +175,27 @@ const JsonWindowApp: React.FC = () => {
   // 初始化数据
   useEffect(() => {
     const loadData = async () => {
-      // 优先尝试从消息API获取数据（类似JSON-Handle）
-      let data = await getJsonFromMessages();
-      
-      // 如果消息API没有数据，回退到存储方法
-      if (!data) {
-        console.log('No data from messages, trying storage methods...');
-        data = await getJsonFromStorage();
-      }
-      
-      if (data) {
-        setJsonData(data);
-        const jsonString = JSON.stringify(data);
-        const size = new TextEncoder().encode(jsonString).length;
-        setJsonSize(formatJsonSize(size));
-        console.log('JSON data loaded successfully');
-      } else {
-        console.error('No JSON data could be loaded');
+      try {
+        setIsLoading(true);
+        setLoadingMessage('Loading JSON data...');
+        
+        const data = await getJsonData();
+        
+        if (data) {
+          setJsonData(data);
+          const jsonString = JSON.stringify(data);
+          const size = new TextEncoder().encode(jsonString).length;
+          setJsonSize(formatJsonSize(size));
+          console.log('JSON data loaded successfully');
+        } else {
+          console.error('No JSON data could be loaded');
+          setLoadingMessage('No JSON data provided');
+        }
+      } catch (error) {
+        console.error('Error loading JSON data:', error);
+        setLoadingMessage('Error loading JSON data');
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -174,8 +225,8 @@ const JsonWindowApp: React.FC = () => {
   };
 
 
-  // 如果没有JSON数据
-  if (!jsonData) {
+  // 如果正在加载或没有JSON数据
+  if (isLoading || !jsonData) {
     return (
       <div className="json-window-container">
         <div className="json-window-header">
@@ -185,7 +236,18 @@ const JsonWindowApp: React.FC = () => {
         </div>
         <div className="json-window-content">
           <div className="json-display">
-            <p style={{ color: '#dc3545', padding: '20px' }}>No JSON data provided</p>
+            {isLoading ? (
+              <div style={{ padding: '20px', textAlign: 'center' }}>
+                <div style={{ marginBottom: '10px' }}>
+                  <span style={{ fontSize: '14px', color: '#666' }}>{loadingMessage}</span>
+                </div>
+                <div style={{ color: '#999' }}>
+                  <span>⏳ Loading...</span>
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: '#dc3545', padding: '20px' }}>{loadingMessage}</p>
+            )}
           </div>
         </div>
       </div>
