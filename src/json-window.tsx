@@ -8,52 +8,7 @@ const JsonWindowApp: React.FC = () => {
   const [jsonSize, setJsonSize] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // 通过消息API从background script获取JSON数据（类似JSON-Handle）
-  const getJsonFromMessages = async (): Promise<any> => {
-    return new Promise((resolve) => {
-      // 首先尝试监听来自background script的消息
-      const messageListener = (request: any, sender: any, sendResponse: any) => {
-        if (request.action === 'loadJsonData' && request.sessionId) {
-          console.log('Received loadJsonData message with sessionId:', request.sessionId);
-          
-          // 请求对应的JSON数据
-          chrome.runtime.sendMessage({
-            action: 'requestJsonData',
-            sessionId: request.sessionId
-          }, (response) => {
-            if (response && response.success && response.data) {
-              try {
-                const jsonData = JSON.parse(response.data.jsonData);
-                resolve(jsonData);
-              } catch (e) {
-                console.error('Error parsing JSON data:', e);
-                resolve(null);
-              }
-            } else {
-              console.error('Failed to get JSON data:', response?.error);
-              resolve(null);
-            }
-          });
-          
-          // 移除监听器，避免重复处理
-          chrome.runtime.onMessage.removeListener(messageListener);
-          return true;
-        }
-      };
-      
-      // 添加消息监听器
-      chrome.runtime.onMessage.addListener(messageListener);
-      
-      // 如果5秒内没有收到消息，回退到其他方法
-      setTimeout(() => {
-        chrome.runtime.onMessage.removeListener(messageListener);
-        console.log('No message received, falling back to storage methods');
-        getJsonFromStorage().then(resolve);
-      }, 5000);
-    });
-  };
-  
-  // 从存储中获取JSON数据（回退方案）
+  // 从存储中获取JSON数据
   const getJsonFromStorage = async (): Promise<any> => {
     const urlParams = new URLSearchParams(window.location.search);
     const storageKey = urlParams.get('key');
@@ -128,23 +83,12 @@ const JsonWindowApp: React.FC = () => {
   // 初始化数据
   useEffect(() => {
     const loadData = async () => {
-      // 优先尝试从消息API获取数据（类似JSON-Handle）
-      let data = await getJsonFromMessages();
-      
-      // 如果消息API没有数据，回退到存储方法
-      if (!data) {
-        console.log('No data from messages, trying storage methods...');
-        data = await getJsonFromStorage();
-      }
-      
+      const data = await getJsonFromStorage();
       if (data) {
         setJsonData(data);
         const jsonString = JSON.stringify(data);
         const size = new TextEncoder().encode(jsonString).length;
         setJsonSize(formatJsonSize(size));
-        console.log('JSON data loaded successfully');
-      } else {
-        console.error('No JSON data could be loaded');
       }
     };
     

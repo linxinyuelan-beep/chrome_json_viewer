@@ -152,27 +152,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     
     if (request.action === 'openJsonWindow') {
-        console.log('Background script received openJsonWindow request with sessionId:', request.sessionId);
+        console.log('Background script received openJsonWindow request');
         try {
-            // 将JSON数据存储到session storage中，使用会话ID作为键
-            const sessionData = {
-                jsonData: request.jsonData,
-                sourceUrl: request.sourceUrl || 'unknown',
-                timestamp: Date.now()
-            };
+            // 生成唯一的存储键
+            const storageKey = `json_data_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
             
-            // 使用Chrome的session storage API（如果可用）或local storage
-            const storage = chrome.storage.session || chrome.storage.local;
-            
-            storage.set({ [request.sessionId]: sessionData }, () => {
+            // 将JSON数据存储到Chrome存储中
+            chrome.storage.local.set({ [storageKey]: request.jsonData }, () => {
                 if (chrome.runtime.lastError) {
-                    console.error('Error storing session data:', chrome.runtime.lastError);
+                    console.error('Error storing JSON data:', chrome.runtime.lastError);
                     sendResponse({ success: false, error: chrome.runtime.lastError.message });
                     return;
                 }
                 
-                // 创建新窗口 - 使用固定URL（类似JSON-Handle）
-                const windowUrl = chrome.runtime.getURL('json-window.html');
+                // 创建新窗口，通过URL参数传递存储键
+                const windowUrl = chrome.runtime.getURL(`json-window.html?key=${storageKey}`);
                 chrome.windows.create({
                     url: windowUrl,
                     type: 'popup',
@@ -182,106 +176,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }, (window) => {
                     if (chrome.runtime.lastError) {
                         console.error('Error creating window:', chrome.runtime.lastError);
-                        // 清理session数据
-                        storage.remove(request.sessionId);
+                        // 清理存储的数据
+                        chrome.storage.local.remove(storageKey);
                         sendResponse({ success: false, error: chrome.runtime.lastError.message });
                     } else {
                         console.log('Window created successfully:', window?.id);
+                        sendResponse({ success: true, windowId: window?.id });
                         
-                        // 等待窗口加载完成后发送数据
+                        // 设置定时器，在窗口关闭后清理存储的数据
                         setTimeout(() => {
-                            chrome.runtime.sendMessage({
-                                action: 'loadJsonData',
-                                sessionId: request.sessionId
-                            }, () => {
-                                // 忽略错误，因为新窗口可能还没有完全加载
-                                void chrome.runtime.lastError;
+                            chrome.storage.local.remove(storageKey, () => {
+                                console.log('Cleaned up stored JSON data:', storageKey);
                             });
-                        }, 500); // 给新窗口一些时间来设置消息监听器
-                        
-                        sendResponse({ success: true, windowId: window?.id, sessionId: request.sessionId });
-                        
-                        // 设置定时器清理session数据（30分钟后）
-                        setTimeout(() => {
-                            storage.remove(request.sessionId, () => {
-                                console.log('Cleaned up session data:', request.sessionId);
-                            });
-                        }, 30 * 60 * 1000); // 30分钟
+                        }, 60000); // 1分钟后清理，给足够时间让窗口加载
                     }
                 });
             });
         } catch (error) {
             console.error('Error in openJsonWindow:', error);
-            sendResponse({ success: false, error: String(error) });
-        }
-        return true; // 保持消息通道开放
-    }
-    
-    // 处理来自JSON窗口的数据请求
-    if (request.action === 'requestJsonData') {
-        console.log('Background script received requestJsonData for sessionId:', request.sessionId);
-        try {
-            const storage = chrome.storage.session || chrome.storage.local;
-            storage.get(request.sessionId, (result) => {
-                if (chrome.runtime.lastError) {
-                    console.error('Error retrieving session data:', chrome.runtime.lastError);
-                    sendResponse({ success: false, error: chrome.runtime.lastError.message });
-                    return;
-                }
-                
-                const sessionData = result[request.sessionId];
-                if (sessionData) {
-                    sendResponse({ 
-                        success: true, 
-                        data: sessionData 
-                    });
-                    
-                    // 数据已被消费，清理存储
-                    storage.remove(request.sessionId, () => {
-                        console.log('Session data consumed and cleaned:', request.sessionId);
-                    });
-                } else {
-                    console.warn('No session data found for:', request.sessionId);
-                    sendResponse({ success: false, error: 'Session data not found' });
-                }
-            });
-        } catch (error) {
-            console.error('Error in requestJsonData:', error);
-            sendResponse({ success: false, error: String(error) });
-        }
-        return true; // 保持消息通道开放
-    }
-    
-    // 处理来自JSON窗口的数据请求
-    if (request.action === 'requestJsonData') {
-        console.log('Background script received requestJsonData for sessionId:', request.sessionId);
-        try {
-            const storage = chrome.storage.session || chrome.storage.local;
-            storage.get(request.sessionId, (result) => {
-                if (chrome.runtime.lastError) {
-                    console.error('Error retrieving session data:', chrome.runtime.lastError);
-                    sendResponse({ success: false, error: chrome.runtime.lastError.message });
-                    return;
-                }
-                
-                const sessionData = result[request.sessionId];
-                if (sessionData) {
-                    sendResponse({ 
-                        success: true, 
-                        data: sessionData 
-                    });
-                    
-                    // 数据已被消费，清理存储
-                    storage.remove(request.sessionId, () => {
-                        console.log('Session data consumed and cleaned:', request.sessionId);
-                    });
-                } else {
-                    console.warn('No session data found for:', request.sessionId);
-                    sendResponse({ success: false, error: 'Session data not found' });
-                }
-            });
-        } catch (error) {
-            console.error('Error in requestJsonData:', error);
             sendResponse({ success: false, error: String(error) });
         }
         return true; // 保持消息通道开放

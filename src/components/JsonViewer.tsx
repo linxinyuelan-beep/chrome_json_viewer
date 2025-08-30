@@ -114,23 +114,18 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
       // 准备JSON数据
       const jsonString = JSON.stringify(jsonData);
       
-      // 生成会话ID
-      const sessionId = `json_session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      
       // 发送消息给background script来打开新窗口
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
         chrome.runtime.sendMessage({
           action: 'openJsonWindow',
-          sessionId: sessionId,
-          jsonData: jsonString,
-          sourceUrl: window.location.href
+          jsonData: jsonString // 直接传递JSON字符串，不进行URL编码
         }, (response) => {
           if (chrome.runtime.lastError) {
             console.error('Error opening new window:', chrome.runtime.lastError);
-            // 回退到存储API方案
+            // 回退到普通窗口打开（使用存储API）
             fallbackOpenWindow(jsonString);
           } else if (response && response.success) {
-            console.log('New window opened successfully with session:', sessionId);
+            console.log('New window opened successfully');
           } else {
             console.error('Failed to open new window:', response?.error);
             fallbackOpenWindow(jsonString);
