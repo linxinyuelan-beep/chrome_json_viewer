@@ -36,6 +36,8 @@
             position: sticky;
             top: 0;
             z-index: 1000;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .json-window-title {
@@ -118,6 +120,64 @@
             font-size: 12px;
             color: #6c757d;
             margin-left: 15px;
+        }
+
+        /* JSON Path display styles */
+        .json-window-path-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(148, 163, 184, 0.05);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin-left: 8px;
+            max-width: 800px;
+        }
+
+        .json-window-path-value {
+            font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+            font-size: 11px;
+            background: rgba(148, 163, 184, 0.1);
+            color: #475569;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 700px;
+        }
+
+        .json-window-path-copy-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            color: #64748b;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+        }
+
+        .json-window-path-copy-btn:hover {
+            background: rgba(148, 163, 184, 0.1);
+            color: #475569;
+        }
+
+        .json-window-path-copy-btn.success {
+            color: #059669;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .json-window-path-copy-btn.success:hover {
+            background: rgba(16, 185, 129, 0.2);
+            color: #047857;
         }
     </style>
 </head>
