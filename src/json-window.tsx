@@ -8,63 +8,39 @@ const JsonWindowApp: React.FC = () => {
   const [jsonSize, setJsonSize] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // 从存储中获取JSON数据
-  const getJsonFromStorage = async (): Promise<any> => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const storageKey = urlParams.get('key');
-    const sessionKey = urlParams.get('sessionKey');
-    
-    // 优先尝试从Chrome存储获取
-    if (storageKey && typeof chrome !== 'undefined' && chrome.storage) {
+  // 通过消息机制从后台脚本获取JSON数据
+  const getJsonFromBackground = async (): Promise<any> => {
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
       try {
         return new Promise((resolve) => {
-          chrome.storage.local.get(storageKey, (result) => {
+          chrome.runtime.sendMessage({ cmd: 'getJson' }, (response) => {
             if (chrome.runtime.lastError) {
-              console.error('Error getting data from storage:', chrome.runtime.lastError);
+              console.error('Error getting JSON from background:', chrome.runtime.lastError);
               resolve(null);
               return;
             }
             
-            const jsonString = result[storageKey];
-            if (jsonString) {
+            if (response) {
               try {
-                resolve(JSON.parse(jsonString));
+                // 如果响应是字符串，尝试解析为JSON
+                if (typeof response === 'string') {
+                  resolve(JSON.parse(response));
+                } else {
+                  // 如果已经是对象，直接返回
+                  resolve(response);
+                }
               } catch (e) {
-                console.error('Error parsing JSON from storage:', e);
+                console.error('Error parsing JSON response:', e);
                 resolve(null);
               }
             } else {
-              console.error('No data found in storage for key:', storageKey);
+              console.log('No JSON data received from background');
               resolve(null);
             }
           });
         });
       } catch (e) {
-        console.error('Error accessing Chrome storage:', e);
-      }
-    }
-    
-    // 回退到sessionStorage
-    if (sessionKey) {
-      try {
-        const jsonString = sessionStorage.getItem(sessionKey);
-        if (jsonString) {
-          // 立即清理sessionStorage
-          sessionStorage.removeItem(sessionKey);
-          return JSON.parse(jsonString);
-        }
-      } catch (e) {
-        console.error('Error getting data from sessionStorage:', e);
-      }
-    }
-    
-    // 最后尝试旧的URL参数方式（向后兼容）
-    const encodedJson = urlParams.get('json');
-    if (encodedJson) {
-      try {
-        return JSON.parse(decodeURIComponent(encodedJson));
-      } catch (e) {
-        console.error('Error parsing JSON from URL:', e);
+        console.error('Error communicating with background script:', e);
       }
     }
     
@@ -83,7 +59,7 @@ const JsonWindowApp: React.FC = () => {
   // 初始化数据
   useEffect(() => {
     const loadData = async () => {
-      const data = await getJsonFromStorage();
+      const data = await getJsonFromBackground();
       if (data) {
         setJsonData(data);
         const jsonString = JSON.stringify(data);
