@@ -106,23 +106,43 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'openJsonInTab') {
         console.log('Background script received openJsonInTab request');
         try {
-            const encodedJson = encodeURIComponent(request.jsonString);
-            const windowUrl = chrome.runtime.getURL(`json-window.html?json=${encodedJson}`);
+            // 生成唯一的存储键
+            const storageKey = `json_data_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
             
-            chrome.windows.create({
-                url: windowUrl,
-                type: 'popup',
-                width: 1200,
-                height: 800,
-                focused: true
-            }, (window) => {
+            // 将JSON数据存储到Chrome存储中
+            chrome.storage.local.set({ [storageKey]: request.jsonString }, () => {
                 if (chrome.runtime.lastError) {
-                    console.error('Error creating window:', chrome.runtime.lastError);
+                    console.error('Error storing JSON data:', chrome.runtime.lastError);
                     sendResponse({ success: false, error: chrome.runtime.lastError.message });
-                } else {
-                    console.log('Window created successfully:', window?.id);
-                    sendResponse({ success: true, windowId: window?.id });
+                    return;
                 }
+                
+                // 创建新窗口，通过URL参数传递存储键
+                const windowUrl = chrome.runtime.getURL(`json-window.html?key=${storageKey}`);
+                chrome.windows.create({
+                    url: windowUrl,
+                    type: 'popup',
+                    width: 1200,
+                    height: 800,
+                    focused: true
+                }, (window) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('Error creating window:', chrome.runtime.lastError);
+                        // 清理存储的数据
+                        chrome.storage.local.remove(storageKey);
+                        sendResponse({ success: false, error: chrome.runtime.lastError.message });
+                    } else {
+                        console.log('Window created successfully:', window?.id);
+                        sendResponse({ success: true, windowId: window?.id });
+                        
+                        // 设置定时器，在窗口关闭后清理存储的数据
+                        setTimeout(() => {
+                            chrome.storage.local.remove(storageKey, () => {
+                                console.log('Cleaned up stored JSON data:', storageKey);
+                            });
+                        }, 60000); // 1分钟后清理
+                    }
+                });
             });
         } catch (error) {
             console.error('Error in openJsonInTab:', error);
@@ -134,22 +154,43 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'openJsonWindow') {
         console.log('Background script received openJsonWindow request');
         try {
-            // 创建新窗口来显示JSON
-            const windowUrl = chrome.runtime.getURL(`json-window.html?json=${request.jsonData}`);
-            chrome.windows.create({
-                url: windowUrl,
-                type: 'popup',
-                width: 1000,
-                height: 700,
-                focused: true
-            }, (window) => {
+            // 生成唯一的存储键
+            const storageKey = `json_data_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            
+            // 将JSON数据存储到Chrome存储中
+            chrome.storage.local.set({ [storageKey]: request.jsonData }, () => {
                 if (chrome.runtime.lastError) {
-                    console.error('Error creating window:', chrome.runtime.lastError);
+                    console.error('Error storing JSON data:', chrome.runtime.lastError);
                     sendResponse({ success: false, error: chrome.runtime.lastError.message });
-                } else {
-                    console.log('Window created successfully:', window?.id);
-                    sendResponse({ success: true, windowId: window?.id });
+                    return;
                 }
+                
+                // 创建新窗口，通过URL参数传递存储键
+                const windowUrl = chrome.runtime.getURL(`json-window.html?key=${storageKey}`);
+                chrome.windows.create({
+                    url: windowUrl,
+                    type: 'popup',
+                    width: 1000,
+                    height: 700,
+                    focused: true
+                }, (window) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('Error creating window:', chrome.runtime.lastError);
+                        // 清理存储的数据
+                        chrome.storage.local.remove(storageKey);
+                        sendResponse({ success: false, error: chrome.runtime.lastError.message });
+                    } else {
+                        console.log('Window created successfully:', window?.id);
+                        sendResponse({ success: true, windowId: window?.id });
+                        
+                        // 设置定时器，在窗口关闭后清理存储的数据
+                        setTimeout(() => {
+                            chrome.storage.local.remove(storageKey, () => {
+                                console.log('Cleaned up stored JSON data:', storageKey);
+                            });
+                        }, 60000); // 1分钟后清理，给足够时间让窗口加载
+                    }
+                });
             });
         } catch (error) {
             console.error('Error in openJsonWindow:', error);

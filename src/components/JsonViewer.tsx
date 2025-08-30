@@ -111,35 +111,58 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   // Open JSON in new window
   const openInNewWindow = () => {
     try {
-      // 准备JSON数据用于URL传递
+      // 准备JSON数据
       const jsonString = JSON.stringify(jsonData);
-      const encodedJson = encodeURIComponent(jsonString);
       
       // 发送消息给background script来打开新窗口
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
         chrome.runtime.sendMessage({
           action: 'openJsonWindow',
-          jsonData: encodedJson
-        }, () => {
+          jsonData: jsonString // 直接传递JSON字符串，不进行URL编码
+        }, (response) => {
           if (chrome.runtime.lastError) {
             console.error('Error opening new window:', chrome.runtime.lastError);
-            // 回退到普通窗口打开
-            fallbackOpenWindow(encodedJson);
+            // 回退到普通窗口打开（使用存储API）
+            fallbackOpenWindow(jsonString);
+          } else if (response && response.success) {
+            console.log('New window opened successfully');
+          } else {
+            console.error('Failed to open new window:', response?.error);
+            fallbackOpenWindow(jsonString);
           }
         });
       } else {
         // 如果chrome API不可用，使用回退方案
-        fallbackOpenWindow(encodedJson);
+        fallbackOpenWindow(jsonString);
       }
     } catch (error) {
       console.error('Error preparing JSON for new window:', error);
     }
   };
 
-  // 回退方案：使用window.open
-  const fallbackOpenWindow = (encodedJson: string) => {
-    const windowUrl = chrome.runtime.getURL(`json-window.html?json=${encodedJson}`);
-    window.open(windowUrl, '_blank', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+  // 回退方案：使用存储API + window.open
+  const fallbackOpenWindow = async (jsonString: string) => {
+    try {
+      // 生成唯一的键名用于存储
+      const storageKey = `json_data_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      
+      // 将JSON数据存储到Chrome存储中
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.set({ [storageKey]: jsonString }, () => {
+          const windowUrl = chrome.runtime.getURL(`json-window.html?key=${storageKey}`);
+          window.open(windowUrl, '_blank', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+        });
+      } else {
+        // 最后的回退方案：使用sessionStorage
+        const storageKey = `json_data_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        sessionStorage.setItem(storageKey, jsonString);
+        const windowUrl = `/json-window.html?sessionKey=${storageKey}`;
+        window.open(windowUrl, '_blank', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+      }
+    } catch (error) {
+      console.error('Error in fallback window opening:', error);
+      alert('Failed to open JSON in new window');
+    }
   };
 
   // Copy JSON to clipboard

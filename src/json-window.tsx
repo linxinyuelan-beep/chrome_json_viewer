@@ -8,18 +8,66 @@ const JsonWindowApp: React.FC = () => {
   const [jsonSize, setJsonSize] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState(false);
 
-  // 从URL参数中获取JSON数据
-  const getJsonFromUrl = (): any => {
+  // 从存储中获取JSON数据
+  const getJsonFromStorage = async (): Promise<any> => {
     const urlParams = new URLSearchParams(window.location.search);
+    const storageKey = urlParams.get('key');
+    const sessionKey = urlParams.get('sessionKey');
+    
+    // 优先尝试从Chrome存储获取
+    if (storageKey && typeof chrome !== 'undefined' && chrome.storage) {
+      try {
+        return new Promise((resolve) => {
+          chrome.storage.local.get(storageKey, (result) => {
+            if (chrome.runtime.lastError) {
+              console.error('Error getting data from storage:', chrome.runtime.lastError);
+              resolve(null);
+              return;
+            }
+            
+            const jsonString = result[storageKey];
+            if (jsonString) {
+              try {
+                resolve(JSON.parse(jsonString));
+              } catch (e) {
+                console.error('Error parsing JSON from storage:', e);
+                resolve(null);
+              }
+            } else {
+              console.error('No data found in storage for key:', storageKey);
+              resolve(null);
+            }
+          });
+        });
+      } catch (e) {
+        console.error('Error accessing Chrome storage:', e);
+      }
+    }
+    
+    // 回退到sessionStorage
+    if (sessionKey) {
+      try {
+        const jsonString = sessionStorage.getItem(sessionKey);
+        if (jsonString) {
+          // 立即清理sessionStorage
+          sessionStorage.removeItem(sessionKey);
+          return JSON.parse(jsonString);
+        }
+      } catch (e) {
+        console.error('Error getting data from sessionStorage:', e);
+      }
+    }
+    
+    // 最后尝试旧的URL参数方式（向后兼容）
     const encodedJson = urlParams.get('json');
     if (encodedJson) {
       try {
         return JSON.parse(decodeURIComponent(encodedJson));
       } catch (e) {
         console.error('Error parsing JSON from URL:', e);
-        return null;
       }
     }
+    
     return null;
   };
 
@@ -34,13 +82,17 @@ const JsonWindowApp: React.FC = () => {
 
   // 初始化数据
   useEffect(() => {
-    const data = getJsonFromUrl();
-    if (data) {
-      setJsonData(data);
-      const jsonString = JSON.stringify(data);
-      const size = new TextEncoder().encode(jsonString).length;
-      setJsonSize(formatJsonSize(size));
-    }
+    const loadData = async () => {
+      const data = await getJsonFromStorage();
+      if (data) {
+        setJsonData(data);
+        const jsonString = JSON.stringify(data);
+        const size = new TextEncoder().encode(jsonString).length;
+        setJsonSize(formatJsonSize(size));
+      }
+    };
+    
+    loadData();
   }, []);
 
 
