@@ -392,7 +392,6 @@ function createJsonDrawer(): HTMLElement {
     const clickOutsideHandler = (event: MouseEvent) => {
         if (drawer.classList.contains('open') && 
             !drawer.contains(event.target as Node)) {
-            // 不再排除点击在 json-text-hover 上的情况，允许点击高亮的JSON文本时关闭抽屉
             drawer.classList.remove('open');
         }
     };
@@ -667,7 +666,6 @@ window.addEventListener('load', () => {
                                             );
                                             const jsonSpan = document.createElement('span');
                                             jsonSpan.className = 'json-text-hover';
-                                            jsonSpan.title = "JSON检测到! 双击查看";                                            // 只存储这个特定的JSON字符串
                                             jsonSpan.dataset.jsonContent = json;
                                             jsonSpan.id = jsonHighlightId;
                                             jsonSpan.textContent = json;

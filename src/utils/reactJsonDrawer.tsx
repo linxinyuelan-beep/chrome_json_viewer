@@ -267,11 +267,6 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
       return;
     }
     
-    // 不再忽略JSON高亮文本的点击，允许点击它们时关闭抽屉
-    // if (target.classList && target.classList.contains('json-text-hover')) {
-    //   return;
-    // }
-    
     // 忽略react-json-view组件内部的点击（它们可能在Portal外渲染）
     if (isJsonViewerElement(target)) {
       return;
@@ -359,12 +354,7 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
       if (drawer.contains(target)) {
         return;
       }
-      
-      // 不再忽略JSON高亮文本的点击，允许点击它们时关闭抽屉
-      // if (target.classList && target.classList.contains('json-text-hover')) {
-      //   return;
-      // }
-      
+
       // 忽略react-json-view组件内部的点击（它们可能在Portal外渲染）
       if (isJsonViewerElement(target)) {
         return;

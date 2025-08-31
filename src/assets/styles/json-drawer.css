@@ -73,20 +73,8 @@
 
 /* 鼠标悬停时只给JSON部分添加样式 - 使用点状下划线 */
 .json-text-hover {
-  border-bottom: 2px dotted #3b82f6;
-  /* padding: 0 2px; */
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-  /* color: inherit; */
-  /* background: transparent; */
-  /* font-weight: normal; */
-  /* border-radius: 0; */
+  border-bottom: 1px dotted #3b82f6;
 }
-
-/* .json-text-hover:hover {
-  border-bottom: 2px dotted #2563eb;
-  color: #2563eb;
-} */
 
 /* Badge styles */
 .json-badge {
