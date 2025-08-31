@@ -74,6 +74,7 @@
 /* 鼠标悬停时只给JSON部分添加样式 - 使用点状下划线 */
 .json-text-hover {
   border-bottom: 1px dotted #3b82f6;
+  cursor: pointer;
 }
 
 /* Badge styles */
