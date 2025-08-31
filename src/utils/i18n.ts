@@ -111,9 +111,9 @@ export const translations: Record<LanguageCode, Translations> = {
     settingsHeading: 'Settings',
     hoverDetection: 'Hover Detection',
     language: 'Language',
-    jsonDisplayMode: 'JSON Display Mode',
-    jsonDisplayModeDrawer: 'Show in Drawer',
-    jsonDisplayModeWindow: 'Open in New Popup Window',
+    jsonDisplayMode: 'Display Mode',
+    jsonDisplayModeDrawer: 'Drawer',
+    jsonDisplayModeWindow: 'New Window',
 
     // Messages
     enterJsonText: 'Please enter JSON text',

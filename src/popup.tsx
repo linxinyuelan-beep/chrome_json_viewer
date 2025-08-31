@@ -42,19 +42,10 @@ const App: React.FC = () => {
           setJsonDisplayMode(mode);
         });
         
-        // Check if hover detection is enabled
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]?.id) {
-            chrome.tabs.sendMessage(tabs[0].id, { action: 'getHoverDetectionState' })
-              .then(response => {
-                if (response && response.enabled !== undefined) {
-                  setJsonHoverEnabled(response.enabled);
-                }
-              })
-              .catch(error => {
-                console.log('Error getting hover detection state:', error);
-              });
-          }
+        // Load hover detection setting from storage
+        chrome.storage.local.get('hoverDetectionEnabled', (result) => {
+          const enabled = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
+          setJsonHoverEnabled(enabled);
         });
       } catch (error) {
         console.error("Error loading settings:", error);
@@ -64,15 +55,23 @@ const App: React.FC = () => {
     loadSettings();
   }, []);
 
-  // Toggle JSON hover detection
-  const toggleHoverDetection = async () => {
-    // Send message to content script to toggle hover detection
+  // Handle hover detection setting change
+  const handleHoverDetectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const enabled = e.target.value === 'enabled';
+    setJsonHoverEnabled(enabled);
+    
+    // Save to storage
+    chrome.storage.local.set({ hoverDetectionEnabled: enabled });
+    
+    // Send message to content script to update hover detection
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: 'toggleHoverDetection' });
+        chrome.tabs.sendMessage(tabs[0].id, { 
+          action: 'setHoverDetection', 
+          enabled: enabled 
+        });
       }
     });
-    setJsonHoverEnabled(!jsonHoverEnabled);
   };
   
   // Change language
@@ -560,43 +559,20 @@ const App: React.FC = () => {
         {activeTab === 'settings' ? (
           <>
             <div className="section">
-              <h2>{translations.keyboardShortcuts}</h2>
-              <ul className="shortcut-list">
-                <li><kbd>Ctrl+Shift+E</kbd> {translations.formatSelectedJson}</li>
-                <li><kbd>Ctrl+Shift+H</kbd> {translations.toggleHoverDetection}</li>
-              </ul>
-              <div className="settings-actions">
-                <button className="button" onClick={openShortcutsPage} aria-label="Open Chrome shortcuts settings">
-                  {translations.configureShortcuts}
-                </button>
-              </div>
-            </div>
-            
-            <div className="section">
-              <h2>{translations.howToUse}</h2>
-              <ul className="feature-list">
-                <li>{translations.hoverOverJson}</li>
-                <li>{translations.doubleClickJson}</li>
-                <li>{translations.rightClickMenu}</li>
-                <li>{translations.useKeyboardShortcuts}</li>
-              </ul>
-            </div>
-
-            <div className="section">
               <h2>{translations.settingsHeading}</h2>
-              <div className="settings-group">
-                <label className="toggle-switch">
-                  <input 
-                    type="checkbox"
-                    checked={jsonHoverEnabled}
-                    onChange={toggleHoverDetection}
-                  />
-                  <span className="toggle-slider"></span>
-                  <span className="toggle-label">{translations.hoverDetection}</span>
+              <div className="settings-compact">
+                <label className="language-select-label">
+                  {translations.hoverDetection}:
+                  <select 
+                    className="language-select"
+                    value={jsonHoverEnabled ? 'enabled' : 'disabled'}
+                    onChange={handleHoverDetectionChange}
+                  >
+                    <option value="enabled">{translations.statusEnabled}</option>
+                    <option value="disabled">{translations.statusDisabled}</option>
+                  </select>
                 </label>
-              </div>
-              
-              <div className="settings-group">
+                
                 <label className="language-select-label">
                   {translations.language}:
                   <select 
@@ -611,9 +587,7 @@ const App: React.FC = () => {
                     ))}
                   </select>
                 </label>
-              </div>
-              
-              <div className="settings-group">
+                
                 <label className="language-select-label">
                   {translations.jsonDisplayMode}:
                   <select 
@@ -625,8 +599,15 @@ const App: React.FC = () => {
                     <option value="window">{translations.jsonDisplayModeWindow}</option>
                   </select>
                 </label>
+
+                <div className="settings-actions">
+                  <button className="button" onClick={openShortcutsPage} aria-label="Open Chrome shortcuts settings">
+                    {translations.configureShortcuts}
+                  </button>
+                </div>
               </div>
             </div>
+
           </>
         ) : (
           <div className="json-input-section">

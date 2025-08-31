@@ -234,6 +234,13 @@ input:checked + .toggle-slider:before {
     margin-bottom: 0;
 }
 
+/* Settings compact layout */
+.settings-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
 .setting-label {
     display: block;
     margin-bottom: 8px;

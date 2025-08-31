@@ -15,8 +15,13 @@ console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_
 import { isValidNestedJson } from './utils/nestedJsonHandler';
 import {getCurrentLanguage, getTranslations} from "./utils/i18n";
 
-// 是否启用悬停检测
+// 是否启用悬停检测，从存储中加载
 let enableHoverDetection = true;
+
+// 初始化时加载悬停检测设置
+chrome.storage.local.get('hoverDetectionEnabled', (result) => {
+  enableHoverDetection = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
+});
 
 // 显示通知
 function showNotification(message: string, type: 'success' | 'error' | 'info' = 'info'): void {
@@ -517,9 +522,30 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         }
         return true; // 支持异步响应
         
+    } else if (request.action === 'setHoverDetection') {
+        // 设置悬停检测状态
+        enableHoverDetection = request.enabled;
+        
+        // 显示状态变化通知
+        showNotification(
+            `${i18n.hoverDetection}: ${enableHoverDetection ? i18n.statusEnabled : i18n.statusDisabled}`,
+            enableHoverDetection ? 'success' : 'info'
+        );
+        
+        // 如果启用悬停检测，刷新页面以应用更改
+        if (enableHoverDetection) {
+            location.reload();
+        }
+        
+        sendResponse({ enabled: enableHoverDetection });
+        return true; // 支持异步响应
+        
     } else if (request.action === 'toggleHoverDetection') {
-        // 切换悬停检测状态
+        // 保持兼容性，但现在也会保存到存储
         enableHoverDetection = !enableHoverDetection;
+        
+        // 保存到存储
+        chrome.storage.local.set({ hoverDetectionEnabled: enableHoverDetection });
         
         // 显示状态变化通知
         showNotification(
