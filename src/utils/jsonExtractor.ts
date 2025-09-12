@@ -9,6 +9,14 @@ export function extractJsonFromString(text: string): string | null {
     return null;
   }
 
+  // 首先尝试直接解析整个文本，如果能成功则直接返回
+  try {
+    JSON.parse(text);
+    return text;
+  } catch (e) {
+    // 如果直接解析失败，继续使用原有的提取逻辑
+  }
+
   // 从第一个 '{' 开始查找
   let startIndex = text.indexOf('{');
   if (startIndex === -1) {

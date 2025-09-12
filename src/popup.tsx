@@ -669,6 +669,16 @@ const App: React.FC = () => {
       
       <div className="footer">
         <div>{translations.appName}</div>
+        <div className="github-link">
+          <a 
+            href="https://github.com/linxinyuelan-beep/chrome_json_viewer" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            title="View source code on GitHub"
+          >
+            GitHub
+          </a>
+        </div>
       </div>
     </div>
   );

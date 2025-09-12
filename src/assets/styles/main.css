@@ -111,6 +111,27 @@ body {
     font-size: 12px;
     color: #64748b;
     font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.github-link a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.github-link a:hover {
+    color: #764ba2;
+    background: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.2);
 }
 
 /* Lists */
@@ -501,24 +522,7 @@ input:checked + .toggle-slider:before {
     transform: translateY(-1px);
 }
 
-/* 焦点样式增强 */
-.json-textarea:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15), inset 0 2px 4px rgba(0, 0, 0, 0.02);
-    background: #ffffff;
-    transform: translateY(-1px);
-    transition: all 0.2s ease;
-}
-
-/* 突出显示当前活动的标签 */
-.tab.active {
-    color: #667eea;
-    font-weight: 700;
-    background: linear-gradient(145deg, #ffffff, #f8fafc);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transform: translateY(-1px);
-}
+/* Enhanced focus and active tab styles are defined above */
 
 .json-input-actions {
     display: flex;
@@ -649,7 +653,7 @@ input:checked + .toggle-slider:before {
 }
 
 /* Add smooth scrolling and focus management */
-* {
+html {
     scroll-behavior: smooth;
 }
 
@@ -665,7 +669,7 @@ input:checked + .toggle-slider:before {
     }
 }
 
-.section {
+.section-animated {
     animation: fadeIn 0.3s ease-out;
 }
 
