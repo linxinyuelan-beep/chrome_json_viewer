@@ -8,6 +8,7 @@ module.exports = {
         content: './src/content.ts',
         popup: './src/popup.tsx',
         'json-window': './src/json-window.tsx',
+        'json-compare': './src/json-compare.tsx',
     },
     output: {
         filename: '[name].bundle.js',
@@ -37,7 +38,8 @@ module.exports = {
                 { from: 'src/assets/images', to: 'images' },
                 { from: 'src/manifest.json', to: 'manifest.json' },
                 { from: 'src/popup.html', to: 'popup.html' },
-                { from: 'src/json-window.html', to: 'json-window.html' }
+                { from: 'src/json-window.html', to: 'json-window.html' },
+                { from: 'src/json-compare.html', to: 'json-compare.html' }
             ],
         }),
     ],

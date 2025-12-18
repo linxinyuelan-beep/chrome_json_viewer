@@ -182,5 +182,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         return true;
     }
+    
+    // 处理打开 JSON Compare 页面的请求
+    if (request.action === 'openJsonCompare') {
+        console.log('Background script received openJsonCompare request');
+        try {
+            if (request.url) {
+                chrome.tabs.create({ url: request.url }, (tab) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('Error creating tab:', chrome.runtime.lastError);
+                        sendResponse({ success: false, error: chrome.runtime.lastError.message });
+                    } else {
+                        sendResponse({ success: true, tabId: tab.id });
+                    }
+                });
+            } else {
+                sendResponse({ success: false, error: 'No URL provided' });
+            }
+        } catch (error) {
+            console.error('Error in openJsonCompare:', error);
+            sendResponse({ success: false, error: String(error) });
+        }
+        return true;
+    }
 });
 

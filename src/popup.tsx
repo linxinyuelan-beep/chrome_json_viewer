@@ -17,7 +17,7 @@ import {
 } from './utils/i18n';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = React.useState<'settings' | 'json-input'>('json-input');
+  const [activeTab, setActiveTab] = React.useState<'settings' | 'json-input' | 'json-compare'>('json-input');
   const [jsonHoverEnabled, setJsonHoverEnabled] = React.useState(true);
   const [jsonDisplayMode, setJsonDisplayMode] = React.useState<'drawer' | 'window'>('drawer');
   const [jsonInput, setJsonInput] = React.useState('');
@@ -96,6 +96,12 @@ const App: React.FC = () => {
     } catch (e) {
       console.error('Failed to open shortcuts page', e);
     }
+  };
+
+  // 新增：打开 JSON 对比页面
+  const openJsonComparePage = () => {
+    const url = chrome.runtime.getURL('json-compare.html');
+    chrome.tabs.create({ url });
   };
 
   // Format JSON input function
@@ -653,6 +659,10 @@ const App: React.FC = () => {
                 <button className="json-button convert-kv" onClick={convertKeyValueToJson}>
                   {translations.convertKeyValue}
                 </button>
+                <button className="json-button format" onClick={openJsonComparePage} style={{ backgroundColor: '#4CAF50' }}>
+                  JSON Compare
+                </button>
+                <div style={{ flex: 1 }}></div>
               </div>
             </div>
             <div className="json-input-help">

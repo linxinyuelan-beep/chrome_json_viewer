@@ -565,6 +565,30 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
               >
                 New Win
               </button>
+              <button 
+                className="json-viewer-button"
+                onClick={() => {
+                  const jsonString = JSON.stringify(jsonData, null, 2);
+                  const url = chrome.runtime.getURL('json-compare.html?left=' + encodeURIComponent(jsonString));
+                  
+                  // 通过消息传递让 background script 创建标签页
+                  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+                    chrome.runtime.sendMessage({
+                      action: 'openJsonCompare',
+                      url: url
+                    }, (response) => {
+                      if (chrome.runtime.lastError) {
+                        console.error('Error opening compare page:', chrome.runtime.lastError);
+                      }
+                    });
+                  } else {
+                    console.error('Chrome runtime API not available');
+                  }
+                }}
+                title="Compare with another JSON"
+              >
+                ⚖️ Compare
+              </button>
               
               {/* History dropdown */}
               <div className="json-viewer-dropdown-container">
