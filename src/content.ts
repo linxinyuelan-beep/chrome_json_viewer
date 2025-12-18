@@ -17,6 +17,12 @@ import {getCurrentLanguage, getTranslations} from "./utils/i18n";
 
 // 是否启用悬停检测，从存储中加载
 let enableHoverDetection = true;
+// 临时禁用自动检测标志（仅在当前页面会话期间有效）
+let autoDetectionTemporarilyDisabled = false;
+// 临时启用自动检测标志（仅在当前页面会话期间有效）
+let autoDetectionTemporarilyEnabled = false;
+// 标志记录是否已添加悬停检测事件监听器
+let hoverDetectionListenerAdded = false;
 
 // 初始化时加载悬停检测设置
 chrome.storage.local.get('hoverDetectionEnabled', (result) => {
@@ -486,6 +492,164 @@ function throttle<T extends (...args: any[]) => any>(
     };
 }
 
+// 封装悬停检测功能，使其可以动态启用
+function enableHoverDetectionFeature(): void {
+    // 如果已经添加过了，不重复添加
+    if (hoverDetectionListenerAdded) {
+        console.log('Hover detection listener already added, skipping...');
+        return;
+    }
+    
+    console.log(`%c🔍 JSON Detector v${EXTENSION_VERSION}: Enabling hover detection${autoDetectionTemporarilyEnabled ? ' (temporarily enabled)' : ''}`,
+        'background: #4285f4; color: white; padding: 2px 6px; border-radius: 2px;');
+
+    // 创建状态提示元素 - 只在调试模式显示
+    console.log(`JSON Detector v${EXTENSION_VERSION} hover mode enabled`);
+
+    // 添加全局鼠标移动监听器，用于悬停检测
+    document.addEventListener('mousemove', throttle((e: MouseEvent) => {
+        // 如果临时禁用了自动检测，则不处理
+        if (autoDetectionTemporarilyDisabled) {
+            return;
+        }
+        
+        // 获取鼠标下方的元素
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+
+        if (!target) return;
+
+        // 检查是否已经是被标记的JSON文本
+        if (target.classList && target.classList.contains('json-text-hover')) {
+            return;
+        }
+
+        // 如果目标是文本节点或有文本内容的元素
+        if ((target.nodeType === Node.TEXT_NODE ||
+            target.childNodes.length === 0 ||
+            (target.textContent && target.textContent.length > 10)) &&
+            !['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'SELECT', 'OPTION'].includes(target.tagName || '')) {
+
+            // 获取目标文本
+            const text = target.textContent || '';
+
+            // 快速检查是否可能包含JSON (预筛选)
+            const mayContainJson = text.includes('{') && text.includes('}') ||
+                text.includes('[') && text.includes(']') ||
+                text.includes('param=');
+
+            if (mayContainJson) {
+                // 尝试提取和检测JSON
+                const jsonContents = detectJsonInElement(target);
+
+                if (jsonContents.length > 0) {
+                    // 找到所有JSON在原始文本中的位置，分别高亮每一个
+                    const htmlTarget = target as HTMLElement;
+                    const originalText = htmlTarget.textContent || '';
+
+                    // 为了防止处理过程中文本改变导致的位置错误，先记录所有要处理的JSON及其位置
+                    const jsonPositions: { json: string, position: number }[] = [];
+
+                    // 查找每个JSON的位置
+                    for (const jsonContent of jsonContents) {
+                        const position = originalText.indexOf(jsonContent);
+                        if (position !== -1) {
+                            jsonPositions.push({ json: jsonContent, position });
+                        }
+                    }
+
+                    // 按位置排序，确保从后向前处理，避免前面的处理影响后面的位置
+                    jsonPositions.sort((a, b) => b.position - a.position);
+
+                    for (const { json, position } of jsonPositions) {
+                        try {
+                            // 为每个JSON查找包含它的文本节点
+                            const textNodes = getAllTextNodes(htmlTarget);
+                            let processedNode = false;
+
+                            for (const textNode of textNodes) {
+                                if (!textNode.textContent) continue;
+
+                                const nodeText = textNode.textContent;
+                                const jsonPosInNode = nodeText.indexOf(json);
+
+                                if (jsonPosInNode !== -1) {
+                                    // 创建一个ID来标识这个JSON的高亮
+                                    const jsonHighlightId = `json-highlight-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+                                    // 分割文本节点
+                                    const beforeTextNode = document.createTextNode(
+                                        nodeText.substring(0, jsonPosInNode)
+                                    );
+                                    const jsonSpan = document.createElement('span');
+                                    jsonSpan.className = 'json-text-hover';
+                                    jsonSpan.dataset.jsonContent = json;
+                                    jsonSpan.id = jsonHighlightId;
+                                    jsonSpan.textContent = json;
+                                    const afterTextNode = document.createTextNode(
+                                        nodeText.substring(jsonPosInNode + json.length)
+                                    );
+
+                                    // 替换原始文本节点
+                                    const parentNode = textNode.parentNode;
+                                    if (!parentNode) continue;
+
+                                    // 将分割后的节点插入DOM
+                                    parentNode.insertBefore(beforeTextNode, textNode);
+                                    parentNode.insertBefore(jsonSpan, textNode);
+                                    parentNode.insertBefore(afterTextNode, textNode);
+                                    parentNode.removeChild(textNode);
+
+                                    // 添加临时双击事件处理器
+                                    const dblClickHandlerForJson = ((jsonString: string) => (ce: Event) => {
+                                        const mouseEvent = ce as MouseEvent;
+                                        mouseEvent.preventDefault();
+                                        mouseEvent.stopPropagation();
+
+                                        // 根据用户设置显示JSON
+                                        showJsonByPreference(jsonString).catch(error => {
+                                            console.error('Error showing JSON:', error);
+                                            showNotification('无法显示JSON', 'error');
+                                        });
+                                    })(json);
+
+                                    // 为当前jsonSpan添加双击处理
+                                    jsonSpan.addEventListener('dblclick', dblClickHandlerForJson);
+                                    
+                                    // 鼠标移出时安全移除高亮
+                                    const currentHighlightId = jsonHighlightId; // 保存当前ID以便在闭包中访问
+                                    htmlTarget.addEventListener('mouseleave', () => {
+                                        try {
+                                            // 找到我们添加的span元素
+                                            const highlightSpan = document.getElementById(currentHighlightId);
+                                            if (highlightSpan && highlightSpan.parentNode) {
+                                                restoreOriginalText(highlightSpan);
+                                            }
+                                        } catch (e) {
+                                            console.error('Error removing JSON highlight:', e);
+                                        }
+                                    }, { once: true });
+
+                                    processedNode = true;
+                                    break;
+                                }
+                            }
+
+                            if (!processedNode) {
+                                // console.log(`Could not find text node containing JSON: ${json.substring(0, 30)}...`);
+                            }
+                        } catch (e) {
+                            console.error("Error highlighting JSON:", e);
+                        }
+                    }
+                }
+            }
+        }
+    }, 150)); // 150ms的节流，保持响应性但不过度消耗性能
+    
+    // 标记为已添加
+    hoverDetectionListenerAdded = true;
+}
+
 // 初始化JSON格式化功能
 function initializeJsonFormatter() {
     console.log('Initializing JSON formatter...');
@@ -604,6 +768,35 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             sendResponse({ success: false, error: 'No JSON string provided' });
         }
         return true; // 支持异步响应
+        
+    } else if (request.action === 'toggleAutoDetectionTemporarily') {
+        // 智能切换自动检测状态（临时开启或关闭，直到页面刷新）
+        // 如果当前悬停检测已启用，则临时关闭；如果已禁用，则临时开启
+        if (enableHoverDetection && !autoDetectionTemporarilyEnabled) {
+            // 当前是开启状态（且不是临时启用的），临时关闭
+            autoDetectionTemporarilyDisabled = true;
+            autoDetectionTemporarilyEnabled = false;
+            
+            showNotification(
+                `${i18n.autoDetectionDisabled}. ${i18n.autoDetectionWillResumeOnRefresh}`,
+                'info'
+            );
+        } else {
+            // 当前是关闭状态或临时启用状态，临时开启
+            autoDetectionTemporarilyDisabled = false;
+            autoDetectionTemporarilyEnabled = true;
+            
+            // 直接启用悬停检测功能，不需要刷新页面
+            enableHoverDetectionFeature();
+            
+            showNotification(
+                `${i18n.autoDetectionEnabled}. ${i18n.autoDetectionWillResumeOnRefresh}`,
+                'success'
+            );
+        }
+        
+        sendResponse({ success: true, temporarilyDisabled: autoDetectionTemporarilyDisabled });
+        return true; // 支持异步响应
     }
     
     // 对于不识别的action，返回false表示不需要异步响应
@@ -613,148 +806,10 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 window.addEventListener('load', () => {
     // 等待页面完全加载后再初始化JSON检测
     setTimeout(() => {
-        // 添加鼠标悬停检测功能
-        if (enableHoverDetection) {
-            console.log(`%c🔍 JSON Detector v${EXTENSION_VERSION}: Enabling hover detection`,
-                'background: #4285f4; color: white; padding: 2px 6px; border-radius: 2px;');
-
-            // 创建状态提示元素 - 只在调试模式显示
-            console.log(`JSON Detector v${EXTENSION_VERSION} hover mode enabled`);
-
-            // 添加全局鼠标移动监听器，用于悬停检测
-            document.addEventListener('mousemove', throttle((e: MouseEvent) => {
-                // 获取鼠标下方的元素
-                const target = document.elementFromPoint(e.clientX, e.clientY);
-
-                if (!target) return;
-
-                // 检查是否已经是被标记的JSON文本
-                if (target.classList && target.classList.contains('json-text-hover')) {
-                    return;
-                }
-
-                // 如果目标是文本节点或有文本内容的元素
-                if ((target.nodeType === Node.TEXT_NODE ||
-                    target.childNodes.length === 0 ||
-                    (target.textContent && target.textContent.length > 10)) &&
-                    !['SCRIPT', 'STYLE', 'TEXTAREA', 'INPUT', 'SELECT', 'OPTION'].includes(target.tagName || '')) {
-
-                    // 获取目标文本
-                    const text = target.textContent || '';
-
-                    // 快速检查是否可能包含JSON (预筛选)
-                    const mayContainJson = text.includes('{') && text.includes('}') ||
-                        text.includes('[') && text.includes(']') ||
-                        text.includes('param=');
-
-                    if (mayContainJson) {
-                        // 尝试提取和检测JSON
-                        const jsonContents = detectJsonInElement(target);
-
-                        if (jsonContents.length > 0) {
-                            // 找到所有JSON在原始文本中的位置，分别高亮每一个
-                            const htmlTarget = target as HTMLElement;
-                            const originalText = htmlTarget.textContent || '';
-
-                            // 为了防止处理过程中文本改变导致的位置错误，先记录所有要处理的JSON及其位置
-                            const jsonPositions: { json: string, position: number }[] = [];
-
-                            // 查找每个JSON的位置
-                            for (const jsonContent of jsonContents) {
-                                const position = originalText.indexOf(jsonContent);
-                                if (position !== -1) {
-                                    jsonPositions.push({ json: jsonContent, position });
-                                }
-                            }
-
-                            // 按位置排序，确保从后向前处理，避免前面的处理影响后面的位置
-                            jsonPositions.sort((a, b) => b.position - a.position);
-
-                            for (const { json, position } of jsonPositions) {
-                                try {
-                                    // 为每个JSON查找包含它的文本节点
-                                    const textNodes = getAllTextNodes(htmlTarget);
-                                    let processedNode = false;
-
-                                    for (const textNode of textNodes) {
-                                        if (!textNode.textContent) continue;
-
-                                        const nodeText = textNode.textContent;
-                                        const jsonPosInNode = nodeText.indexOf(json);
-
-                                        if (jsonPosInNode !== -1) {
-                                            // 创建一个ID来标识这个JSON的高亮
-                                            const jsonHighlightId = `json-highlight-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-
-                                            // 分割文本节点
-                                            const beforeTextNode = document.createTextNode(
-                                                nodeText.substring(0, jsonPosInNode)
-                                            );
-                                            const jsonSpan = document.createElement('span');
-                                            jsonSpan.className = 'json-text-hover';
-                                            jsonSpan.dataset.jsonContent = json;
-                                            jsonSpan.id = jsonHighlightId;
-                                            jsonSpan.textContent = json;
-                                            const afterTextNode = document.createTextNode(
-                                                nodeText.substring(jsonPosInNode + json.length)
-                                            );
-
-                                            // 替换原始文本节点
-                                            const parentNode = textNode.parentNode;
-                                            if (!parentNode) continue;
-
-                                            // 将分割后的节点插入DOM
-                                            parentNode.insertBefore(beforeTextNode, textNode);
-                                            parentNode.insertBefore(jsonSpan, textNode);
-                                            parentNode.insertBefore(afterTextNode, textNode);
-                                            parentNode.removeChild(textNode);
-
-                                            // 添加临时双击事件处理器
-                                            const dblClickHandlerForJson = ((jsonString: string) => (ce: Event) => {
-                                                const mouseEvent = ce as MouseEvent;
-                                                mouseEvent.preventDefault();
-                                                mouseEvent.stopPropagation();
-
-                                                // 根据用户设置显示JSON
-                                                showJsonByPreference(jsonString).catch(error => {
-                                                    console.error('Error showing JSON:', error);
-                                                    showNotification('无法显示JSON', 'error');
-                                                });
-                                            })(json);
-
-                                            // 为当前jsonSpan添加双击处理
-                                            jsonSpan.addEventListener('dblclick', dblClickHandlerForJson);
-                                            
-                                            // 鼠标移出时安全移除高亮
-                                            const currentHighlightId = jsonHighlightId; // 保存当前ID以便在闭包中访问
-                                            htmlTarget.addEventListener('mouseleave', () => {
-                                                try {
-                                                    // 找到我们添加的span元素
-                                                    const highlightSpan = document.getElementById(currentHighlightId);
-                                                    if (highlightSpan && highlightSpan.parentNode) {
-                                                        restoreOriginalText(highlightSpan);
-                                                    }
-                                                } catch (e) {
-                                                    console.error('Error removing JSON highlight:', e);
-                                                }
-                                            }, { once: true });
-
-                                            processedNode = true;
-                                            break;
-                                        }
-                                    }
-
-                                    if (!processedNode) {
-                                        // console.log(`Could not find text node containing JSON: ${json.substring(0, 30)}...`);
-                                    }
-                                } catch (e) {
-                                    console.error("Error highlighting JSON:", e);
-                                }
-                            }
-                        }
-                    }
-                }
-            }, 150)); // 150ms的节流，保持响应性但不过度消耗性能
+        // 添加悬停检测功能
+        // 如果设置中启用了悬停检测，或者临时启用了检测，则启用
+        if (enableHoverDetection || autoDetectionTemporarilyEnabled) {
+            enableHoverDetectionFeature();
         }
     }, 500); // 等待500ms确保页面内容完全加载
 });

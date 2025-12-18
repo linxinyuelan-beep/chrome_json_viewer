@@ -70,6 +70,11 @@ export interface Translations {
   statusEnabled: string;
   statusDisabled: string;
   jsonExtracted: string;
+  disableAutoDetection: string;
+  enableAutoDetection: string;
+  autoDetectionDisabled: string;
+  autoDetectionEnabled: string;
+  autoDetectionWillResumeOnRefresh: string;
 }
 
 // Language definitions
@@ -137,6 +142,11 @@ export const translations: Record<LanguageCode, Translations> = {
     statusEnabled: 'Enabled',
     statusDisabled: 'Disabled',
     jsonExtracted: 'JSON content extracted and formatted',
+    disableAutoDetection: 'Disable Auto-Detection (Until Refresh)',
+    enableAutoDetection: 'Enable Auto-Detection (Until Refresh)',
+    autoDetectionDisabled: 'Auto-detection disabled',
+    autoDetectionEnabled: 'Auto-detection enabled',
+    autoDetectionWillResumeOnRefresh: 'Auto-detection will resume on page refresh',
   },
   zh: {
     // General UI
@@ -201,6 +211,11 @@ export const translations: Record<LanguageCode, Translations> = {
     statusEnabled: '已启用',
     statusDisabled: '已禁用',
     jsonExtracted: 'JSON内容已提取并格式化',
+    disableAutoDetection: '临时关闭自动检测（直到刷新页面）',
+    enableAutoDetection: '临时开启自动检测（直到刷新页面）',
+    autoDetectionDisabled: '自动检测已关闭',
+    autoDetectionEnabled: '自动检测已开启',
+    autoDetectionWillResumeOnRefresh: '刷新页面后将恢复自动检测',
   },
 };
 

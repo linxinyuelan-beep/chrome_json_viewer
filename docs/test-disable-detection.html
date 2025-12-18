@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试临时关闭自动检测功能</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4285f4;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #4285f4;
+            margin-top: 30px;
+        }
+        .json-sample {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .instruction {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #fff;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .step-number {
+            display: inline-block;
+            background: #4285f4;
+            color: white;
+            width: 25px;
+            height: 25px;
+            text-align: center;
+            line-height: 25px;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .highlight {
+            background: #fff9c4;
+            padding: 2px 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 测试临时关闭自动检测功能</h1>
+        
+        <div class="instruction">
+            <strong>功能说明：</strong>此功能允许您在当前页面会话中智能切换JSON自动检测功能。
+            如果当前设置中悬停检测是<strong>开启的</strong>，右键菜单会显示"<strong>临时关闭</strong>"；
+            如果设置中悬停检测是<strong>关闭的</strong>，右键菜单会显示"<strong>临时开启</strong>"。
+            这样您可以根据需要临时改变检测状态，刷新页面后会恢复到原始设置。
+        </div>
+
+        <h2>📋 测试步骤</h2>
+        
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>启用悬停检测：</strong>确保扩展的悬停检测功能已启用（可在扩展popup中设置）
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <strong>测试自动检测：</strong>将鼠标悬停在下方的JSON示例上，应该会看到JSON被高亮显示
+        </div>
+
+        <div class="step">
+            <span class="step-number">3</span>
+            <strong>右键打开菜单：</strong>在页面任意位置点击右键，您会看到：
+            <ul style="margin-top: 5px;">
+                <li>如果悬停检测已开启：显示 <code class="highlight">"临时关闭自动检测（直到刷新页面）"</code></li>
+                <li>如果悬停检测已关闭：显示 <code class="highlight">"临时开启自动检测（直到刷新页面）"</code></li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">4</span>
+            <strong>验证切换：</strong>点击菜单项后：
+            <ul style="margin-top: 5px;">
+                <li>如果是关闭操作：会显示"自动检测已关闭"通知，鼠标悬停在JSON上不会有高亮效果</li>
+                <li>如果是开启操作：会显示"自动检测已开启"通知，并在1.5秒后自动刷新页面以启用检测</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">5</span>
+            <strong>测试复制：</strong>现在您可以轻松选择和复制页面上的任何文本，包括JSON内容
+        </div>
+
+        <div class="step">
+            <span class="step-number">6</span>
+            <strong>测试反向切换：</strong>在扩展popup中关闭悬停检测，然后刷新此页面。
+            右键菜单应该显示"临时开启"选项，点击后会自动刷新页面并启用检测（仅在当前页面会话中有效）
+        </div>
+
+        <div class="step">
+            <span class="step-number">7</span>
+            <strong>刷新恢复：</strong>无论是临时开启还是临时关闭，刷新页面后都会恢复到扩展设置中的原始状态
+        </div>
+
+        <h2>🔍 JSON测试样例</h2>
+        
+        <h3>样例 1: 简单对象</h3>
+        <div class="json-sample">{"name": "张三", "age": 28, "city": "北京", "email": "zhangsan@example.com"}</div>
+
+        <h3>样例 2: 数组数据</h3>
+        <div class="json-sample">[{"id": 1, "product": "笔记本电脑", "price": 5999}, {"id": 2, "product": "鼠标", "price": 99}, {"id": 3, "product": "键盘", "price": 299}]</div>
+
+        <h3>样例 3: 嵌套对象</h3>
+        <div class="json-sample">{
+  "user": {
+    "id": 12345,
+    "username": "testuser",
+    "profile": {
+      "firstName": "李",
+      "lastName": "明",
+      "contacts": {
+        "email": "liming@test.com",
+        "phone": "+86-138-0000-0000"
+      }
+    }
+  },
+  "settings": {
+    "language": "zh-CN",
+    "theme": "dark",
+    "notifications": true
+  }
+}</div>
+
+        <h3>样例 4: API日志格式</h3>
+        <div class="json-sample">req: {"method": "POST", "url": "/api/users", "body": {"username": "newuser", "email": "new@example.com"}}
+res: {"success": true, "data": {"userId": 789, "message": "用户创建成功"}}</div>
+
+        <h2>✅ 预期结果</h2>
+        <ul>
+            <li><strong>智能菜单：</strong>右键菜单会根据当前设置自动显示"临时关闭"或"临时开启"选项</li>
+            <li><strong>临时关闭：</strong>当悬停检测开启时，可以临时关闭检测，不会有高亮效果，方便复制文本</li>
+            <li><strong>临时开启：</strong>当悬停检测关闭时，可以临时开启检测，页面会自动刷新并启用检测功能</li>
+            <li><strong>状态恢复：</strong>刷新页面后，无论之前是临时开启还是关闭，都会恢复到扩展设置中的原始状态</li>
+            <li><strong>通知提示：</strong>每次切换都会有清晰的通知提示当前状态</li>
+        </ul>
+
+        <h2>💡 使用场景</h2>
+        <ul>
+            <li><strong>临时关闭场景：</strong>
+                <ul>
+                    <li>需要复制包含JSON的大段文本时</li>
+                    <li>在日志文件中查找和复制特定内容时</li>
+                    <li>临时不想被JSON高亮干扰时</li>
+                    <li>需要精确选择文本而不触发扩展功能时</li>
+                </ul>
+            </li>
+            <li><strong>临时开启场景：</strong>
+                <ul><strong>智能识别</strong>当前的悬停检测设置，自动显示相反的操作选项</li>
+                <li>临时开启或关闭是<strong>页面级别</strong>的，不会影响扩展的全局设置</li>
+                <li>临时开启时会自动刷新页面，因为需要重新初始化检测逻辑</li>
+                <li>临时关闭时不需要刷新，可以立即生效</li>
+                <li>如果想永久改变悬停检测设置，请在扩展popup中修改</li>
+                <li>此功能不会影响其他扩展功能（如右键格式化、快捷键等）i>
+                </ul>
+            </li>
+        </ul>
+
+        <div class="instruction" style="margin-top: 30px;">
+            <strong>💡 提示：</strong>
+            <ul style="margin: 10px 0 0 0;">
+                <li>此功能不会影响其他扩展功能（如右键格式化、快捷键等）</li>
+                <li>关闭自动检测是临时的，不会保存到设置中</li>
+                <li>每次需要关闭都可以通过右键菜单操作</li>
+                <li>如果想永久关闭悬停检测，可在扩展popup中关闭相应设置</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 添加一些测试用的普通文本
+        console.log('测试页面已加载');
+        console.log('可以在控制台查看扩展的日志信息');
+    </script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations } from "./utils/i18n";
 
 const CONTEXT_MENU_ID = 'formatSelectedJson';
+const TOGGLE_AUTO_DETECTION_MENU_ID = 'toggleAutoDetection';
 
 // Function to create or update the context menu
 async function setupContextMenu() {
@@ -17,6 +18,24 @@ async function setupContextMenu() {
             id: CONTEXT_MENU_ID,
             title: i18n.formatSelectedJson,
             contexts: ['selection'],
+        });
+    });
+
+    // Get current hover detection setting to determine menu text
+    chrome.storage.local.get('hoverDetectionEnabled', (result) => {
+        const hoverDetectionEnabled = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
+        const menuTitle = hoverDetectionEnabled ? i18n.disableAutoDetection : i18n.enableAutoDetection;
+
+        // Add menu item to toggle auto-detection temporarily
+        chrome.contextMenus.remove(TOGGLE_AUTO_DETECTION_MENU_ID, () => {
+            // Ignore error in case the item doesn't exist
+            void chrome.runtime.lastError;
+
+            chrome.contextMenus.create({
+                id: TOGGLE_AUTO_DETECTION_MENU_ID,
+                title: menuTitle,
+                contexts: ['page', 'selection'],
+            });
         });
     });
 }
@@ -35,9 +54,9 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
-// Listen for language changes to update the context menu title
+// Listen for language changes or hover detection changes to update the context menu title
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local' && changes.language) {
+    if (namespace === 'local' && (changes.language || changes.hoverDetectionEnabled)) {
         setupContextMenu();
     }
 });
@@ -47,7 +66,14 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
 
 // 处理右键菜单点击
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === 'formatSelectedJson') {
+    if (info.menuItemId === TOGGLE_AUTO_DETECTION_MENU_ID) {
+        // 切换自动检测状态（临时开启或关闭）
+        if (tab && tab.id && !tab.url?.startsWith('chrome://') && !tab.url?.startsWith('chrome-extension://')) {
+            chrome.tabs.sendMessage(tab.id, {
+                action: 'toggleAutoDetectionTemporarily'
+            });
+        }
+    } else if (info.menuItemId === 'formatSelectedJson') {
         if (!tab || tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
             // 保存选中文本到全局变量并打开新窗口
             (chrome as any).action.sJson = info.selectionText;

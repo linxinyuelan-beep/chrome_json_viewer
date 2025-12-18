@@ -40,7 +40,7 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
   const [currentDiffIndex, setCurrentDiffIndex] = useState<number>(-1);
 
   // 显示选项
-  const [showOnlyDiffs, setShowOnlyDiffs] = useState<boolean>(false);
+  const [showOnlyDiffs, setShowOnlyDiffs] = useState<boolean>(true);
   const [showDiffSidebar, setShowDiffSidebar] = useState<boolean>(true);
   const [syncScroll, setSyncScroll] = useState<boolean>(true);
 

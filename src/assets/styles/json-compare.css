@@ -267,8 +267,10 @@ body.dragging * {
 /* 差异可视化 */
 .diff-line {
   display: flex;
-  padding: 2px 0;
+  flex-direction: column;
+  padding: 4px 0;
   margin: 0;
+  gap: 4px;
 }
 
 .diff-line-number {
@@ -331,6 +333,23 @@ body.dragging * {
   background-color: #fdb8c0;
   padding: 2px 0;
   text-decoration: line-through;
+}
+
+/* 差异值容器 */
+.diff-values {
+  display: block;
+  margin-left: 20px;
+  margin-top: 4px;
+}
+
+.diff-path {
+  font-weight: 500;
+  color: #333;
+}
+
+.diff-symbol {
+  font-weight: bold;
+  margin-right: 8px;
 }
 
 /* 分隔条 */
