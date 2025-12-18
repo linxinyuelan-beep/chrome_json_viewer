@@ -51,6 +51,9 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   // 添加导航按钮状态
   const [canGoBack, setCanGoBack] = useState<boolean>(false);
   const [canGoForward, setCanGoForward] = useState<boolean>(false);
+  // 添加排序状态
+  const [sortedData, setSortedData] = useState<any>(jsonData);
+  const [isKeySorted, setIsKeySorted] = useState<boolean>(false);
 
   // 确保组件初始化时记录日志
   useEffect(() => {
@@ -60,7 +63,45 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
     };
   }, []);
   
+  // 排序JSON键的函数
+  const sortObjectKeys = (obj: any): any => {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => sortObjectKeys(item));
+    }
+    
+    const sortedKeys = Object.keys(obj).sort((a, b) => a.localeCompare(b));
+    const sortedObj: any = {};
+    
+    for (const key of sortedKeys) {
+      sortedObj[key] = sortObjectKeys(obj[key]);
+    }
+    
+    return sortedObj;
+  };
+  
+  // 切换键排序状态
+  const toggleKeySort = () => {
+    if (isKeySorted) {
+      // 恢复原始数据
+      setSortedData(jsonData);
+      setIsKeySorted(false);
+    } else {
+      // 排序数据
+      const sorted = sortObjectKeys(jsonData);
+      setSortedData(sorted);
+      setIsKeySorted(true);
+    }
+  };
+  
   useEffect(() => {
+    // 重置排序状态和数据
+    setSortedData(jsonData);
+    setIsKeySorted(false);
+    
     // Calculate JSON size
     const size = new TextEncoder().encode(JSON.stringify(jsonData)).length;
     setJsonSize(formatJsonSize(size));
@@ -505,6 +546,13 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                 {expanded ? 'Collapse All' : 'Expand All'}
               </button>
               <button 
+                className={`json-viewer-button ${isKeySorted ? 'active' : ''}`}
+                onClick={toggleKeySort}
+                title="Sort JSON keys alphabetically"
+              >
+                {isKeySorted ? 'Unsort Keys' : 'Sort Keys'}
+              </button>
+              <button 
                 className={`json-viewer-button ${copySuccess ? 'success' : ''}`}
                 onClick={copyJson}
               >
@@ -567,14 +615,43 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
           {/* JSON Viewer component */}
           <div className="json-tree-container">
             <ReactJson
-              src={jsonData}
+              src={sortedData}
               theme="rjv-default"
               style={{ backgroundColor: 'transparent' }}
               collapsed={!expanded}
               collapseStringsAfterLength={false}
               displayDataTypes={false}
               displayObjectSize={true}
-              enableClipboard={true}
+              enableClipboard={(copy) => {
+                // Custom clipboard handler to remove quotes from string values
+                let textToCopy: string;
+                if (typeof copy.src === 'string') {
+                  // For string values, copy without quotes
+                  textToCopy = copy.src;
+                } else {
+                  // For objects/arrays, copy as formatted JSON
+                  textToCopy = JSON.stringify(copy.src, null, 2);
+                }
+                
+                // Copy to clipboard
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                  navigator.clipboard.writeText(textToCopy).catch(err => {
+                    console.error('Failed to copy:', err);
+                  });
+                } else {
+                  // Fallback for older browsers
+                  const textArea = document.createElement('textarea');
+                  textArea.value = textToCopy;
+                  textArea.style.position = 'fixed';
+                  textArea.style.left = '-999999px';
+                  textArea.style.top = '-999999px';
+                  document.body.appendChild(textArea);
+                  textArea.focus();
+                  textArea.select();
+                  document.execCommand('copy');
+                  document.body.removeChild(textArea);
+                }
+              }}
               escapeStrings={false}
               name={null}
               onSelect={(select) => {

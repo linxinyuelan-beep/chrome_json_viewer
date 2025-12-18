@@ -2,7 +2,7 @@
   "author": "linxinyuelan@gmail.com",
   "manifest_version": 3,
   "name": "JSON Formatter & Viewer",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "A Chrome extension that detects, formats and visualizes JSON on web pages.",
   "homepage_url": "https://github.com/linxinyuelan-beep/chrome_json_viewer",
   "permissions": [
