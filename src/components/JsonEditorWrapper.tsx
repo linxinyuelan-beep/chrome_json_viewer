@@ -78,7 +78,8 @@ const JsonEditorWrapper = forwardRef<JsonEditorRef, JsonEditorWrapperProps>(({
                 content,
                 mode: currentMode as any,
                 readOnly: mode === 'view',
-                truncateNumberSize: 1000000,
+                // Disable string truncation ("show more" button) - default is 1000 bytes
+                truncateTextSize: 5000,
                 onChange: (updatedContent: any, previousContent: any, { contentErrors, patchResult }: any) => {
                     // updatedContent is { json: ... } or { text: ... }
                     if (onChange) {
