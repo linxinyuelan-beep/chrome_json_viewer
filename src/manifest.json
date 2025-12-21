@@ -53,5 +53,17 @@
       },
       "description": "Toggle JSON hover detection"
     }
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "*.svg",
+        "*.png",
+        "*.css"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
 }

@@ -1,5 +1,7 @@
 // background.ts - Background service worker for JSON Formatter & Viewer
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations } from "./utils/i18n";
+import './config/public-path';
+import { VERSION } from './config/version';
 
 const CONTEXT_MENU_ID = 'formatSelectedJson';
 const TOGGLE_AUTO_DETECTION_MENU_ID = 'toggleAutoDetection';
@@ -111,7 +113,7 @@ function openJsonWindow() {
 
 // 监听命令快捷键
 chrome.commands.onCommand.addListener(async (command) => {
-    console.log(`Command received: ${command}`);
+    console.log(`Command received: ${command} `);
 
     // 获取当前标签页
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -208,7 +210,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
         return true;
     }
-    
+
     // 处理打开 JSON Compare 页面的请求
     if (request.action === 'openJsonCompare') {
         console.log('Background script received openJsonCompare request');

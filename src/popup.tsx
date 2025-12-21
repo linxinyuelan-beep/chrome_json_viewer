@@ -1,3 +1,4 @@
+import './config/public-path';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './assets/styles/main.css';
@@ -6,11 +7,11 @@ import { isValidNestedJson } from './utils/nestedJsonHandler';
 import { processJsonDates } from './utils/dateConverter';
 import { parseJsonSafely } from './utils/jsonParser';
 import { extractJsonFromString } from './utils/jsonExtractor';
-import { 
+import {
   LanguageCode,
-  DEFAULT_LANGUAGE, 
-  getTranslations, 
-  getCurrentLanguage, 
+  DEFAULT_LANGUAGE,
+  getTranslations,
+  getCurrentLanguage,
   saveLanguage,
   languageOptions,
   Translations
@@ -35,13 +36,13 @@ const App: React.FC = () => {
         const currentLang = await getCurrentLanguage();
         setLanguage(currentLang);
         setTranslations(getTranslations(currentLang));
-        
+
         // Load JSON display mode setting
         chrome.storage.local.get('jsonDisplayMode', (result) => {
           const mode = result.jsonDisplayMode || 'drawer';
           setJsonDisplayMode(mode);
         });
-        
+
         // Load hover detection setting from storage
         chrome.storage.local.get('hoverDetectionEnabled', (result) => {
           const enabled = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
@@ -51,7 +52,7 @@ const App: React.FC = () => {
         console.error("Error loading settings:", error);
       }
     };
-    
+
     loadSettings();
   }, []);
 
@@ -59,21 +60,21 @@ const App: React.FC = () => {
   const handleHoverDetectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const enabled = e.target.value === 'enabled';
     setJsonHoverEnabled(enabled);
-    
+
     // Save to storage
     chrome.storage.local.set({ hoverDetectionEnabled: enabled });
-    
+
     // Send message to content script to update hover detection
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { 
-          action: 'setHoverDetection', 
-          enabled: enabled 
+        chrome.tabs.sendMessage(tabs[0].id, {
+          action: 'setHoverDetection',
+          enabled: enabled
         });
       }
     });
   };
-  
+
   // Change language
   const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLang = e.target.value as LanguageCode;
@@ -108,7 +109,7 @@ const App: React.FC = () => {
   const formatJsonInput = () => {
     try {
       let jsonToFormat = jsonInput.trim();
-      
+
       if (!jsonToFormat) {
         setJsonFormatError(translations.enterJsonText);
         return;
@@ -128,7 +129,7 @@ const App: React.FC = () => {
       // 使用增强的 JSON 解析器处理大整数精度问题
       const parsedJson = parseJsonSafely(jsonToFormat);
       const formattedJson = JSON.stringify(parsedJson, null, 2);
-      
+
       // 如果提取了 JSON，则更新输入框并显示提示
       if (extractedJson && extractedJson !== jsonInput) {
         setJsonInput(formattedJson);
@@ -137,13 +138,13 @@ const App: React.FC = () => {
         setJsonInput(formattedJson);
         setJsonFormatError(null);
       }
-      
+
       // Add a status indication
       setJsonFormatError(translations.processing);
-      
+
       // 先通过background.js发送消息（这样可以处理跨域问题）
       chrome.runtime.sendMessage(
-        { 
+        {
           action: 'showJsonFromPopup',
           jsonString: formattedJson,
           version: version
@@ -151,13 +152,13 @@ const App: React.FC = () => {
         (response) => {
           if (chrome.runtime.lastError) {
             console.log('Error sending message through background:', chrome.runtime.lastError);
-            
+
             // 尝试直接发送到当前标签页
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
               if (tabs[0]?.id) {
                 chrome.tabs.sendMessage(
                   tabs[0].id,
-                  { 
+                  {
                     action: 'showJsonFromPopup',
                     jsonString: formattedJson,
                     version: version
@@ -190,19 +191,19 @@ const App: React.FC = () => {
       setJsonFormatError(`解析JSON出错：${(error as Error).message}`);
     }
   };
-  
+
   // 在新标签页中打开JSON
   const openJsonInNewTab = (jsonString: string) => {
     const blob = new Blob([jsonString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     chrome.tabs.create({ url });
   };
-  
+
   // Format and convert JSON date formats, then display in drawer
   const convertJsonDates = () => {
     try {
       let jsonToConvert = jsonInput.trim();
-      
+
       if (!jsonToConvert) {
         setJsonFormatError(translations.noJsonToConvert);
         return;
@@ -221,13 +222,13 @@ const App: React.FC = () => {
 
       // 使用增强的 JSON 解析器处理大整数精度问题
       const parsedJson = parseJsonSafely(jsonToConvert);
-      
+
       // Process and convert date formats
       const convertedJson = processJsonDates(parsedJson);
-      
+
       // Format the converted JSON
       const formattedJson = JSON.stringify(convertedJson, null, 2);
-      
+
       // 如果提取了 JSON，则更新输入框并显示提示
       if (extractedJson && extractedJson !== jsonInput) {
         setJsonInput(formattedJson);
@@ -237,7 +238,7 @@ const App: React.FC = () => {
         setJsonInput(formattedJson);
         setJsonFormatError(translations.processing);
       }
-      
+
       // 复制到剪贴板
       navigator.clipboard.writeText(formattedJson)
         .then(() => {
@@ -251,7 +252,7 @@ const App: React.FC = () => {
           // 无论剪贴板操作成功与否，都发送转换后的JSON到内容脚本并打开抽屉
           // 先通过background.js发送消息（这样可以处理跨域问题）
           chrome.runtime.sendMessage(
-            { 
+            {
               action: 'showJsonFromPopup',
               jsonString: formattedJson,
               version: version
@@ -259,13 +260,13 @@ const App: React.FC = () => {
             (response) => {
               if (chrome.runtime.lastError) {
                 console.log('Error sending message through background:', chrome.runtime.lastError);
-                
+
                 // 尝试直接发送到当前标签页
                 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                   if (tabs[0]?.id) {
                     chrome.tabs.sendMessage(
                       tabs[0].id,
-                      { 
+                      {
                         action: 'showJsonFromPopup',
                         jsonString: formattedJson,
                         version: version
@@ -322,11 +323,11 @@ const App: React.FC = () => {
       // Parse and compress JSON (no indentation or whitespace)
       const parsedJson = parseJsonSafely(jsonInput);
       const minifiedJson = JSON.stringify(parsedJson);
-      
+
       // Directly update the content in the input field
       setJsonInput(minifiedJson);
       setJsonFormatError(translations.jsonMinified);
-      
+
       // Copy to clipboard
       navigator.clipboard.writeText(minifiedJson)
         .then(() => {
@@ -354,14 +355,14 @@ const App: React.FC = () => {
         const parsedJson = parseJsonSafely(jsonInput);
         inputToEscape = JSON.stringify(parsedJson);
       }
-      
+
       // Escape string (JSON serialize the string and remove the quotes)
       const escapedString = JSON.stringify(inputToEscape).slice(1, -1);
-      
+
       // Update content in the input field
       setJsonInput(escapedString);
       setJsonFormatError(translations.textEscaped);
-      
+
       // Copy to clipboard
       navigator.clipboard.writeText(escapedString)
         .then(() => {
@@ -385,11 +386,11 @@ const App: React.FC = () => {
 
       // Add quotes to the string and parse
       const unescapedString = JSON.parse(`"${jsonInput}"`);
-      
+
       // Update the content in the input field
       setJsonInput(unescapedString);
       setJsonFormatError(translations.textUnescaped);
-      
+
       // Copy to clipboard
       navigator.clipboard.writeText(unescapedString)
         .then(() => {
@@ -413,7 +414,7 @@ const App: React.FC = () => {
 
       // Split by semicolons to get individual groups
       const groups = jsonInput.split(';').filter(group => group.trim());
-      
+
       if (groups.length === 0) {
         setJsonFormatError(translations.convertError + '没有找到有效的数据组');
         return;
@@ -450,7 +451,7 @@ const App: React.FC = () => {
 
           // Try to convert value to appropriate type
           let convertedValue: any = value;
-          
+
           // Check if it's a number
           if (/^-?\d+$/.test(value)) {
             convertedValue = parseInt(value, 10);
@@ -472,11 +473,11 @@ const App: React.FC = () => {
 
       // Format the converted JSON
       const formattedJson = JSON.stringify(jsonArray, null, 2);
-      
+
       // Update content in the input field
       setJsonInput(formattedJson);
       setJsonFormatError(translations.processing);
-      
+
       // 复制到剪贴板
       navigator.clipboard.writeText(formattedJson)
         .then(() => {
@@ -490,7 +491,7 @@ const App: React.FC = () => {
           // 无论剪贴板操作成功与否，都发送转换后的JSON到内容脚本并打开抽屉
           // 先通过background.js发送消息（这样可以处理跨域问题）
           chrome.runtime.sendMessage(
-            { 
+            {
               action: 'showJsonFromPopup',
               jsonString: formattedJson,
               version: version
@@ -498,13 +499,13 @@ const App: React.FC = () => {
             (response) => {
               if (chrome.runtime.lastError) {
                 console.log('Error sending message through background:', chrome.runtime.lastError);
-                
+
                 // 尝试直接发送到当前标签页
                 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                   if (tabs[0]?.id) {
                     chrome.tabs.sendMessage(
                       tabs[0].id,
-                      { 
+                      {
                         action: 'showJsonFromPopup',
                         jsonString: formattedJson,
                         version: version
@@ -545,22 +546,22 @@ const App: React.FC = () => {
         <h1>{translations.appName}</h1>
         <div className="version">{translations.version}{version}</div>
       </div>
-      
+
       <div className="tabs">
-        <button 
+        <button
           className={`tab ${activeTab === 'json-input' ? 'active' : ''}`}
           onClick={() => setActiveTab('json-input')}
         >
           {translations.jsonFormat}
         </button>
-        <button 
+        <button
           className={`tab ${activeTab === 'settings' ? 'active' : ''}`}
           onClick={() => setActiveTab('settings')}
         >
           {translations.settingsTab}
         </button>
       </div>
-      
+
       <div className="content">
         {activeTab === 'settings' ? (
           <>
@@ -569,7 +570,7 @@ const App: React.FC = () => {
               <div className="settings-compact">
                 <label className="language-select-label">
                   {translations.hoverDetection}:
-                  <select 
+                  <select
                     className="language-select"
                     value={jsonHoverEnabled ? 'enabled' : 'disabled'}
                     onChange={handleHoverDetectionChange}
@@ -578,10 +579,10 @@ const App: React.FC = () => {
                     <option value="disabled">{translations.statusDisabled}</option>
                   </select>
                 </label>
-                
+
                 <label className="language-select-label">
                   {translations.language}:
-                  <select 
+                  <select
                     className="language-select"
                     value={language}
                     onChange={handleLanguageChange}
@@ -593,10 +594,10 @@ const App: React.FC = () => {
                     ))}
                   </select>
                 </label>
-                
+
                 <label className="language-select-label">
                   {translations.jsonDisplayMode}:
-                  <select 
+                  <select
                     className="language-select"
                     value={jsonDisplayMode}
                     onChange={handleDisplayModeChange}
@@ -676,13 +677,13 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-      
+
       <div className="footer">
         <div>{translations.appName}</div>
         <div className="github-link">
-          <a 
-            href="https://github.com/linxinyuelan-beep/chrome_json_viewer" 
-            target="_blank" 
+          <a
+            href="https://github.com/linxinyuelan-beep/chrome_json_viewer"
+            target="_blank"
             rel="noopener noreferrer"
             title="View source code on GitHub"
           >

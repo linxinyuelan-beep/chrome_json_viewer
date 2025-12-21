@@ -1,16 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import './config/public-path';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import ReactJson from '@microlink/react-json-view';
+import JsonEditorWrapper, { JsonEditorRef } from './components/JsonEditorWrapper';
 
 // JSON Window React Component
 const JsonWindowApp: React.FC = () => {
   const [jsonData, setJsonData] = useState<any>(null);
   const [jsonSize, setJsonSize] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState(false);
-  
+
   // JSON path related states
   const [currentJsonPath, setCurrentJsonPath] = useState<string>('');
   const [pathCopySuccess, setPathCopySuccess] = useState(false);
+
+  // View mode state: 'default' (microlink) or 'editor' (jsoneditor)
+  const [viewMode, setViewMode] = useState<'default' | 'editor'>('default');
+
+  // Load view mode preference
+  useEffect(() => {
+    chrome.storage.local.get(['preferredViewMode'], (result) => {
+      if (result.preferredViewMode) {
+        setViewMode(result.preferredViewMode);
+      }
+    });
+  }, []);
+
+  // Toggle view mode
+  const toggleViewMode = () => {
+    const newMode = viewMode === 'default' ? 'editor' : 'default';
+    setViewMode(newMode);
+    chrome.storage.local.set({ preferredViewMode: newMode });
+  };
 
   // 通过消息机制从后台脚本获取JSON数据
   const getJsonFromBackground = async (): Promise<any> => {
@@ -23,7 +44,7 @@ const JsonWindowApp: React.FC = () => {
               resolve(null);
               return;
             }
-            
+
             if (response) {
               try {
                 // 如果响应是字符串，尝试解析为JSON
@@ -47,7 +68,7 @@ const JsonWindowApp: React.FC = () => {
         console.error('Error communicating with background script:', e);
       }
     }
-    
+
     return null;
   };
 
@@ -71,21 +92,34 @@ const JsonWindowApp: React.FC = () => {
         setJsonSize(formatJsonSize(size));
       }
     };
-    
+
     loadData();
   }, []);
 
 
+  // Ref for JsonEditorWrapper
+  const jsonEditorRef = useRef<JsonEditorRef>(null);
+
   // 切换展开/折叠
   const [expanded, setExpanded] = useState(true);
   const toggleExpand = () => {
-    setExpanded(!expanded);
+    const newExpanded = !expanded;
+    setExpanded(newExpanded);
+
+    // If in editor mode, also trigger editor methods
+    if (viewMode === 'editor' && jsonEditorRef.current) {
+      if (newExpanded) {
+        jsonEditorRef.current.expandAll();
+      } else {
+        jsonEditorRef.current.collapseAll();
+      }
+    }
   };
 
   // 复制JSON到剪贴板
   const copyJson = async () => {
     if (!jsonData) return;
-    
+
     const jsonString = JSON.stringify(jsonData, null, 2);
     try {
       await navigator.clipboard.writeText(jsonString);
@@ -101,20 +135,20 @@ const JsonWindowApp: React.FC = () => {
   const handleJsonPathSelect = (selectInfo: any) => {
     try {
       console.log('Select info:', selectInfo); // Debug log to see what we get
-      
+
       // Build JSON path from namespace and current key
       let pathParts: (string | number)[] = [];
-      
+
       // Add namespace parts if available
       if (selectInfo.namespace && selectInfo.namespace.length > 0) {
         pathParts = [...selectInfo.namespace];
       }
-      
+
       // Add current key name if available and not null
       if (selectInfo.name !== null && selectInfo.name !== undefined) {
         pathParts.push(selectInfo.name);
       }
-      
+
       let path = '';
       if (pathParts.length > 0) {
         // Convert path parts array to dot notation
@@ -136,12 +170,12 @@ const JsonWindowApp: React.FC = () => {
           }
           return `.${key}`;
         }).join('');
-        
+
         // Remove leading dot if present
         if (path.startsWith('.')) {
           path = path.substring(1);
         }
-        
+
         // Add root prefix if needed
         if (path) {
           path = `$${path.startsWith('[') ? '' : '.'}${path}`;
@@ -154,7 +188,7 @@ const JsonWindowApp: React.FC = () => {
 
       // Update current path display
       setCurrentJsonPath(path);
-      
+
       // Log the path for debugging
       console.log('JSON Path selected:', path);
       console.log('Path parts:', pathParts);
@@ -184,12 +218,12 @@ const JsonWindowApp: React.FC = () => {
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        
+
         const successful = document.execCommand('copy');
         if (!successful) {
           throw new Error('Failed to copy using execCommand');
         }
-        
+
         document.body.removeChild(textArea);
       }
 
@@ -238,7 +272,7 @@ const JsonWindowApp: React.FC = () => {
         {currentJsonPath && (
           <div className="json-window-path-display">
             <code className="json-window-path-value">{currentJsonPath}</code>
-            <button 
+            <button
               className={`json-window-path-copy-btn ${pathCopySuccess ? 'success' : ''}`}
               onClick={copyCurrentPath}
               title="Copy path to clipboard"
@@ -248,13 +282,20 @@ const JsonWindowApp: React.FC = () => {
           </div>
         )}
         <div className="json-window-actions">
-          <button 
-            className="json-window-button secondary" 
+          <button
+            className="json-window-button secondary"
             onClick={toggleExpand}
           >
             {expanded ? 'Collapse All' : 'Expand All'}
           </button>
-          <button 
+          <button
+            className={`json-window-button ${viewMode === 'editor' ? 'active' : ''}`}
+            onClick={toggleViewMode}
+            title="Switch between Tree View and Editor View"
+          >
+            {viewMode === 'default' ? 'Switch to Editor' : 'Switch to Tree'}
+          </button>
+          <button
             className={`json-window-button ${copySuccess ? 'success' : ''}`}
             onClick={copyJson}
           >
@@ -264,28 +305,40 @@ const JsonWindowApp: React.FC = () => {
       </div>
       <div className="json-window-content">
         <div className="json-display">
-          <div className="json-tree-container">
-            <ReactJson
-              src={jsonData}
-              theme="rjv-default"
-              style={{ backgroundColor: 'transparent' }}
-              collapsed={!expanded}
-              collapseStringsAfterLength={false}
-              displayDataTypes={false}
-              displayObjectSize={true}
-              enableClipboard={true}
-              escapeStrings={false}
-              name={null}
-              iconStyle="triangle"
-              indentWidth={2}
-              quotesOnKeys={false}
-              sortKeys={false}
-              validationMessage="Invalid JSON"
-              onSelect={(select) => {
-                // Handle JSON path display functionality
-                handleJsonPathSelect(select);
-              }}
-            />
+          <div className="json-tree-container" style={{ height: 'calc(100vh - 80px)' }}>
+            {viewMode === 'default' ? (
+              <ReactJson
+                src={jsonData}
+                theme="rjv-default"
+                style={{ backgroundColor: 'transparent' }}
+                collapsed={!expanded}
+                collapseStringsAfterLength={false}
+                displayDataTypes={false}
+                displayObjectSize={true}
+                enableClipboard={true}
+                escapeStrings={false}
+                name={null}
+                iconStyle="triangle"
+                indentWidth={2}
+                quotesOnKeys={false}
+                sortKeys={false}
+                validationMessage="Invalid JSON"
+                onSelect={(select) => {
+                  // Handle JSON path display functionality
+                  handleJsonPathSelect(select);
+                }}
+              />
+            ) : (
+              <JsonEditorWrapper
+                ref={jsonEditorRef}
+                data={jsonData}
+                mode="view"
+                onChange={(newData) => {
+                  // Optional: update data if we want edits to reflect immediately
+                  // setJsonData(newData);
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

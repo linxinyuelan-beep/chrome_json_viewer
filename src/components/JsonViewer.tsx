@@ -12,18 +12,19 @@
  *    Professional editor (powers VS Code) with JSON support
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactJson from '@microlink/react-json-view';
-import { 
+import JsonEditorWrapper, { JsonEditorRef } from './JsonEditorWrapper';
+import {
   formatJsonSize
 } from '../utils/jsonViewer';
 import { addToHistory } from '../utils/jsonHistory';
-import { 
-  addToNavigationHistory, 
-  navigateBack, 
-  navigateForward, 
-  canNavigateBack, 
-  canNavigateForward 
+import {
+  addToNavigationHistory,
+  navigateBack,
+  navigateForward,
+  canNavigateBack,
+  canNavigateForward
 } from '../utils/jsonNavigation';
 import History from './History';
 import '../assets/styles/history.css';
@@ -55,6 +56,28 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   const [sortedData, setSortedData] = useState<any>(jsonData);
   const [isKeySorted, setIsKeySorted] = useState<boolean>(false);
 
+  // View mode state: 'default' (microlink) or 'editor' (jsoneditor)
+  const [viewMode, setViewMode] = useState<'default' | 'editor'>('default');
+
+  // Ref for JsonEditorWrapper
+  const jsonEditorRef = useRef<JsonEditorRef>(null);
+
+  // Load view mode preference
+  useEffect(() => {
+    chrome.storage.local.get(['preferredViewMode'], (result) => {
+      if (result.preferredViewMode) {
+        setViewMode(result.preferredViewMode);
+      }
+    });
+  }, []);
+
+  // Toggle view mode
+  const toggleViewMode = () => {
+    const newMode = viewMode === 'default' ? 'editor' : 'default';
+    setViewMode(newMode);
+    chrome.storage.local.set({ preferredViewMode: newMode });
+  };
+
   // 确保组件初始化时记录日志
   useEffect(() => {
     // 清理函数
@@ -62,27 +85,27 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
       // console.log(`JSON Viewer unmounted: ${instanceId}`);
     };
   }, []);
-  
+
   // 排序JSON键的函数
   const sortObjectKeys = (obj: any): any => {
     if (obj === null || typeof obj !== 'object') {
       return obj;
     }
-    
+
     if (Array.isArray(obj)) {
       return obj.map(item => sortObjectKeys(item));
     }
-    
+
     const sortedKeys = Object.keys(obj).sort((a, b) => a.localeCompare(b));
     const sortedObj: any = {};
-    
+
     for (const key of sortedKeys) {
       sortedObj[key] = sortObjectKeys(obj[key]);
     }
-    
+
     return sortedObj;
   };
-  
+
   // 切换键排序状态
   const toggleKeySort = () => {
     if (isKeySorted) {
@@ -96,31 +119,31 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
       setIsKeySorted(true);
     }
   };
-  
+
   useEffect(() => {
     // 重置排序状态和数据
     setSortedData(jsonData);
     setIsKeySorted(false);
-    
+
     // Calculate JSON size
     const size = new TextEncoder().encode(JSON.stringify(jsonData)).length;
     setJsonSize(formatJsonSize(size));
-    
+
     // Add to history when JSON data is loaded
     // Use current URL as source
     const jsonString = JSON.stringify(jsonData);
     const currentUrl = window.location.href;
     addToHistory(jsonString, currentUrl)
       .catch(err => console.error('Error adding to history:', err));
-    
+
     // 添加到导航历史
     addToNavigationHistory(jsonString);
-    
+
     // 更新导航按钮状态
     setCanGoBack(canNavigateBack());
     setCanGoForward(canNavigateForward());
   }, [jsonData]);
-  
+
   // 监听导航状态更新事件
   useEffect(() => {
     const handleNavigationUpdate = (event: Event) => {
@@ -130,10 +153,10 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
         setCanGoForward(customEvent.detail.canGoForward);
       }
     };
-    
+
     // 添加事件监听器
     document.addEventListener('json-navigation-updated', handleNavigationUpdate);
-    
+
     // 清理函数
     return () => {
       document.removeEventListener('json-navigation-updated', handleNavigationUpdate);
@@ -154,7 +177,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
     try {
       // 准备JSON数据
       const jsonString = JSON.stringify(jsonData);
-      
+
       // 发送消息给background script来打开新窗口
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
         chrome.runtime.sendMessage({
@@ -186,7 +209,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
     try {
       // 生成唯一的键名用于存储
       const storageKey = `json_data_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      
+
       // 将JSON数据存储到Chrome存储中
       if (typeof chrome !== 'undefined' && chrome.storage) {
         chrome.storage.local.set({ [storageKey]: jsonString }, () => {
@@ -210,7 +233,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   const copyJson = async () => {
     try {
       const formattedJson = JSON.stringify(jsonData, null, 2);
-      
+
       // First try the modern clipboard API
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(formattedJson);
@@ -225,15 +248,15 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        
+
         const successful = document.execCommand('copy');
         if (!successful) {
           throw new Error('Failed to copy using execCommand');
         }
-        
+
         document.body.removeChild(textArea);
       }
-      
+
       // Show success feedback
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
@@ -250,9 +273,19 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
 
   // Toggle expand/collapse all
   const toggleExpand = () => {
-    setExpanded(!expanded);
+    const newExpanded = !expanded;
+    setExpanded(newExpanded);
+
+    // If in editor mode, also trigger editor methods
+    if (viewMode === 'editor' && jsonEditorRef.current) {
+      if (newExpanded) {
+        jsonEditorRef.current.expandAll();
+      } else {
+        jsonEditorRef.current.collapseAll();
+      }
+    }
   };
-  
+
   // 视图类型切换功能已移除
 
   // Handle navigation back
@@ -262,7 +295,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
       window.showJsonInDrawerWithReact(previousJson, version);
     }
   };
-  
+
   // Handle navigation forward
   const handleNavigateForward = () => {
     const nextJson = navigateForward();
@@ -282,20 +315,20 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   const handleJsonPathSelect = (selectInfo: any) => {
     try {
       console.log('Select info:', selectInfo); // Debug log to see what we get
-      
+
       // Build JSON path from namespace and current key
       let pathParts: (string | number)[] = [];
-      
+
       // Add namespace parts if available
       if (selectInfo.namespace && selectInfo.namespace.length > 0) {
         pathParts = [...selectInfo.namespace];
       }
-      
+
       // Add current key name if available and not null
       if (selectInfo.name !== null && selectInfo.name !== undefined) {
         pathParts.push(selectInfo.name);
       }
-      
+
       let path = '';
       if (pathParts.length > 0) {
         // Convert path parts array to dot notation
@@ -317,12 +350,12 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
           }
           return `.${key}`;
         }).join('');
-        
+
         // Remove leading dot if present
         if (path.startsWith('.')) {
           path = path.substring(1);
         }
-        
+
         // Add root prefix if needed
         if (path) {
           path = `$${path.startsWith('[') ? '' : '.'}${path}`;
@@ -335,7 +368,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
 
       // Update current path display
       setCurrentJsonPath(path);
-      
+
       // Log the path for debugging
       console.log('JSON Path selected:', path);
       console.log('Path parts:', pathParts);
@@ -365,12 +398,12 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        
+
         const successful = document.execCommand('copy');
         if (!successful) {
           throw new Error('Failed to copy using execCommand');
         }
-        
+
         document.body.removeChild(textArea);
       }
 
@@ -390,7 +423,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   };
 
   // State for history dropdown
-  const [historyItems, setHistoryItems] = useState<Array<{id: string, preview: string, timestamp: number}>>([]);
+  const [historyItems, setHistoryItems] = useState<Array<{ id: string, preview: string, timestamp: number }>>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Load history items for dropdown when needed
@@ -438,17 +471,17 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
       console.error('Error parsing JSON from history:', e);
     }
   };
-  
+
   // Handle selecting JSON from dropdown
   const handleSelectFromDropdown = async (id: string) => {
     try {
       // Close the dropdown
       setIsDropdownOpen(false);
-      
+
       // Import dynamically
       const { getHistoryItem } = await import('../utils/jsonHistory');
       const item = await getHistoryItem(id);
-      
+
       if (item && item.jsonData) {
         // Use the same function to display the selected JSON
         if (window.showJsonInDrawerWithReact) {
@@ -467,7 +500,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
     // 阻止事件冒泡到文档
     e.stopPropagation();
   };
-  
+
   // 添加点击外部关闭下拉框的事件处理
   useEffect(() => {
     if (isDropdownOpen) {
@@ -477,24 +510,24 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
           setIsDropdownOpen(false);
         }
       };
-      
+
       // 添加事件监听器
       document.addEventListener('click', handleClickOutside);
-      
+
       // 清理函数
       return () => {
         document.removeEventListener('click', handleClickOutside);
       };
     }
   }, [isDropdownOpen]);;
-  
+
   return (
-    <div 
-      className="json-viewer-component" 
+    <div
+      className="json-viewer-component"
       onClick={stopPropagation} // 添加点击处理以阻止冒泡
     >
       {showHistory ? (
-        <History 
+        <History
           onSelect={handleSelectFromHistory}
           onClose={() => setShowHistory(false)}
         />
@@ -505,7 +538,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
             <div className="json-viewer-info">
               {/* Navigation buttons */}
               <div className="json-viewer-navigation">
-                <button 
+                <button
                   className={`json-viewer-nav-button ${!canGoBack ? 'disabled' : ''}`}
                   onClick={handleNavigateBack}
                   disabled={!canGoBack}
@@ -513,7 +546,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                 >
                   ◀
                 </button>
-                <button 
+                <button
                   className={`json-viewer-nav-button ${!canGoForward ? 'disabled' : ''}`}
                   onClick={handleNavigateForward}
                   disabled={!canGoForward}
@@ -526,51 +559,58 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
               </div>
             </div>
             {/* JSON Path display */}
-              {currentJsonPath && (
-                <div className="json-viewer-path-display">
-                  <code className="json-viewer-path-value">{currentJsonPath}</code>
-                  <button 
-                    className={`json-viewer-path-copy-btn ${pathCopySuccess ? 'success' : ''}`}
-                    onClick={copyCurrentPath}
-                    title="Copy path to clipboard"
-                  >
-                    {pathCopySuccess ? '✓' : '📋'}
-                  </button>
-                </div>
-              )}
+            {currentJsonPath && (
+              <div className="json-viewer-path-display">
+                <code className="json-viewer-path-value">{currentJsonPath}</code>
+                <button
+                  className={`json-viewer-path-copy-btn ${pathCopySuccess ? 'success' : ''}`}
+                  onClick={copyCurrentPath}
+                  title="Copy path to clipboard"
+                >
+                  {pathCopySuccess ? '✓' : '📋'}
+                </button>
+              </div>
+            )}
             <div className="json-viewer-actions">
-              <button 
-                className="json-viewer-button" 
+              <button
+                className="json-viewer-button"
                 onClick={toggleExpand}
               >
                 {expanded ? 'Collapse All' : 'Expand All'}
               </button>
-              <button 
+              <button
+                className={`json-viewer-button ${viewMode === 'editor' ? 'active' : ''}`}
+                onClick={toggleViewMode}
+                title="Switch between Tree View and Editor View"
+              >
+                {viewMode === 'default' ? 'Switch to Editor' : 'Switch to Tree'}
+              </button>
+              <button
                 className={`json-viewer-button ${isKeySorted ? 'active' : ''}`}
                 onClick={toggleKeySort}
                 title="Sort JSON keys alphabetically"
               >
                 {isKeySorted ? 'Unsort Keys' : 'Sort Keys'}
               </button>
-              <button 
+              <button
                 className={`json-viewer-button ${copySuccess ? 'success' : ''}`}
                 onClick={copyJson}
               >
                 {copySuccess ? '✓ Copied' : 'Copy JSON'}
               </button>
-              <button 
+              <button
                 className="json-viewer-button"
                 onClick={openInNewWindow}
                 title="Open JSON in new window"
               >
                 New Win
               </button>
-              <button 
+              <button
                 className="json-viewer-button"
                 onClick={() => {
                   const jsonString = JSON.stringify(jsonData, null, 2);
                   const url = chrome.runtime.getURL('json-compare.html?left=' + encodeURIComponent(jsonString));
-                  
+
                   // 通过消息传递让 background script 创建标签页
                   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
                     chrome.runtime.sendMessage({
@@ -589,10 +629,10 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
               >
                 ⚖️ Compare
               </button>
-              
+
               {/* History dropdown */}
               <div className="json-viewer-dropdown-container">
-                <button 
+                <button
                   className="json-viewer-button history-dropdown-button"
                   onClick={toggleDropdown}
                   title="View history"
@@ -603,7 +643,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                   <div className="json-viewer-dropdown-menu">
                     <div className="json-viewer-dropdown-header">
                       <span>Recent JSON</span>
-                      <button 
+                      <button
                         className="json-viewer-dropdown-view-all"
                         onClick={() => {
                           setIsDropdownOpen(false);
@@ -618,8 +658,8 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                     ) : (
                       <>
                         {historyItems.slice(0, 10).map(item => (
-                          <div 
-                            key={item.id} 
+                          <div
+                            key={item.id}
                             className="json-viewer-dropdown-item"
                             onClick={() => handleSelectFromDropdown(item.id)}
                             title={new Date(item.timestamp).toLocaleString()}
@@ -637,52 +677,64 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
           </div>
 
           {/* JSON Viewer component */}
-          <div className="json-tree-container">
-            <ReactJson
-              src={sortedData}
-              theme="rjv-default"
-              style={{ backgroundColor: 'transparent' }}
-              collapsed={!expanded}
-              collapseStringsAfterLength={false}
-              displayDataTypes={false}
-              displayObjectSize={true}
-              enableClipboard={(copy) => {
-                // Custom clipboard handler to remove quotes from string values
-                let textToCopy: string;
-                if (typeof copy.src === 'string') {
-                  // For string values, copy without quotes
-                  textToCopy = copy.src;
-                } else {
-                  // For objects/arrays, copy as formatted JSON
-                  textToCopy = JSON.stringify(copy.src, null, 2);
-                }
-                
-                // Copy to clipboard
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                  navigator.clipboard.writeText(textToCopy).catch(err => {
-                    console.error('Failed to copy:', err);
-                  });
-                } else {
-                  // Fallback for older browsers
-                  const textArea = document.createElement('textarea');
-                  textArea.value = textToCopy;
-                  textArea.style.position = 'fixed';
-                  textArea.style.left = '-999999px';
-                  textArea.style.top = '-999999px';
-                  document.body.appendChild(textArea);
-                  textArea.focus();
-                  textArea.select();
-                  document.execCommand('copy');
-                  document.body.removeChild(textArea);
-                }
-              }}
-              escapeStrings={false}
-              name={null}
-              onSelect={(select) => {
-                // Handle JSON path display functionality
-                handleJsonPathSelect(select);
-              }}
-            />
+          <div className="json-tree-container" style={{ height: 'calc(100% - 50px)' }}>
+            {viewMode === 'default' ? (
+              <ReactJson
+                src={sortedData}
+                theme="rjv-default"
+                style={{ backgroundColor: 'transparent' }}
+                collapsed={!expanded}
+                collapseStringsAfterLength={false}
+                displayDataTypes={false}
+                displayObjectSize={true}
+                enableClipboard={(copy) => {
+                  // Custom clipboard handler to remove quotes from string values
+                  let textToCopy: string;
+                  if (typeof copy.src === 'string') {
+                    // For string values, copy without quotes
+                    textToCopy = copy.src;
+                  } else {
+                    // For objects/arrays, copy as formatted JSON
+                    textToCopy = JSON.stringify(copy.src, null, 2);
+                  }
+
+                  // Copy to clipboard
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(textToCopy).catch(err => {
+                      console.error('Failed to copy:', err);
+                    });
+                  } else {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = textToCopy;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                  }
+                }}
+                escapeStrings={false}
+                name={null}
+                onSelect={(select) => {
+                  // Handle JSON path display functionality
+                  handleJsonPathSelect(select);
+                }}
+              />
+            ) : (
+              <JsonEditorWrapper
+                ref={jsonEditorRef}
+                data={sortedData}
+                mode="view"
+                onChange={(newData) => {
+                  // Optional: if we want to update the source data when edited
+                  // setSortedData(newData); 
+                }}
+              />
+            )}
           </div>
         </>
       )}
