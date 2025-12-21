@@ -28,7 +28,7 @@ const JsonEditorWrapper = forwardRef<JsonEditorRef, JsonEditorWrapperProps>(({
     expanded = true
 }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const jsonEditorRef = useRef<JSONEditor | null>(null);
+    const jsonEditorRef = useRef<any>(null);
 
     // Map legacy modes to simple vanilla-jsoneditor modes if needed
     // 'tree' -> Mode.tree (which is actually 'tree' string in newer versions, checking types is safer if we had them)
@@ -44,24 +44,16 @@ const JsonEditorWrapper = forwardRef<JsonEditorRef, JsonEditorWrapperProps>(({
     useImperativeHandle(ref, () => ({
         expandAll: () => {
             if (jsonEditorRef.current) {
-                jsonEditorRef.current.expand((path: any) => true);
+                // vanilla-jsoneditor v3 API: expand(path, callback)
+                // To expand all: expand([], () => true)
+                jsonEditorRef.current.expand([], () => true);
             }
         },
         collapseAll: () => {
             if (jsonEditorRef.current) {
-                // collapse all by returning false for all paths, or use specific method if available
-                // .expand(callback) where callback returns boolean. false = collapse?
-                // Wait, typically .expand() controls expansion. 
-                // There isn;t a direct "collapseAll" method in the new API usually, 
-                // but passing a callback that returns false to expand might work, OR simply using a method if it exists.
-                // The search result SAID expandAll/collapseAll exist. I will try to use them if they exist on the instance.
-                // If not, I'll fallback to expand(path => false).
-                const editor = jsonEditorRef.current as any;
-                if (typeof editor.collapseAll === 'function') {
-                    editor.collapseAll();
-                } else if (typeof editor.expand === 'function') {
-                    editor.expand(() => false);
-                }
+                // vanilla-jsoneditor v3 API: collapse(path)
+                // To collapse all: collapse([])
+                jsonEditorRef.current.collapse([]);
             }
         }
     }));
@@ -111,13 +103,11 @@ const JsonEditorWrapper = forwardRef<JsonEditorRef, JsonEditorWrapperProps>(({
             const currentContent = { json: data };
             jsonEditorRef.current.update(currentContent);
 
-            // Handle expansion on update
-            // Note: update() usually preserves state. 
-            // If we strictly want to enforce 'expanded' state on every data update:
+            // Handle expansion on update using the correct v3 API
             if (expanded) {
-                (jsonEditorRef.current as any).expand(() => true);
+                jsonEditorRef.current.expand([], () => true);
             } else {
-                (jsonEditorRef.current as any).expand(() => false);
+                jsonEditorRef.current.collapse([]);
             }
         }
     }, [data, expanded]);
