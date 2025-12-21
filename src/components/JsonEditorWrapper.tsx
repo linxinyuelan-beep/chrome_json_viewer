@@ -12,12 +12,14 @@ interface JsonEditorWrapperProps {
     data: any;
     mode?: 'tree' | 'view' | 'form' | 'code' | 'text' | 'preview';
     onChange?: (data: any) => void;
+    expanded?: boolean;
 }
 
 const JsonEditorWrapper = forwardRef<JsonEditorRef, JsonEditorWrapperProps>(({
     data,
     mode = 'tree',
-    onChange
+    onChange,
+    expanded = true // Default to expanded
 }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const jsoneditor = useRef<JSONEditor | null>(null);
@@ -49,9 +51,11 @@ const JsonEditorWrapper = forwardRef<JsonEditorRef, JsonEditorWrapperProps>(({
             jsoneditor.current = new JSONEditor(containerRef.current, options);
             jsoneditor.current.set(data);
 
-            // Safely call expandAll if available
-            if (typeof jsoneditor.current.expandAll === 'function') {
+            // Safely call expandAll if available and requested
+            if (expanded && typeof jsoneditor.current.expandAll === 'function') {
                 jsoneditor.current.expandAll();
+            } else if (!expanded && typeof jsoneditor.current.collapseAll === 'function') {
+                jsoneditor.current.collapseAll();
             }
         }
 
@@ -64,12 +68,17 @@ const JsonEditorWrapper = forwardRef<JsonEditorRef, JsonEditorWrapperProps>(({
 
     useEffect(() => {
         if (jsoneditor.current) {
-            jsoneditor.current.update(data);
-            // If the data structure changed significantly (like sorting), we might want to expand all again?
-            // But usually user wants to keep state. However, for "Sort Keys", it might be better to re-expand.
-            // Let's keep it simple for now, update() tries to preserve state.
+            // Use set() instead of update() to force re-render, which is needed for key sorting to show up
+            jsoneditor.current.set(data);
+
+            // Re-apply expansion state after data update
+            if (expanded && typeof jsoneditor.current.expandAll === 'function') {
+                jsoneditor.current.expandAll();
+            } else if (!expanded && typeof jsoneditor.current.collapseAll === 'function') {
+                jsoneditor.current.collapseAll();
+            }
         }
-    }, [data]);
+    }, [data, expanded]); // Re-run when data or expansion preference changes
 
     return (
         <div

@@ -333,6 +333,7 @@ const JsonWindowApp: React.FC = () => {
                 ref={jsonEditorRef}
                 data={jsonData}
                 mode="view"
+                expanded={expanded} // Pass expanded state
                 onChange={(newData) => {
                   // Optional: update data if we want edits to reflect immediately
                   // setJsonData(newData);

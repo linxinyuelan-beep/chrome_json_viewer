@@ -729,6 +729,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                 ref={jsonEditorRef}
                 data={sortedData}
                 mode="view"
+                expanded={expanded} // Pass expanded state
                 onChange={(newData) => {
                   // Optional: if we want to update the source data when edited
                   // setSortedData(newData); 
