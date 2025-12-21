@@ -727,6 +727,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
             ) : (
               <JsonEditorWrapper
                 ref={jsonEditorRef}
+                key={isKeySorted ? 'sorted' : 'unsorted'}
                 data={sortedData}
                 mode="view"
                 expanded={expanded} // Pass expanded state
