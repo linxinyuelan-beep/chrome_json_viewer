@@ -384,8 +384,25 @@ const App: React.FC = () => {
         return;
       }
 
-      // Add quotes to the string and parse
-      const unescapedString = JSON.parse(`"${jsonInput}"`);
+      let inputToUnescape = jsonInput.trim();
+      let unescapedString: string;
+      
+      // 检查是否外层有双引号，如果有则先解析一次（这一步会同时去掉外层引号和进行反转义）
+      if (inputToUnescape.startsWith('"') && inputToUnescape.endsWith('"')) {
+        try {
+          // 对于 "{\"id\":123,\"name\":\"hahaha\"}" 这种情况
+          // JSON.parse 会直接得到反转义后的结果：{"id":123,"name":"hahaha"}
+          unescapedString = JSON.parse(inputToUnescape);
+        } catch (e) {
+          // 如果解析失败，使用原来的方法
+          console.log('Failed to parse as quoted string, trying normal unescape');
+          unescapedString = JSON.parse(`"${inputToUnescape}"`);
+        }
+      } else {
+        // 对于 {\"id\":123,\"name\":\"hahaha\"} 这种情况
+        // 需要加上引号后再解析
+        unescapedString = JSON.parse(`"${inputToUnescape}"`);
+      }
 
       // Update the content in the input field
       setJsonInput(unescapedString);
