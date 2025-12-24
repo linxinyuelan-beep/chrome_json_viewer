@@ -16,9 +16,17 @@ import {
   languageOptions,
   Translations
 } from './utils/i18n';
+import {
+  FilterMode,
+  SiteFilterConfig,
+  getSiteFilterConfig,
+  saveSiteFilterConfig,
+  addSiteToFilter,
+  removeSiteFromFilter
+} from './utils/siteFilter';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = React.useState<'settings' | 'json-input' | 'json-compare'>('json-input');
+  const [activeTab, setActiveTab] = React.useState<'settings' | 'json-input' | 'site-filter'>('json-input');
   const [jsonHoverEnabled, setJsonHoverEnabled] = React.useState(true);
   const [jsonDisplayMode, setJsonDisplayMode] = React.useState<'drawer' | 'window'>('drawer');
   const [defaultViewerMode, setDefaultViewerMode] = React.useState<'default' | 'editor'>('default');
@@ -27,6 +35,12 @@ const App: React.FC = () => {
   const [language, setLanguage] = React.useState<LanguageCode>(DEFAULT_LANGUAGE);
   const [translations, setTranslations] = React.useState<Translations>(getTranslations(DEFAULT_LANGUAGE));
   const version = VERSION;
+  
+  // Site filter states
+  const [filterMode, setFilterMode] = React.useState<FilterMode>('disabled');
+  const [siteList, setSiteList] = React.useState<string[]>([]);
+  const [newSiteInput, setNewSiteInput] = React.useState('');
+  const [currentSite, setCurrentSite] = React.useState<string>('');
 
   // Load saved settings when popup opens
   React.useEffect(() => {
@@ -54,6 +68,23 @@ const App: React.FC = () => {
         chrome.storage.local.get('hoverDetectionEnabled', (result) => {
           const enabled = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
           setJsonHoverEnabled(enabled);
+        });
+        
+        // Load site filter configuration
+        const filterConfig = await getSiteFilterConfig();
+        setFilterMode(filterConfig.mode);
+        setSiteList(filterConfig.sites);
+        
+        // Get current tab's hostname
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (tabs[0]?.url) {
+            try {
+              const url = new URL(tabs[0].url);
+              setCurrentSite(url.hostname);
+            } catch (error) {
+              console.error('Error parsing URL:', error);
+            }
+          }
         });
       } catch (error) {
         console.error("Error loading settings:", error);
@@ -117,6 +148,47 @@ const App: React.FC = () => {
   const openJsonComparePage = () => {
     const url = chrome.runtime.getURL('json-compare.html');
     chrome.tabs.create({ url });
+  };
+  
+  // Site filter handlers
+  const handleFilterModeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMode = e.target.value as FilterMode;
+    setFilterMode(newMode);
+    
+    const config: SiteFilterConfig = {
+      mode: newMode,
+      sites: siteList
+    };
+    await saveSiteFilterConfig(config);
+  };
+  
+  const handleAddSite = async () => {
+    const site = newSiteInput.trim();
+    if (!site) return;
+    
+    if (siteList.includes(site)) {
+      setNewSiteInput('');
+      return;
+    }
+    
+    await addSiteToFilter(site);
+    const newList = [...siteList, site];
+    setSiteList(newList);
+    setNewSiteInput('');
+  };
+  
+  const handleAddCurrentSite = async () => {
+    if (!currentSite || siteList.includes(currentSite)) return;
+    
+    await addSiteToFilter(currentSite);
+    const newList = [...siteList, currentSite];
+    setSiteList(newList);
+  };
+  
+  const handleRemoveSite = async (site: string) => {
+    await removeSiteFromFilter(site);
+    const newList = siteList.filter(s => s !== site);
+    setSiteList(newList);
   };
 
   // Format JSON input function
@@ -591,6 +663,12 @@ const App: React.FC = () => {
         >
           {translations.settingsTab}
         </button>
+        <button
+          className={`tab ${activeTab === 'site-filter' ? 'active' : ''}`}
+          onClick={() => setActiveTab('site-filter')}
+        >
+          {translations.siteFilterTab}
+        </button>
       </div>
 
       <div className="content">
@@ -659,6 +737,131 @@ const App: React.FC = () => {
             </div>
 
           </>
+        ) : activeTab === 'site-filter' ? (
+          <div className="section">
+            <h2>{translations.siteFilterHeading}</h2>
+            
+            <div className="settings-compact">
+              <label className="language-select-label">
+                {translations.filterMode}:
+                <select
+                  className="language-select"
+                  value={filterMode}
+                  onChange={handleFilterModeChange}
+                >
+                  <option value="disabled">{translations.filterModeDisabled}</option>
+                  <option value="blacklist">{translations.filterModeBlacklist}</option>
+                  <option value="whitelist">{translations.filterModeWhitelist}</option>
+                </select>
+              </label>
+              
+              <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+                {filterMode === 'disabled' && translations.filterModeDisabledDesc}
+                {filterMode === 'blacklist' && translations.filterModeBlacklistDesc}
+                {filterMode === 'whitelist' && translations.filterModeWhitelistDesc}
+              </div>
+              
+              <div style={{ marginTop: '10px', padding: '8px', backgroundColor: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px', fontSize: '12px', color: '#856404' }}>
+                💡 {translations.refreshPageToApply}
+              </div>
+            </div>
+            
+            {filterMode !== 'disabled' && (
+              <>
+                <div style={{ marginTop: '20px' }}>
+                  <h3 style={{ fontSize: '14px', marginBottom: '10px' }}>{translations.siteList}</h3>
+                  
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                    <input
+                      type="text"
+                      value={newSiteInput}
+                      onChange={(e) => setNewSiteInput(e.target.value)}
+                      placeholder={translations.sitePatternPlaceholder}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddSite();
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '6px 10px',
+                        border: '1px solid #ddd',
+                        borderRadius: '4px',
+                        fontSize: '13px'
+                      }}
+                    />
+                    <button 
+                      className="json-button format"
+                      onClick={handleAddSite}
+                      style={{ padding: '6px 12px', fontSize: '13px' }}
+                    >
+                      {translations.addSite}
+                    </button>
+                  </div>
+                  
+                  {currentSite && (
+                    <div style={{ marginBottom: '10px' }}>
+                      <button
+                        className="json-button"
+                        onClick={handleAddCurrentSite}
+                        style={{ padding: '6px 12px', fontSize: '13px', width: '100%' }}
+                      >
+                        {translations.addCurrentSite}: {currentSite}
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div style={{ fontSize: '11px', color: '#666', marginBottom: '10px' }}>
+                    {translations.sitePatternHelp}
+                  </div>
+                  
+                  <div style={{ 
+                    border: '1px solid #ddd', 
+                    borderRadius: '4px', 
+                    maxHeight: '200px', 
+                    overflowY: 'auto',
+                    padding: '8px'
+                  }}>
+                    {siteList.length === 0 ? (
+                      <div style={{ color: '#999', fontSize: '13px', textAlign: 'center', padding: '10px' }}>
+                        {translations.noSitesAdded}
+                      </div>
+                    ) : (
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {siteList.map((site, index) => (
+                          <li key={index} style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            padding: '6px 8px',
+                            borderBottom: index < siteList.length - 1 ? '1px solid #eee' : 'none'
+                          }}>
+                            <span style={{ fontSize: '13px', wordBreak: 'break-all' }}>{site}</span>
+                            <button
+                              onClick={() => handleRemoveSite(site)}
+                              style={{
+                                padding: '2px 8px',
+                                fontSize: '11px',
+                                backgroundColor: '#f44336',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '3px',
+                                cursor: 'pointer',
+                                marginLeft: '8px',
+                                flexShrink: 0
+                              }}
+                            >
+                              {translations.remove}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         ) : (
           <div className="json-input-section">
             <div className="json-input-container">

@@ -78,6 +78,27 @@ export interface Translations {
   autoDetectionDisabled: string;
   autoDetectionEnabled: string;
   autoDetectionWillResumeOnRefresh: string;
+
+  // Site filter (blacklist/whitelist)
+  siteFilterTab: string;
+  siteFilterHeading: string;
+  filterMode: string;
+  filterModeDisabled: string;
+  filterModeBlacklist: string;
+  filterModeWhitelist: string;
+  filterModeDisabledDesc: string;
+  filterModeBlacklistDesc: string;
+  filterModeWhitelistDesc: string;
+  siteList: string;
+  addSite: string;
+  addCurrentSite: string;
+  enterSitePattern: string;
+  sitePatternPlaceholder: string;
+  sitePatternHelp: string;
+  currentSite: string;
+  remove: string;
+  noSitesAdded: string;
+  refreshPageToApply: string;
 }
 
 // Language definitions
@@ -153,6 +174,27 @@ export const translations: Record<LanguageCode, Translations> = {
     autoDetectionDisabled: 'Auto-detection disabled',
     autoDetectionEnabled: 'Auto-detection enabled',
     autoDetectionWillResumeOnRefresh: 'Auto-detection will resume on page refresh',
+
+    // Site filter (blacklist/whitelist)
+    siteFilterTab: 'Site Filter',
+    siteFilterHeading: 'Site Filter Settings',
+    filterMode: 'Filter Mode',
+    filterModeDisabled: 'Disabled',
+    filterModeBlacklist: 'Blacklist',
+    filterModeWhitelist: 'Whitelist',
+    filterModeDisabledDesc: 'Extension is enabled on all websites',
+    filterModeBlacklistDesc: 'Extension is disabled on listed websites',
+    filterModeWhitelistDesc: 'Extension is enabled only on listed websites',
+    siteList: 'Site List',
+    addSite: 'Add Site',
+    addCurrentSite: 'Add Current Site',
+    enterSitePattern: 'Enter site pattern',
+    sitePatternPlaceholder: 'e.g., example.com or *.example.com',
+    sitePatternHelp: 'Supports wildcards (*). Examples: example.com, *.example.com, *example*',
+    currentSite: 'Current Site',
+    remove: 'Remove',
+    noSitesAdded: 'No sites added yet',
+    refreshPageToApply: 'Note: Refresh the page to apply filter changes',
   },
   zh: {
     // General UI
@@ -225,6 +267,27 @@ export const translations: Record<LanguageCode, Translations> = {
     autoDetectionDisabled: '自动检测已关闭',
     autoDetectionEnabled: '自动检测已开启',
     autoDetectionWillResumeOnRefresh: '刷新页面后将恢复自动检测',
+
+    // Site filter (blacklist/whitelist)
+    siteFilterTab: '网站过滤',
+    siteFilterHeading: '网站过滤设置',
+    filterMode: '过滤模式',
+    filterModeDisabled: '已禁用',
+    filterModeBlacklist: '黑名单模式',
+    filterModeWhitelist: '白名单模式',
+    filterModeDisabledDesc: '插件在所有网站上启用',
+    filterModeBlacklistDesc: '插件在列表中的网站上禁用',
+    filterModeWhitelistDesc: '插件仅在列表中的网站上启用',
+    siteList: '网站列表',
+    addSite: '添加网站',
+    addCurrentSite: '添加当前网站',
+    enterSitePattern: '输入网站模式',
+    sitePatternPlaceholder: '例如：example.com 或 *.example.com',
+    sitePatternHelp: '支持通配符 (*)。示例：example.com、*.example.com、*example*',
+    currentSite: '当前网站',
+    remove: '移除',
+    noSitesAdded: '还没有添加任何网站',
+    refreshPageToApply: '注意：需要刷新页面才能应用过滤设置的更改',
   },
 };
 

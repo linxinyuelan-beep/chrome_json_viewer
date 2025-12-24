@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Filter Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .section {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .json-text {
+            background-color: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .instructions {
+            color: #666;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 JSON Formatter & Viewer - Site Filter Test Page</h1>
+    
+    <div class="section">
+        <h2>Instructions</h2>
+        <div class="instructions">
+            <p>This page is for testing the Site Filter (Blacklist/Whitelist) functionality:</p>
+            <ol>
+                <li>Open the extension popup and go to the "Site Filter" tab</li>
+                <li>Choose a filter mode:
+                    <ul>
+                        <li><strong>Disabled:</strong> Extension works on all sites</li>
+                        <li><strong>Blacklist:</strong> Extension disabled on listed sites</li>
+                        <li><strong>Whitelist:</strong> Extension only works on listed sites</li>
+                    </ul>
+                </li>
+                <li>Add the current site to the list</li>
+                <li>Refresh the page and check if JSON detection works based on your settings</li>
+                <li>Try hovering over the JSON text below or double-clicking it</li>
+            </ol>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Test JSON Data</h2>
+        <p class="instructions">Hover over or double-click the JSON below to test if the extension is working:</p>
+        
+        <div class="json-text">{"name":"John Doe","age":30,"email":"john@example.com","address":{"street":"123 Main St","city":"New York","zipCode":"10001"},"hobbies":["reading","coding","traveling"]}</div>
+        
+        <div class="json-text">[{"id":1,"product":"Laptop","price":1299.99,"inStock":true},{"id":2,"product":"Mouse","price":29.99,"inStock":false},{"id":3,"product":"Keyboard","price":89.99,"inStock":true}]</div>
+        
+        <div class="json-text">{"response":{"success":true,"data":{"users":[{"userId":101,"username":"alice"},{"userId":102,"username":"bob"}],"totalCount":2},"timestamp":"2024-12-24T10:30:00Z"}}</div>
+    </div>
+    
+    <div class="section">
+        <h2>Expected Behavior</h2>
+        <ul>
+            <li><strong>When filter is disabled:</strong> JSON should be detected and highlighted on hover</li>
+            <li><strong>When in blacklist mode and site is listed:</strong> No JSON detection should occur</li>
+            <li><strong>When in blacklist mode and site is NOT listed:</strong> JSON detection should work normally</li>
+            <li><strong>When in whitelist mode and site is listed:</strong> JSON detection should work normally</li>
+            <li><strong>When in whitelist mode and site is NOT listed:</strong> No JSON detection should occur</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>Testing Patterns</h2>
+        <p class="instructions">Try adding these patterns to test wildcard matching:</p>
+        <ul>
+            <li><code>localhost</code> - Exact match for localhost</li>
+            <li><code>*.github.io</code> - Match all GitHub Pages sites</li>
+            <li><code>*example*</code> - Match any domain containing "example"</li>
+        </ul>
+    </div>
+</body>
+</html>

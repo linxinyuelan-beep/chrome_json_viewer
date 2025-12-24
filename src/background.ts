@@ -2,51 +2,83 @@
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations } from "./utils/i18n";
 import './config/public-path';
 import { VERSION } from './config/version';
+import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
 
 const CONTEXT_MENU_ID = 'formatSelectedJson';
 const TOGGLE_AUTO_DETECTION_MENU_ID = 'toggleAutoDetection';
 
-// Function to create or update the context menu
-async function setupContextMenu() {
+// Function to create or update the context menu based on current tab
+async function setupContextMenu(tabUrl?: string) {
     const lang = await getCurrentLanguage();
     const i18n = getTranslations(lang);
+    
+    // Get site filter configuration
+    const filterConfig = await getSiteFilterConfig();
+    
+    // Determine if menu should be shown
+    let shouldShowMenu = true;
+    if (tabUrl) {
+        // If we have a URL, check if extension should be enabled on this site
+        shouldShowMenu = shouldEnableOnSite(tabUrl, filterConfig);
+        console.log(`[Site Filter] URL: ${tabUrl}, Mode: ${filterConfig.mode}, Sites: ${filterConfig.sites.join(', ')}, Show Menu: ${shouldShowMenu}`);
+    } else if (filterConfig.mode === 'whitelist') {
+        // If no URL is provided and we're in whitelist mode,
+        // don't show menu by default (only show on whitelisted sites)
+        shouldShowMenu = false;
+        console.log(`[Site Filter] No URL, Whitelist mode, Show Menu: false`);
+    } else {
+        console.log(`[Site Filter] No URL, Mode: ${filterConfig.mode}, Show Menu: ${shouldShowMenu}`);
+    }
 
-    // Use remove and create to handle both installation and updates
-    chrome.contextMenus.remove(CONTEXT_MENU_ID, () => {
-        // Ignore error in case the item doesn't exist (e.g., first install)
-        void chrome.runtime.lastError;
-
-        chrome.contextMenus.create({
-            id: CONTEXT_MENU_ID,
-            title: i18n.formatSelectedJson,
-            contexts: ['selection'],
+    // Remove all existing menu items first
+    await new Promise<void>((resolve) => {
+        chrome.contextMenus.removeAll(() => {
+            if (chrome.runtime.lastError) {
+                console.log('Error removing menus (may not exist):', chrome.runtime.lastError.message);
+            }
+            resolve();
         });
     });
 
-    // Get current hover detection setting to determine menu text
-    chrome.storage.local.get('hoverDetectionEnabled', (result) => {
-        const hoverDetectionEnabled = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
-        const menuTitle = hoverDetectionEnabled ? i18n.disableAutoDetection : i18n.enableAutoDetection;
+    // Only create menu items if extension should be enabled
+    if (shouldShowMenu) {
+        try {
+            // Create format JSON menu item
+            chrome.contextMenus.create({
+                id: CONTEXT_MENU_ID,
+                title: i18n.formatSelectedJson,
+                contexts: ['selection'],
+            });
 
-        // Add menu item to toggle auto-detection temporarily
-        chrome.contextMenus.remove(TOGGLE_AUTO_DETECTION_MENU_ID, () => {
-            // Ignore error in case the item doesn't exist
-            void chrome.runtime.lastError;
+            // Get current hover detection setting to determine menu text
+            const result = await chrome.storage.local.get('hoverDetectionEnabled');
+            const hoverDetectionEnabled = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
+            const menuTitle = hoverDetectionEnabled ? i18n.disableAutoDetection : i18n.enableAutoDetection;
 
+            // Create toggle auto-detection menu item
             chrome.contextMenus.create({
                 id: TOGGLE_AUTO_DETECTION_MENU_ID,
                 title: menuTitle,
                 contexts: ['page', 'selection'],
             });
-        });
-    });
+            
+            console.log('[Site Filter] Context menus created');
+        } catch (error) {
+            console.error('[Site Filter] Error creating context menus:', error);
+        }
+    } else {
+        console.log('[Site Filter] Context menus not created (extension disabled on this site)');
+    }
 }
 
 chrome.runtime.onInstalled.addListener(() => {
     console.log('JSON Formatter & Viewer extension installed');
 
-    // Setup context menu
-    setupContextMenu();
+    // Setup context menu with current active tab URL
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const currentTabUrl = tabs[0]?.url;
+        setupContextMenu(currentTabUrl);
+    });
 
     // Initialize language settings if not already set
     chrome.storage.local.get('language', (result) => {
@@ -56,11 +88,37 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
-// Listen for language changes or hover detection changes to update the context menu title
+// Listen for language changes, hover detection changes, or site filter changes to update the context menu
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local' && (changes.language || changes.hoverDetectionEnabled)) {
-        setupContextMenu();
+    if (namespace === 'local' && (changes.language || changes.hoverDetectionEnabled || changes.siteFilterConfig)) {
+        // Get current tab URL and update menu
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const currentTabUrl = tabs[0]?.url;
+            setupContextMenu(currentTabUrl);
+        });
     }
+});
+
+// Listen for tab updates to refresh context menu based on site filter
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    // Only update when URL changes or page is loaded
+    if (changeInfo.url || changeInfo.status === 'complete') {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            // Only update if this is the active tab
+            if (tabs[0]?.id === tabId) {
+                setupContextMenu(tab.url);
+            }
+        });
+    }
+});
+
+// Listen for tab activation to refresh context menu
+chrome.tabs.onActivated.addListener((activeInfo) => {
+    chrome.tabs.get(activeInfo.tabId, (tab) => {
+        if (tab.url) {
+            setupContextMenu(tab.url);
+        }
+    });
 });
 
 // 全局变量用于临时存储选中的JSON内容

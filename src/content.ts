@@ -15,6 +15,7 @@ console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_
 // 导入工具函数
 import { isValidNestedJson } from './utils/nestedJsonHandler';
 import { getCurrentLanguage, getTranslations } from "./utils/i18n";
+import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
 
 // 是否启用悬停检测，从存储中加载
 let enableHoverDetection = true;
@@ -24,11 +25,31 @@ let autoDetectionTemporarilyDisabled = false;
 let autoDetectionTemporarilyEnabled = false;
 // 标志记录是否已添加悬停检测事件监听器
 let hoverDetectionListenerAdded = false;
+// 标志记录插件是否在当前网站上启用
+let extensionEnabledOnCurrentSite = true;
 
-// 初始化时加载悬停检测设置
-chrome.storage.local.get('hoverDetectionEnabled', (result) => {
+// 初始化时加载设置
+async function initializeSettings() {
+  // 检查网站过滤设置
+  const filterConfig = await getSiteFilterConfig();
+  const currentUrl = window.location.href;
+  extensionEnabledOnCurrentSite = shouldEnableOnSite(currentUrl, filterConfig);
+  
+  // 如果在当前网站上禁用，直接返回，不加载其他设置
+  if (!extensionEnabledOnCurrentSite) {
+    console.log(`%c🚫 JSON Detector v${EXTENSION_VERSION}: Disabled on this site`,
+      'background: #f44336; color: white; padding: 2px 6px; border-radius: 2px;');
+    return;
+  }
+  
+  // 加载悬停检测设置
+  chrome.storage.local.get('hoverDetectionEnabled', (result) => {
     enableHoverDetection = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
-});
+  });
+}
+
+// 调用初始化函数
+initializeSettings();
 
 // 显示通知
 function showNotification(message: string, type: 'success' | 'error' | 'info' = 'info'): void {
@@ -495,6 +516,12 @@ function throttle<T extends (...args: any[]) => any>(
 
 // 封装悬停检测功能，使其可以动态启用
 function enableHoverDetectionFeature(): void {
+    // 如果插件在当前网站上被禁用，不启用悬停检测
+    if (!extensionEnabledOnCurrentSite) {
+        console.log('Extension is disabled on this site, hover detection will not be enabled');
+        return;
+    }
+    
     // 如果已经添加过了，不重复添加
     if (hoverDetectionListenerAdded) {
         console.log('Hover detection listener already added, skipping...');
@@ -653,6 +680,11 @@ function enableHoverDetectionFeature(): void {
 
 // 初始化JSON格式化功能
 function initializeJsonFormatter() {
+    // 如果插件在当前网站上被禁用，不初始化
+    if (!extensionEnabledOnCurrentSite) {
+        return;
+    }
+    
     console.log('Initializing JSON formatter...');
 
     // 创建抽屉元素以便随时使用
@@ -805,6 +837,11 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
 });
 
 window.addEventListener('load', () => {
+    // 如果插件在当前网站上被禁用，不执行任何操作
+    if (!extensionEnabledOnCurrentSite) {
+        return;
+    }
+    
     // 等待页面完全加载后再初始化JSON检测
     setTimeout(() => {
         // 添加悬停检测功能
