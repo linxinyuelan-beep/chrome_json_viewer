@@ -57,25 +57,27 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   const [isKeySorted, setIsKeySorted] = useState<boolean>(false);
 
   // View mode state: 'default' (microlink) or 'editor' (jsoneditor)
-  const [viewMode, setViewMode] = useState<'default' | 'editor'>('default');
+  // Initialize as null to wait for settings to load
+  const [viewMode, setViewMode] = useState<'default' | 'editor' | null>(null);
 
   // Ref for JsonEditorWrapper
   const jsonEditorRef = useRef<JsonEditorRef>(null);
 
-  // Load view mode preference
+  // Load view mode from settings (defaultViewerMode)
   useEffect(() => {
-    chrome.storage.local.get(['preferredViewMode'], (result) => {
-      if (result.preferredViewMode) {
-        setViewMode(result.preferredViewMode);
-      }
+    chrome.storage.local.get(['defaultViewerMode'], (result) => {
+      // Set the mode from settings, or default to 'default' if not set
+      setViewMode(result.defaultViewerMode || 'default');
     });
   }, []);
 
-  // Toggle view mode
+  // Toggle view mode (only for current session, doesn't persist)
   const toggleViewMode = () => {
+    if (viewMode === null) return; // Don't toggle if still loading
     const newMode = viewMode === 'default' ? 'editor' : 'default';
     setViewMode(newMode);
-    chrome.storage.local.set({ preferredViewMode: newMode });
+    // Note: We no longer persist this preference, it only affects the current view
+    // The default mode is controlled by the settings page
   };
 
   // 确保组件初始化时记录日志
@@ -678,7 +680,12 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
 
           {/* JSON Viewer component */}
           <div className="json-tree-container" style={{ height: 'calc(100% - 50px)' }}>
-            {viewMode === 'default' ? (
+            {viewMode === null ? (
+              // Loading state while fetching settings
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#666' }}>
+                Loading...
+              </div>
+            ) : viewMode === 'default' ? (
               <ReactJson
                 src={sortedData}
                 theme="rjv-default"

@@ -21,6 +21,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<'settings' | 'json-input' | 'json-compare'>('json-input');
   const [jsonHoverEnabled, setJsonHoverEnabled] = React.useState(true);
   const [jsonDisplayMode, setJsonDisplayMode] = React.useState<'drawer' | 'window'>('drawer');
+  const [defaultViewerMode, setDefaultViewerMode] = React.useState<'default' | 'editor'>('default');
   const [jsonInput, setJsonInput] = React.useState('');
   const [jsonFormatError, setJsonFormatError] = React.useState<string | null>(null);
   const [language, setLanguage] = React.useState<LanguageCode>(DEFAULT_LANGUAGE);
@@ -41,6 +42,12 @@ const App: React.FC = () => {
         chrome.storage.local.get('jsonDisplayMode', (result) => {
           const mode = result.jsonDisplayMode || 'drawer';
           setJsonDisplayMode(mode);
+        });
+
+        // Load default viewer mode setting
+        chrome.storage.local.get('defaultViewerMode', (result) => {
+          const mode = result.defaultViewerMode || 'default';
+          setDefaultViewerMode(mode);
         });
 
         // Load hover detection setting from storage
@@ -88,6 +95,13 @@ const App: React.FC = () => {
     const newMode = e.target.value as 'drawer' | 'window';
     setJsonDisplayMode(newMode);
     chrome.storage.local.set({ jsonDisplayMode: newMode });
+  };
+
+  // Change default viewer mode
+  const handleDefaultViewerModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMode = e.target.value as 'default' | 'editor';
+    setDefaultViewerMode(newMode);
+    chrome.storage.local.set({ defaultViewerMode: newMode });
   };
 
   // 新增：打开 Chrome 快捷键设置页面
@@ -621,6 +635,18 @@ const App: React.FC = () => {
                   >
                     <option value="drawer">{translations.jsonDisplayModeDrawer}</option>
                     <option value="window">{translations.jsonDisplayModeWindow}</option>
+                  </select>
+                </label>
+
+                <label className="language-select-label">
+                  {translations.defaultViewerMode}:
+                  <select
+                    className="language-select"
+                    value={defaultViewerMode}
+                    onChange={handleDefaultViewerModeChange}
+                  >
+                    <option value="default">{translations.viewerModeTreeView}</option>
+                    <option value="editor">{translations.viewerModeEditor}</option>
                   </select>
                 </label>
 

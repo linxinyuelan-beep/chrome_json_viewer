@@ -47,6 +47,9 @@ export interface Translations {
   jsonDisplayMode: string;
   jsonDisplayModeDrawer: string;
   jsonDisplayModeWindow: string;
+  defaultViewerMode: string;
+  viewerModeTreeView: string;
+  viewerModeEditor: string;
 
   // Messages
   enterJsonText: string;
@@ -119,6 +122,9 @@ export const translations: Record<LanguageCode, Translations> = {
     jsonDisplayMode: 'Display Mode',
     jsonDisplayModeDrawer: 'Drawer',
     jsonDisplayModeWindow: 'New Window',
+    defaultViewerMode: 'Default Viewer Mode',
+    viewerModeTreeView: 'Tree View',
+    viewerModeEditor: 'Editor',
 
     // Messages
     enterJsonText: 'Please enter JSON text',
@@ -188,6 +194,9 @@ export const translations: Record<LanguageCode, Translations> = {
     jsonDisplayMode: 'JSON显示方式',
     jsonDisplayModeDrawer: '在抽屉中显示',
     jsonDisplayModeWindow: '在新弹出窗口中打开',
+    defaultViewerMode: '默认查看器模式',
+    viewerModeTreeView: '树形视图',
+    viewerModeEditor: '编辑器视图',
 
     // Messages
     enterJsonText: '请输入JSON文本',
