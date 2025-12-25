@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大整数测试页面 - JSON Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .json-text {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .description {
+            color: #666;
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔢 大整数精度测试页面</h1>
+    
+    <div class="info">
+        <strong>📌 测试说明：</strong>
+        <p>此页面用于测试 JSON Viewer 扩展对大整数的处理能力。JavaScript 的 Number 类型基于 IEEE 754 双精度浮点数，
+        只能安全表示 -2^53 到 2^53 之间的整数（即 ±9007199254740991）。超出此范围的整数会发生精度丢失。</p>
+        <p><code>Number.MAX_SAFE_INTEGER = 9007199254740991</code> (16位数字)</p>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 1：用户报告的问题 - 数组中的大整数 ⭐</h2>
+        <div class="description">
+            <strong>这是最重要的测试！</strong> 用户发现 <code>ticketingVoucherIds</code> 数组中的值从 <code>16633992720384107</code> 变成了 <code>16633992720384108</code>
+        </div>
+        <div class="json-text">[{"orderId":1134766076569217,"ticketingVoucherIds":[16633992720384107]}]</div>
+        <div class="warning">
+            <strong>⚠️ 预期行为：</strong> 打开后应该显示为字符串 <code>"16633992720384107"</code>（带引号），保持原值不变
+        </div>
+        <div class="info">
+            <strong>🔍 关键点：</strong> 这个数字在<strong>数组</strong>中，修复前的正则表达式只能处理键值对，无法处理数组中的大整数。修复后增加了专门的数组匹配模式。
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 2：边界值测试</h2>
+        <div class="description">
+            测试刚好在安全整数边界附近的值
+        </div>
+        <div class="json-text">{
+  "maxSafeInteger": 9007199254740991,
+  "justOverMax": 9007199254740992,
+  "muchOverMax": 9007199254740999,
+  "veryLargeInt": 12345678901234567890
+}</div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 3：订单ID场景</h2>
+        <div class="description">
+            模拟真实的订单系统，通常使用雪花算法生成的64位整数ID
+        </div>
+        <div class="json-text">{
+  "orderId": 1234567890123456789,
+  "userId": 9876543210987654321,
+  "transactionId": 1111222233334444555,
+  "timestamp": 1703577600000,
+  "items": [
+    {
+      "productId": 5555666677778888999,
+      "quantity": 2
+    }
+  ]
+}</div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 4：纯数组中的大整数</h2>
+        <div class="description">
+            测试纯数组（不在对象中）包含多个大整数的情况
+        </div>
+        <div class="json-text">[
+  1234567890123456789,
+  2345678901234567890,
+  3456789012345678901,
+  4567890123456789012
+]</div>
+        <div class="info">
+            <strong>📝 说明：</strong> 这是对数组大整数处理的直接测试，所有数字都应该转换为字符串格式
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 5：嵌套数组中的大整数</h2>
+        <div class="description">
+            测试多层嵌套数组中的大整数
+        </div>
+        <div class="json-text">{
+  "matrix": [
+    [16633992720384107, 16633992720384108],
+    [16633992720384109, 16633992720384110]
+  ],
+  "list": [1234567890123456789, [9876543210987654321]]
+}</div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 6：对比测试 - 键值对 vs 数组</h2>
+        <div class="description">
+            同一个大整数，在键值对和数组中的表现应该一致
+        </div>
+        <div class="json-text">{
+  "inObject": 16633992720384107,
+  "inArray": [16633992720384107],
+  "both": {
+    "value": 16633992720384107,
+    "list": [16633992720384107, 16633992720384108]
+  }
+}</div>
+        <div class="info">
+            <strong>✅ 预期：</strong> 所有的 <code>16633992720384107</code> 都应该显示为字符串 <code>"16633992720384107"</code>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 7：混合类型数组</h2>
+        <div class="description">
+            数组中同时包含大整数、小整数、字符串等不同类型
+        </div>
+        <div class="json-text">{
+  "mixed": [
+    123,
+    "text",
+    16633992720384107,
+    true,
+    null,
+    {"nested": 98765432109876543},
+    [11111111111111111, 22222222222222222]
+  ]
+}</div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 8：边界测试 - 16位 vs 17位</h2>
+        <div class="description">
+            测试 16 位和 17 位整数的区别（阈值测试）
+        </div>
+        <div class="json-text">{
+  "digits16_safe": [1234567890123456, 9007199254740991],
+  "digits17_unsafe": [12345678901234567, 16633992720384107],
+  "comparison": {
+    "maxSafe": 9007199254740991,
+    "overSafe": 9007199254740992
+  }
+}</div>
+        <div class="warning">
+            <strong>⚠️ 注意：</strong> 16位数字应该保持为 number 类型，17位及以上应该转换为 string 类型
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 5：混合类型</h2>
+        <div class="description">
+            测试大整数与其他类型混合的场景
+        </div>
+        <div class="json-text">{
+  "id": 1234567890123456789,
+  "name": "测试订单",
+  "amount": 99.99,
+  "status": "pending",
+  "createdAt": "2024-12-25T10:30:00Z",
+  "tags": ["urgent", "vip"],
+  "metadata": {
+    "requestId": 9876543210987654321,
+    "sessionId": "abc123xyz789",
+    "attempts": 3
+  }
+}</div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 6：嵌套对象中的大整数</h2>
+        <div class="description">
+            测试深层嵌套结构中的大整数
+        </div>
+        <div class="json-text">{
+  "level1": {
+    "id": 1111111111111111111,
+    "level2": {
+      "id": 2222222222222222222,
+      "level3": {
+        "id": 3333333333333333333,
+        "data": [
+          {
+            "recordId": 4444444444444444444
+          },
+          {
+            "recordId": 5555555555555555555
+          }
+        ]
+      }
+    }
+  }
+}</div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试用例 7：17位以上的整数（触发保护机制）</h2>
+        <div class="description">
+            扩展的大整数保护机制会将 17 位及以上的整数转换为字符串
+        </div>
+        <div class="json-text">{
+  "id16digits": 1234567890123456,
+  "id17digits": 12345678901234567,
+  "id18digits": 123456789012345678,
+  "id19digits": 1234567890123456789,
+  "id20digits": 12345678901234567890
+}</div>
+        <div class="info">
+            <strong>📝 注意：</strong> 根据 <code>jsonParser.ts</code> 的实现，17位及以上的整数会被自动转换为字符串格式以保持精度
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>验证方法</h2>
+        <div class="description">
+            <ol>
+                <li>双击或选中上面的任何 JSON 文本</li>
+                <li>扩展会自动检测并高亮显示</li>
+                <li>再次双击打开 JSON 查看器</li>
+                <li>在查看器中检查大整数的值是否保持不变</li>
+                <li>特别注意 17 位及以上的整数应该显示为带引号的字符串</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // 在控制台输出一些测试信息
+        console.log('%c大整数测试信息', 'color: #4CAF50; font-size: 16px; font-weight: bold;');
+        console.log('Number.MAX_SAFE_INTEGER =', Number.MAX_SAFE_INTEGER);
+        console.log('原始值: 16633992720384107');
+        console.log('不安全的解析:', JSON.parse('16633992720384107'));
+        console.log('精度是否丢失:', JSON.parse('16633992720384107') !== 16633992720384107);
+        
+        // 测试一些大整数
+        const testNumbers = [
+            16633992720384107,
+            1234567890123456789,
+            9007199254740991,
+            9007199254740992
+        ];
+        
+        console.log('\n测试结果:');
+        testNumbers.forEach(num => {
+            const parsed = JSON.parse(num.toString());
+            const match = parsed === num;
+            console.log(`${num}: ${match ? '✓ 精度保持' : '✗ 精度丢失'} (解析后: ${parsed})`);
+        });
+    </script>
+</body>
+</html>

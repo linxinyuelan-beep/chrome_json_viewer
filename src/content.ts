@@ -16,6 +16,7 @@ console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_
 import { isValidNestedJson } from './utils/nestedJsonHandler';
 import { getCurrentLanguage, getTranslations } from "./utils/i18n";
 import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
+import { parseJsonSafely } from './utils/jsonParser';
 
 // 是否启用悬停检测，从存储中加载
 let enableHoverDetection = true;
@@ -173,7 +174,7 @@ function findAllPotentialJsons(text: string): string[] {
         try {
             if (isValidJson(jsonStr) && jsonStr.length > 10) {
                 // 进行更严格的验证，确保是完整的JSON对象/数组
-                const jsonObj = JSON.parse(jsonStr);
+                const jsonObj = parseJsonSafely(jsonStr);
                 if (typeof jsonObj === 'object' && jsonObj !== null) {
                     // 检查是否为顶层JSON（不是其他JSON的子集）
                     let isSubset = false;

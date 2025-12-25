@@ -9,9 +9,20 @@ export function parseJsonSafely(jsonString: string): any {
   if (!jsonString) return null;
   
   // 预处理：使用正则表达式将大整数转换为字符串
-  // 匹配键值对中的大整数（超过15位数字的整数，这是JS安全整数的大致范围）
-  const bigIntPattern = /("[\w\d_-]+"\s*:\s*)(\d{17,}\b)/g;
-  const processedJson = jsonString.replace(bigIntPattern, '$1"$2"');
+  // 需要匹配两种情况：
+  // 1. 键值对中的大整数：("key": 12345678901234567)
+  // 2. 数组中的大整数：([12345678901234567] 或 [12345678901234567,)
+  
+  let processedJson = jsonString;
+  
+  // 匹配键值对中的大整数
+  const keyValuePattern = /("[\w\d_-]+"\s*:\s*)(\d{17,})\b/g;
+  processedJson = processedJson.replace(keyValuePattern, '$1"$2"');
+  
+  // 匹配数组中的大整数
+  // 匹配: [数字 或 ,数字 或 :数字（后面可能跟 , ] } 或空格）
+  const arrayPattern = /([\[,:\s])(\d{17,})\b(?=[\s,\]\}]|$)/g;
+  processedJson = processedJson.replace(arrayPattern, '$1"$2"');
   
   try {
     // 使用处理后的JSON字符串进行解析
