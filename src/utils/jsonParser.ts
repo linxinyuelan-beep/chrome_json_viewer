@@ -16,12 +16,14 @@ export function parseJsonSafely(jsonString: string): any {
   let processedJson = jsonString;
   
   // 匹配键值对中的大整数
+  // 匹配格式: "key": 数字 或 "key":数字
   const keyValuePattern = /("[\w\d_-]+"\s*:\s*)(\d{17,})\b/g;
   processedJson = processedJson.replace(keyValuePattern, '$1"$2"');
   
   // 匹配数组中的大整数
-  // 匹配: [数字 或 ,数字 或 :数字（后面可能跟 , ] } 或空格）
-  const arrayPattern = /([\[,:\s])(\d{17,})\b(?=[\s,\]\}]|$)/g;
+  // 注意：只匹配 [ 或 , 后面的数字，不匹配 : 后面的（避免破坏转义字符串）
+  // 匹配: [数字 或 ,数字 或 空格+数字（后面可能跟 , ] } 或空格）
+  const arrayPattern = /([\[,]\s*)(\d{17,})\b(?=[\s,\]\}]|$)/g;
   processedJson = processedJson.replace(arrayPattern, '$1"$2"');
   
   try {

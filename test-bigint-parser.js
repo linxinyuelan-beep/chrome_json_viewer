@@ -15,7 +15,7 @@ function parseJsonSafely(jsonString) {
   processedJson = processedJson.replace(keyValuePattern, '$1"$2"');
   
   // 匹配数组中的大整数
-  const arrayPattern = /([\[,:\s])(\d{17,})\b(?=[\s,\]\}]|$)/g;
+  const arrayPattern = /([\[,]\s*)(\d{17,})\b(?=[\s,\]\}]|$)/g;
   processedJson = processedJson.replace(arrayPattern, '$1"$2"');
   
   console.log('\n原始 JSON:');
