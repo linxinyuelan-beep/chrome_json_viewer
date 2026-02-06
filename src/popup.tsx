@@ -755,23 +755,23 @@ const App: React.FC = () => {
                 </select>
               </label>
               
-              <div style={{ marginTop: '10px', fontSize: '12px', color: '#666' }}>
+              <div className="filter-mode-description">
                 {filterMode === 'disabled' && translations.filterModeDisabledDesc}
                 {filterMode === 'blacklist' && translations.filterModeBlacklistDesc}
                 {filterMode === 'whitelist' && translations.filterModeWhitelistDesc}
               </div>
               
-              <div style={{ marginTop: '10px', padding: '8px', backgroundColor: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px', fontSize: '12px', color: '#856404' }}>
+              <div className="filter-warning">
                 💡 {translations.refreshPageToApply}
               </div>
             </div>
             
             {filterMode !== 'disabled' && (
               <>
-                <div style={{ marginTop: '20px' }}>
-                  <h3 style={{ fontSize: '14px', marginBottom: '10px' }}>{translations.siteList}</h3>
+                <div className="site-filter-panel">
+                  <h3 className="site-list-title">{translations.siteList}</h3>
                   
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                  <div className="site-input-row">
                     <input
                       type="text"
                       value={newSiteInput}
@@ -782,74 +782,47 @@ const App: React.FC = () => {
                           handleAddSite();
                         }
                       }}
-                      style={{
-                        flex: 1,
-                        padding: '6px 10px',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        fontSize: '13px'
-                      }}
+                      className="site-input"
                     />
                     <button 
-                      className="json-button format"
+                      className="json-button format site-add-btn"
                       onClick={handleAddSite}
-                      style={{ padding: '6px 12px', fontSize: '13px' }}
                     >
                       {translations.addSite}
                     </button>
                   </div>
                   
                   {currentSite && (
-                    <div style={{ marginBottom: '10px' }}>
+                    <div className="site-current-row">
                       <button
-                        className="json-button"
+                        className="json-button secondary"
                         onClick={handleAddCurrentSite}
-                        style={{ padding: '6px 12px', fontSize: '13px', width: '100%' }}
                       >
                         {translations.addCurrentSite}: {currentSite}
                       </button>
                     </div>
                   )}
                   
-                  <div style={{ fontSize: '11px', color: '#666', marginBottom: '10px' }}>
+                  <div className="site-pattern-help">
                     {translations.sitePatternHelp}
                   </div>
                   
-                  <div style={{ 
-                    border: '1px solid #ddd', 
-                    borderRadius: '4px', 
-                    maxHeight: '200px', 
-                    overflowY: 'auto',
-                    padding: '8px'
-                  }}>
+                  <div className="site-list-container">
                     {siteList.length === 0 ? (
-                      <div style={{ color: '#999', fontSize: '13px', textAlign: 'center', padding: '10px' }}>
+                      <div className="site-empty">
                         {translations.noSitesAdded}
                       </div>
                     ) : (
-                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      <ul className="site-list">
                         {siteList.map((site, index) => (
-                          <li key={index} style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center',
-                            padding: '6px 8px',
-                            borderBottom: index < siteList.length - 1 ? '1px solid #eee' : 'none'
-                          }}>
-                            <span style={{ fontSize: '13px', wordBreak: 'break-all' }}>{site}</span>
+                          <li
+                            key={index}
+                            className={`site-item ${index < siteList.length - 1 ? 'with-divider' : ''}`}
+                          >
+                            <span className="site-name">{site}</span>
                             <button
                               onClick={() => handleRemoveSite(site)}
-                              style={{
-                                padding: '2px 8px',
-                                fontSize: '11px',
-                                backgroundColor: '#f44336',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '3px',
-                                cursor: 'pointer',
-                                marginLeft: '8px',
-                                flexShrink: 0
-                              }}
+                              className="site-remove-btn"
                             >
                               {translations.remove}
                             </button>
@@ -906,10 +879,10 @@ const App: React.FC = () => {
                 <button className="json-button convert-kv" onClick={convertKeyValueToJson}>
                   {translations.convertKeyValue}
                 </button>
-                <button className="json-button format" onClick={openJsonComparePage} style={{ backgroundColor: '#4CAF50' }}>
-                  JSON Compare
+                <button className="json-button compare" onClick={openJsonComparePage}>
+                  比较
                 </button>
-                <div style={{ flex: 1 }}></div>
+                <div className="action-spacer"></div>
               </div>
             </div>
             <div className="json-input-help">

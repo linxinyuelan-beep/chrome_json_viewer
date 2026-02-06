@@ -211,13 +211,13 @@ export const translations: Record<LanguageCode, Translations> = {
     formatAndView: '格式化并查看',
     formatAndConvert: '格式化并转换',
     clear: '清空',
-    minifyJson: 'JSON压缩',
+    minifyJson: '压缩',
     escapeString: '转义字符串',
     unescapeString: '反转义字符串',
     convertKeyValue: '转换键值对',
     jsonInputHelp1: '将JSON文本粘贴在上方，然后点击"格式化并查看"以显示格式化后的JSON',
     jsonInputHelp2: '点击"格式化并转换"可将特殊日期格式 /Date(timestamp)/ 转换为可读日期并显示',
-    jsonInputHelp3: '点击\"JSON压缩\"可将JSON压缩为单行，\"转义字符串\"和\"反转义字符串\"用于处理特殊字符',
+    jsonInputHelp3: '点击\"压缩\"可将JSON压缩为单行，\"转义字符串\"和\"反转义字符串\"用于处理特殊字符',
     jsonInputHelp4: '"转换键值对"可将分号分隔的键值对格式 (key1=value1,key2=value2;key3=value3,key4=value4) 转换为JSON数组',
 
     // Settings section
