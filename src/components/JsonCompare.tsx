@@ -207,9 +207,6 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
 
     const cleaned = removeEmptyValues(obj, {
       removeNull: true,
-      removeEmptyString: true,
-      removeEmptyObject: true,
-      removeEmptyArray: true,
     });
     const cleanedText = JSON.stringify(cleaned, null, 2);
 
