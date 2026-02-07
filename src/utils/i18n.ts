@@ -99,6 +99,46 @@ export interface Translations {
   remove: string;
   noSitesAdded: string;
   refreshPageToApply: string;
+
+  // JSON viewer / drawer
+  loading: string;
+  sizeLabel: string;
+  backToPreviousJson: string;
+  forwardToNextJson: string;
+  copyPathToClipboard: string;
+  collapseAll: string;
+  expandAll: string;
+  switchBetweenTreeAndEditor: string;
+  switchToEditor: string;
+  switchToTree: string;
+  sortJsonKeysAlphabetically: string;
+  unsortKeys: string;
+  sortKeys: string;
+  copied: string;
+  copyJson: string;
+  openJsonInNewWindow: string;
+  newWindow: string;
+  compareWithAnotherJson: string;
+  compare: string;
+  viewHistory: string;
+  history: string;
+  recentJson: string;
+  viewAll: string;
+  noHistoryFound: string;
+  jsonHistory: string;
+  closeHistory: string;
+  loadingHistory: string;
+  areYouSure: string;
+  yesClearAll: string;
+  cancel: string;
+  clearHistory: string;
+  deleteFromHistory: string;
+  jsonViewerTitle: string;
+  noJsonDataProvided: string;
+  failedToCopyJsonToClipboard: string;
+  failedToCopyPath: string;
+  errorGettingPath: string;
+  unknownError: string;
 }
 
 // Language definitions
@@ -195,6 +235,46 @@ export const translations: Record<LanguageCode, Translations> = {
     remove: 'Remove',
     noSitesAdded: 'No sites added yet',
     refreshPageToApply: 'Note: Refresh the page to apply filter changes',
+
+    // JSON viewer / drawer
+    loading: 'Loading...',
+    sizeLabel: 'Size',
+    backToPreviousJson: 'Back to previous JSON',
+    forwardToNextJson: 'Forward to next JSON',
+    copyPathToClipboard: 'Copy path to clipboard',
+    collapseAll: 'Collapse',
+    expandAll: 'Expand',
+    switchBetweenTreeAndEditor: 'Switch between Tree View and Editor View',
+    switchToEditor: 'Switch',
+    switchToTree: 'Switch',
+    sortJsonKeysAlphabetically: 'Sort JSON keys alphabetically',
+    unsortKeys: 'Unsort',
+    sortKeys: 'Sort',
+    copied: 'Copied',
+    copyJson: 'Copy',
+    openJsonInNewWindow: 'Open JSON in new window',
+    newWindow: 'NewWin',
+    compareWithAnotherJson: 'Compare with another JSON',
+    compare: 'Compare',
+    viewHistory: 'View history',
+    history: 'History',
+    recentJson: 'Recent JSON',
+    viewAll: 'View All',
+    noHistoryFound: 'No history found',
+    jsonHistory: 'JSON History',
+    closeHistory: 'Close history',
+    loadingHistory: 'Loading history...',
+    areYouSure: 'Are you sure?',
+    yesClearAll: 'Yes, clear all',
+    cancel: 'Cancel',
+    clearHistory: 'Clear History',
+    deleteFromHistory: 'Delete from history',
+    jsonViewerTitle: 'JSON Viewer',
+    noJsonDataProvided: 'No JSON data provided',
+    failedToCopyJsonToClipboard: 'Failed to copy JSON to clipboard',
+    failedToCopyPath: 'Failed to copy path',
+    errorGettingPath: 'Error getting path',
+    unknownError: 'Unknown error',
   },
   zh: {
     // General UI
@@ -288,6 +368,46 @@ export const translations: Record<LanguageCode, Translations> = {
     remove: '移除',
     noSitesAdded: '还没有添加任何网站',
     refreshPageToApply: '注意：需要刷新页面才能应用过滤设置的更改',
+
+    // JSON viewer / drawer
+    loading: '加载中...',
+    sizeLabel: '大小',
+    backToPreviousJson: '返回上一个 JSON',
+    forwardToNextJson: '前进到下一个 JSON',
+    copyPathToClipboard: '复制路径到剪贴板',
+    collapseAll: '折叠',
+    expandAll: '展开',
+    switchBetweenTreeAndEditor: '在树形视图和编辑器视图之间切换',
+    switchToEditor: '切换',
+    switchToTree: '切换',
+    sortJsonKeysAlphabetically: '按字母顺序排序 JSON 键',
+    unsortKeys: '排序',
+    sortKeys: '排序',
+    copied: '已复制',
+    copyJson: '复制',
+    openJsonInNewWindow: '在新窗口中打开 JSON',
+    newWindow: '新窗口',
+    compareWithAnotherJson: '与另一个 JSON 对比',
+    compare: '对比',
+    viewHistory: '查看历史',
+    history: '历史',
+    recentJson: '最近 JSON',
+    viewAll: '查看全部',
+    noHistoryFound: '暂无历史记录',
+    jsonHistory: 'JSON 历史',
+    closeHistory: '关闭历史',
+    loadingHistory: '正在加载历史...',
+    areYouSure: '确定吗？',
+    yesClearAll: '是的，清空全部',
+    cancel: '取消',
+    clearHistory: '清空历史',
+    deleteFromHistory: '从历史中删除',
+    jsonViewerTitle: 'JSON 查看器',
+    noJsonDataProvided: '未提供 JSON 数据',
+    failedToCopyJsonToClipboard: '复制 JSON 到剪贴板失败',
+    failedToCopyPath: '复制路径失败',
+    errorGettingPath: '获取路径失败',
+    unknownError: '未知错误',
   },
 };
 
@@ -302,11 +422,31 @@ export const languageOptions = [
   { code: 'zh', label: '中文', flag: '🇨🇳' },
 ];
 
+// Treat Simplified Chinese locales as zh, fallback all others to en.
+export function detectLanguageByLocale(locale?: string): LanguageCode {
+  const normalizedLocale = (locale || '').toLowerCase();
+  const isSimplifiedChinese =
+    normalizedLocale === 'zh-cn' ||
+    normalizedLocale === 'zh-sg' ||
+    normalizedLocale.startsWith('zh-hans');
+
+  return isSimplifiedChinese ? 'zh' : 'en';
+}
+
 // Function to get stored language or default
 export async function getCurrentLanguage(): Promise<LanguageCode> {
   return new Promise((resolve) => {
     chrome.storage.local.get('language', (result) => {
-      resolve((result.language as LanguageCode) || DEFAULT_LANGUAGE);
+      const storedLanguage = result.language as LanguageCode | undefined;
+      if (storedLanguage) {
+        resolve(storedLanguage);
+        return;
+      }
+
+      const detectedLanguage = detectLanguageByLocale(navigator.language) || DEFAULT_LANGUAGE;
+      chrome.storage.local.set({ language: detectedLanguage }, () => {
+        resolve(detectedLanguage);
+      });
     });
   });
 }

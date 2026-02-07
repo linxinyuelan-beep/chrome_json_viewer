@@ -12,13 +12,15 @@ import {
   formatTimestamp,
   formatSize 
 } from '../utils/jsonHistory';
+import { Translations } from '../utils/i18n';
 
 interface HistoryProps {
   onSelect: (jsonString: string) => void;
   onClose: () => void;
+  translations: Translations;
 }
 
-const History: React.FC<HistoryProps> = ({ onSelect, onClose }) => {
+const History: React.FC<HistoryProps> = ({ onSelect, onClose, translations }) => {
   const [history, setHistory] = useState<JsonHistoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [confirmClear, setConfirmClear] = useState<boolean>(false);
@@ -93,12 +95,12 @@ const History: React.FC<HistoryProps> = ({ onSelect, onClose }) => {
   return (
     <div className="json-history">
       <div className="json-history-header">
-        <h3>JSON History</h3>
+        <h3>{translations.jsonHistory}</h3>
         <div className="json-history-actions">
           <button 
             className="json-history-close" 
             onClick={onClose}
-            title="Close history"
+            title={translations.closeHistory}
           >
             ×
           </button>
@@ -106,26 +108,26 @@ const History: React.FC<HistoryProps> = ({ onSelect, onClose }) => {
       </div>
 
       {loading ? (
-        <div className="json-history-loading">Loading history...</div>
+        <div className="json-history-loading">{translations.loadingHistory}</div>
       ) : history.length === 0 ? (
-        <div className="json-history-empty">No history found</div>
+        <div className="json-history-empty">{translations.noHistoryFound}</div>
       ) : (
         <>
           <div className="json-history-clear">
             {confirmClear ? (
               <div className="json-history-confirm">
-                <span>Are you sure?</span>
+                <span>{translations.areYouSure}</span>
                 <button 
                   onClick={handleClearHistory}
                   className="json-history-button confirm"
                 >
-                  Yes, clear all
+                  {translations.yesClearAll}
                 </button>
                 <button 
                   onClick={handleCancelClear}
                   className="json-history-button cancel"
                 >
-                  Cancel
+                  {translations.cancel}
                 </button>
               </div>
             ) : (
@@ -133,7 +135,7 @@ const History: React.FC<HistoryProps> = ({ onSelect, onClose }) => {
                 onClick={handleClearHistory}
                 className="json-history-button clear"
               >
-                Clear History
+                {translations.clearHistory}
               </button>
             )}
           </div>
@@ -164,7 +166,7 @@ const History: React.FC<HistoryProps> = ({ onSelect, onClose }) => {
                 <button 
                   className="json-history-item-delete"
                   onClick={(e) => handleDelete(e, item.id)}
-                  title="Delete from history"
+                  title={translations.deleteFromHistory}
                 >
                   ×
                 </button>

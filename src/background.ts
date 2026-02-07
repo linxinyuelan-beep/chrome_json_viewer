@@ -1,5 +1,5 @@
 // background.ts - Background service worker for JSON Formatter & Viewer
-import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations } from "./utils/i18n";
+import { detectLanguageByLocale, getCurrentLanguage, getTranslations } from "./utils/i18n";
 import './config/public-path';
 import { VERSION } from './config/version';
 import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
@@ -83,7 +83,7 @@ chrome.runtime.onInstalled.addListener(() => {
     // Initialize language settings if not already set
     chrome.storage.local.get('language', (result) => {
         if (!result.language) {
-            chrome.storage.local.set({ language: DEFAULT_LANGUAGE });
+            chrome.storage.local.set({ language: detectLanguageByLocale(navigator.language) });
         }
     });
 });
@@ -292,4 +292,3 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 });
-

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import ReactJson from '@microlink/react-json-view';
 import JsonEditorWrapper, { JsonEditorRef } from './components/JsonEditorWrapper';
+import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from './utils/i18n';
 
 // JSON Window React Component
 const JsonWindowApp: React.FC = () => {
@@ -13,9 +14,38 @@ const JsonWindowApp: React.FC = () => {
   // JSON path related states
   const [currentJsonPath, setCurrentJsonPath] = useState<string>('');
   const [pathCopySuccess, setPathCopySuccess] = useState(false);
+  const [i18n, setI18n] = useState<Translations>(getTranslations(DEFAULT_LANGUAGE));
 
   // View mode state: 'default' (microlink) or 'editor' (jsoneditor)
   const [viewMode, setViewMode] = useState<'default' | 'editor'>('default');
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadLanguage = async () => {
+      const lang = await getCurrentLanguage();
+      if (mounted) {
+        setI18n(getTranslations(lang));
+      }
+    };
+    loadLanguage();
+
+    const handleLanguageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+      if (areaName === 'local' && changes.language?.newValue) {
+        setI18n(getTranslations(changes.language.newValue as LanguageCode));
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleLanguageChange);
+    return () => {
+      mounted = false;
+      chrome.storage.onChanged.removeListener(handleLanguageChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.title = i18n.jsonViewerTitle;
+  }, [i18n]);
 
   // Load view mode preference
   useEffect(() => {
@@ -127,7 +157,7 @@ const JsonWindowApp: React.FC = () => {
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
-      alert('Failed to copy JSON to clipboard');
+      alert(i18n.failedToCopyJsonToClipboard);
     }
   };
 
@@ -194,7 +224,7 @@ const JsonWindowApp: React.FC = () => {
       console.log('Path parts:', pathParts);
     } catch (err: unknown) {
       console.error('Failed to process JSON path:', err);
-      setCurrentJsonPath('Error getting path');
+      setCurrentJsonPath(i18n.errorGettingPath);
     }
   };
 
@@ -234,11 +264,11 @@ const JsonWindowApp: React.FC = () => {
       console.log('JSON Path copied:', currentJsonPath);
     } catch (err: unknown) {
       console.error('Failed to copy JSON path:', err);
-      let errorMessage = 'Unknown error';
+      let errorMessage = i18n.unknownError;
       if (err instanceof Error) {
         errorMessage = err.message;
       }
-      alert('Failed to copy path: ' + errorMessage);
+      alert(`${i18n.failedToCopyPath}: ${errorMessage}`);
     }
   };
 
@@ -249,12 +279,12 @@ const JsonWindowApp: React.FC = () => {
       <div className="json-window-container">
         <div className="json-window-header">
           <div>
-            <span className="json-window-title">JSON Viewer</span>
+            <span className="json-window-title">{i18n.jsonViewerTitle}</span>
           </div>
         </div>
         <div className="json-window-content">
           <div className="json-display">
-            <p style={{ color: '#dc3545', padding: '20px' }}>No JSON data provided</p>
+            <p style={{ color: '#dc3545', padding: '20px' }}>{i18n.noJsonDataProvided}</p>
           </div>
         </div>
       </div>
@@ -265,8 +295,8 @@ const JsonWindowApp: React.FC = () => {
     <div className="json-window-container">
       <div className="json-window-header">
         <div>
-          <span className="json-window-title">JSON Viewer</span>
-          {jsonSize && <span className="json-window-size-info">Size: {jsonSize}</span>}
+          <span className="json-window-title">{i18n.jsonViewerTitle}</span>
+          {jsonSize && <span className="json-window-size-info">{i18n.sizeLabel}: {jsonSize}</span>}
         </div>
         {/* JSON Path display */}
         {currentJsonPath && (
@@ -275,7 +305,7 @@ const JsonWindowApp: React.FC = () => {
             <button
               className={`json-window-path-copy-btn ${pathCopySuccess ? 'success' : ''}`}
               onClick={copyCurrentPath}
-              title="Copy path to clipboard"
+              title={i18n.copyPathToClipboard}
             >
               {pathCopySuccess ? '✓' : '📋'}
             </button>
@@ -286,20 +316,20 @@ const JsonWindowApp: React.FC = () => {
             className="json-window-button secondary"
             onClick={toggleExpand}
           >
-            {expanded ? 'Collapse All' : 'Expand All'}
+            {expanded ? i18n.collapseAll : i18n.expandAll}
           </button>
           <button
             className={`json-window-button ${viewMode === 'editor' ? 'active' : ''}`}
             onClick={toggleViewMode}
-            title="Switch between Tree View and Editor View"
+            title={i18n.switchBetweenTreeAndEditor}
           >
-            {viewMode === 'default' ? 'Switch to Editor' : 'Switch to Tree'}
+            {viewMode === 'default' ? i18n.switchToEditor : i18n.switchToTree}
           </button>
           <button
             className={`json-window-button ${copySuccess ? 'success' : ''}`}
             onClick={copyJson}
           >
-            {copySuccess ? '✓ Copied' : 'Copy JSON'}
+            {copySuccess ? `✓ ${i18n.copied}` : i18n.copyJson}
           </button>
         </div>
       </div>
@@ -322,7 +352,7 @@ const JsonWindowApp: React.FC = () => {
                 indentWidth={2}
                 quotesOnKeys={false}
                 sortKeys={false}
-                validationMessage="Invalid JSON"
+                validationMessage={i18n.invalidJsonFormat}
                 onSelect={(select) => {
                   // Handle JSON path display functionality
                   handleJsonPathSelect(select);

@@ -880,7 +880,7 @@ const App: React.FC = () => {
                   {translations.convertKeyValue}
                 </button>
                 <button className="json-button compare" onClick={openJsonComparePage}>
-                  比较
+                  {translations.compare}
                 </button>
                 <div className="action-spacer"></div>
               </div>

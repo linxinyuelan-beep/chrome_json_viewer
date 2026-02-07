@@ -27,6 +27,7 @@ import {
   canNavigateForward
 } from '../utils/jsonNavigation';
 import History from './History';
+import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from '../utils/i18n';
 import '../assets/styles/history.css';
 
 // Declare global function that will be added to window by reactJsonDrawer.tsx
@@ -62,6 +63,32 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
 
   // Ref for JsonEditorWrapper
   const jsonEditorRef = useRef<JsonEditorRef>(null);
+  const [i18n, setI18n] = useState<Translations>(getTranslations(DEFAULT_LANGUAGE));
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadLanguage = async () => {
+      const lang = await getCurrentLanguage();
+      if (mounted) {
+        setI18n(getTranslations(lang));
+      }
+    };
+    loadLanguage();
+
+    const handleLanguageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+      if (areaName === 'local' && changes.language?.newValue) {
+        setI18n(getTranslations(changes.language.newValue as LanguageCode));
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleLanguageChange);
+
+    return () => {
+      mounted = false;
+      chrome.storage.onChanged.removeListener(handleLanguageChange);
+    };
+  }, []);
 
   // Load view mode from settings (defaultViewerMode)
   useEffect(() => {
@@ -532,6 +559,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
         <History
           onSelect={handleSelectFromHistory}
           onClose={() => setShowHistory(false)}
+          translations={i18n}
         />
       ) : (
         <>
@@ -544,7 +572,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                   className={`json-viewer-nav-button ${!canGoBack ? 'disabled' : ''}`}
                   onClick={handleNavigateBack}
                   disabled={!canGoBack}
-                  title="Back to previous JSON"
+                  title={i18n.backToPreviousJson}
                 >
                   ◀
                 </button>
@@ -552,12 +580,12 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                   className={`json-viewer-nav-button ${!canGoForward ? 'disabled' : ''}`}
                   onClick={handleNavigateForward}
                   disabled={!canGoForward}
-                  title="Forward to next JSON"
+                  title={i18n.forwardToNextJson}
                 >
                   ▶
                 </button>
 
-                <span className="json-viewer-size">Size: {jsonSize}</span>
+                <span className="json-viewer-size">{i18n.sizeLabel}: {jsonSize}</span>
               </div>
             </div>
             {/* JSON Path display */}
@@ -567,7 +595,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                 <button
                   className={`json-viewer-path-copy-btn ${pathCopySuccess ? 'success' : ''}`}
                   onClick={copyCurrentPath}
-                  title="Copy path to clipboard"
+                  title={i18n.copyPathToClipboard}
                 >
                   {pathCopySuccess ? '✓' : '📋'}
                 </button>
@@ -578,34 +606,34 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                 className="json-viewer-button"
                 onClick={toggleExpand}
               >
-                {expanded ? 'Collapse All' : 'Expand All'}
+                {expanded ? i18n.collapseAll : i18n.expandAll}
               </button>
               <button
                 className={`json-viewer-button ${viewMode === 'editor' ? 'active' : ''}`}
                 onClick={toggleViewMode}
-                title="Switch between Tree View and Editor View"
+                title={i18n.switchBetweenTreeAndEditor}
               >
-                {viewMode === 'default' ? 'Switch to Editor' : 'Switch to Tree'}
+                {viewMode === 'default' ? i18n.switchToEditor : i18n.switchToTree}
               </button>
               <button
                 className={`json-viewer-button ${isKeySorted ? 'active' : ''}`}
                 onClick={toggleKeySort}
-                title="Sort JSON keys alphabetically"
+                title={i18n.sortJsonKeysAlphabetically}
               >
-                {isKeySorted ? 'Unsort Keys' : 'Sort Keys'}
+                {isKeySorted ? i18n.unsortKeys : i18n.sortKeys}
               </button>
               <button
                 className={`json-viewer-button ${copySuccess ? 'success' : ''}`}
                 onClick={copyJson}
               >
-                {copySuccess ? '✓ Copied' : 'Copy JSON'}
+                {copySuccess ? `✓ ${i18n.copied}` : i18n.copyJson}
               </button>
               <button
                 className="json-viewer-button"
                 onClick={openInNewWindow}
-                title="Open JSON in new window"
+                title={i18n.openJsonInNewWindow}
               >
-                New Win
+                {i18n.newWindow}
               </button>
               <button
                 className="json-viewer-button"
@@ -627,9 +655,9 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                     console.error('Chrome runtime API not available');
                   }
                 }}
-                title="Compare with another JSON"
+                title={i18n.compareWithAnotherJson}
               >
-                ⚖️ Compare
+                {`${i18n.compare}`}
               </button>
 
               {/* History dropdown */}
@@ -637,14 +665,14 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                 <button
                   className="json-viewer-button history-dropdown-button"
                   onClick={toggleDropdown}
-                  title="View history"
+                  title={i18n.viewHistory}
                 >
-                  History ▾
+                  {`${i18n.history} ▾`}
                 </button>
                 {isDropdownOpen && (
                   <div className="json-viewer-dropdown-menu">
                     <div className="json-viewer-dropdown-header">
-                      <span>Recent JSON</span>
+                      <span>{i18n.recentJson}</span>
                       <button
                         className="json-viewer-dropdown-view-all"
                         onClick={() => {
@@ -652,11 +680,11 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                           toggleHistory();
                         }}
                       >
-                        View All
+                        {i18n.viewAll}
                       </button>
                     </div>
                     {historyItems.length === 0 ? (
-                      <div className="json-viewer-dropdown-empty">No history found</div>
+                      <div className="json-viewer-dropdown-empty">{i18n.noHistoryFound}</div>
                     ) : (
                       <>
                         {historyItems.slice(0, 10).map(item => (
@@ -683,7 +711,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
             {viewMode === null ? (
               // Loading state while fetching settings
               <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#666' }}>
-                Loading...
+                {i18n.loading}
               </div>
             ) : viewMode === 'default' ? (
               <ReactJson
