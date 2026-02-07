@@ -223,6 +223,31 @@ body.dragging * {
   display: block;
 }
 
+.pane-editor-highlight .json-token-key,
+.pane-viewer-highlight .json-token-key {
+  color: #1d4ed8;
+}
+
+.pane-editor-highlight .json-token-string,
+.pane-viewer-highlight .json-token-string {
+  color: #0f766e;
+}
+
+.pane-editor-highlight .json-token-number,
+.pane-viewer-highlight .json-token-number {
+  color: #7c2d12;
+}
+
+.pane-editor-highlight .json-token-boolean,
+.pane-viewer-highlight .json-token-boolean {
+  color: #7c3aed;
+}
+
+.pane-editor-highlight .json-token-null,
+.pane-viewer-highlight .json-token-null {
+  color: #6b7280;
+}
+
 /* 编辑器差异高亮容器 */
 .pane-editor-with-highlight {
   position: relative;

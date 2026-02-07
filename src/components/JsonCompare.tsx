@@ -553,6 +553,51 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
       applyLineHighlight(startLine, endLine, highlightClass, diff.path === activeDiffPath);
     });
 
+    const renderJsonLine = (line: string, enableSyntaxHighlight: boolean): JSX.Element[] | string => {
+      if (!enableSyntaxHighlight) return line;
+
+      const tokens: JSX.Element[] = [];
+      const tokenRegex = /"(?:\\.|[^"\\])*"|true|false|null|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g;
+      let lastIndex = 0;
+      let tokenIndex = 0;
+      let match: RegExpExecArray | null;
+
+      while ((match = tokenRegex.exec(line)) !== null) {
+        const matchedText = match[0];
+        const start = match.index;
+        const end = start + matchedText.length;
+
+        if (start > lastIndex) {
+          tokens.push(<span key={`plain-${tokenIndex++}`}>{line.slice(lastIndex, start)}</span>);
+        }
+
+        let tokenClass = '';
+        if (matchedText.startsWith('"')) {
+          const rest = line.slice(end);
+          tokenClass = /^\s*:/.test(rest) ? 'json-token-key' : 'json-token-string';
+        } else if (matchedText === 'true' || matchedText === 'false') {
+          tokenClass = 'json-token-boolean';
+        } else if (matchedText === 'null') {
+          tokenClass = 'json-token-null';
+        } else {
+          tokenClass = 'json-token-number';
+        }
+
+        tokens.push(
+          <span key={`token-${tokenIndex++}`} className={tokenClass}>
+            {matchedText}
+          </span>
+        );
+        lastIndex = end;
+      }
+
+      if (lastIndex < line.length) {
+        tokens.push(<span key={`tail-${tokenIndex++}`}>{line.slice(lastIndex)}</span>);
+      }
+
+      return tokens;
+    };
+
     lines.forEach((line, index) => {
       const { highlightClass, isActive } = lineState[index];
 
@@ -561,7 +606,7 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
           key={index} 
           className={`highlight-line ${highlightClass} ${isActive ? 'highlight-active' : ''}`}
         >
-          {line}
+          {renderJsonLine(line, true)}
         </span>
       );
     });
@@ -813,9 +858,9 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
           <button
             className="toolbar-button"
             onClick={() => setCompareMode(compareMode === 'view' ? 'edit' : 'view')}
-            title={compareMode === 'view' ? 'Switch to Edit Mode' : 'Switch to View Mode'}
+            title={compareMode === 'view' ? i18n.switchToEditMode : i18n.switchToViewMode}
           >
-            {compareMode === 'view' ? 'Edit' : 'View'}
+            {compareMode === 'view' ? i18n.compareEditMode : i18n.compareViewMode}
           </button>
           <button
             className="toolbar-button"

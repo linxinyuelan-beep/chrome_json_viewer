@@ -174,6 +174,10 @@ export interface Translations {
   addedValueLabel: string;
   beforeValueLabel: string;
   afterValueLabel: string;
+  compareViewMode: string;
+  compareEditMode: string;
+  switchToViewMode: string;
+  switchToEditMode: string;
 }
 
 // Language definitions
@@ -345,6 +349,10 @@ export const translations: Record<LanguageCode, Translations> = {
     addedValueLabel: 'Added',
     beforeValueLabel: 'Before',
     afterValueLabel: 'After',
+    compareViewMode: 'View',
+    compareEditMode: 'Edit',
+    switchToViewMode: 'Switch to View Mode',
+    switchToEditMode: 'Switch to Edit Mode',
   },
   zh: {
     // General UI
@@ -513,6 +521,10 @@ export const translations: Record<LanguageCode, Translations> = {
     addedValueLabel: '新增',
     beforeValueLabel: '变更前',
     afterValueLabel: '变更后',
+    compareViewMode: '查看',
+    compareEditMode: '编辑',
+    switchToViewMode: '切换到查看模式',
+    switchToEditMode: '切换到编辑模式',
   },
 };
 
