@@ -19,12 +19,14 @@ import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Tr
 interface JsonCompareProps {
   initialLeft?: string;
   initialRight?: string;
+  initialMode?: 'edit' | 'view';
 }
 
-const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRight = '' }) => {
+const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRight = '', initialMode = 'edit' }) => {
   // JSON 文本状态
   const [leftJson, setLeftJson] = useState<string>(initialLeft);
   const [rightJson, setRightJson] = useState<string>(initialRight);
+  const [compareMode, setCompareMode] = useState<'edit' | 'view'>(initialMode);
   const [i18n, setI18n] = useState<Translations>(getTranslations(DEFAULT_LANGUAGE));
   const [leftLabel, setLeftLabel] = useState<string>(getTranslations(DEFAULT_LANGUAGE).sourceJsonLabel);
   const [rightLabel, setRightLabel] = useState<string>(getTranslations(DEFAULT_LANGUAGE).targetJsonLabel);
@@ -64,6 +66,8 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
   // 引用
   const leftEditorRef = useRef<HTMLTextAreaElement>(null);
   const rightEditorRef = useRef<HTMLTextAreaElement>(null);
+  const leftViewRef = useRef<HTMLDivElement>(null);
+  const rightViewRef = useRef<HTMLDivElement>(null);
   const leftHighlightRef = useRef<HTMLDivElement>(null);
   const rightHighlightRef = useRef<HTMLDivElement>(null);
   const defaultLabelsRef = useRef({
@@ -344,54 +348,57 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
     const lineHeight = 21; // 根据 CSS 中的 line-height: 1.6 和 font-size: 13px 计算
     
     // 滚动左侧编辑器
-    if (leftEditorRef.current && leftLineIndex !== -1) {
+    const leftScrollElement = compareMode === 'view' ? leftViewRef.current : leftEditorRef.current;
+    const rightScrollElement = compareMode === 'view' ? rightViewRef.current : rightEditorRef.current;
+
+    if (leftScrollElement && leftLineIndex !== -1) {
       const leftScrollTop = leftLineIndex * lineHeight;
-      leftEditorRef.current.scrollTop = leftScrollTop;
+      leftScrollElement.scrollTop = leftScrollTop;
       
-      if (leftHighlightRef.current) {
+      if (compareMode === 'edit' && leftHighlightRef.current) {
         leftHighlightRef.current.scrollTop = leftScrollTop;
       }
     }
     
     // 滚动右侧编辑器
-    if (rightEditorRef.current && rightLineIndex !== -1) {
+    if (rightScrollElement && rightLineIndex !== -1) {
       const rightScrollTop = rightLineIndex * lineHeight;
-      rightEditorRef.current.scrollTop = rightScrollTop;
+      rightScrollElement.scrollTop = rightScrollTop;
       
-      if (rightHighlightRef.current) {
+      if (compareMode === 'edit' && rightHighlightRef.current) {
         rightHighlightRef.current.scrollTop = rightScrollTop;
       }
     }
     
     // 如果只在一侧找到，使用比例同步到另一侧
-    if (leftLineIndex !== -1 && rightLineIndex === -1 && leftEditorRef.current && rightEditorRef.current) {
+    if (leftLineIndex !== -1 && rightLineIndex === -1 && leftScrollElement && rightScrollElement) {
       const leftScrollTop = leftLineIndex * lineHeight;
-      const leftScrollHeight = leftEditorRef.current.scrollHeight - leftEditorRef.current.clientHeight;
+      const leftScrollHeight = leftScrollElement.scrollHeight - leftScrollElement.clientHeight;
       const scrollRatio = leftScrollHeight > 0 ? leftScrollTop / leftScrollHeight : 0;
       
-      const rightScrollHeight = rightEditorRef.current.scrollHeight - rightEditorRef.current.clientHeight;
-      rightEditorRef.current.scrollTop = rightScrollHeight * scrollRatio;
+      const rightScrollHeight = rightScrollElement.scrollHeight - rightScrollElement.clientHeight;
+      rightScrollElement.scrollTop = rightScrollHeight * scrollRatio;
       
-      if (rightHighlightRef.current) {
+      if (compareMode === 'edit' && rightHighlightRef.current) {
         const rightHighlightScrollHeight = rightHighlightRef.current.scrollHeight - rightHighlightRef.current.clientHeight;
         rightHighlightRef.current.scrollTop = rightHighlightScrollHeight * scrollRatio;
       }
-    } else if (rightLineIndex !== -1 && leftLineIndex === -1 && rightEditorRef.current && leftEditorRef.current) {
+    } else if (rightLineIndex !== -1 && leftLineIndex === -1 && rightScrollElement && leftScrollElement) {
       const rightScrollTop = rightLineIndex * lineHeight;
-      const rightScrollHeight = rightEditorRef.current.scrollHeight - rightEditorRef.current.clientHeight;
+      const rightScrollHeight = rightScrollElement.scrollHeight - rightScrollElement.clientHeight;
       const scrollRatio = rightScrollHeight > 0 ? rightScrollTop / rightScrollHeight : 0;
       
-      const leftScrollHeight = leftEditorRef.current.scrollHeight - leftEditorRef.current.clientHeight;
-      leftEditorRef.current.scrollTop = leftScrollHeight * scrollRatio;
+      const leftScrollHeight = leftScrollElement.scrollHeight - leftScrollElement.clientHeight;
+      leftScrollElement.scrollTop = leftScrollHeight * scrollRatio;
       
-      if (leftHighlightRef.current) {
+      if (compareMode === 'edit' && leftHighlightRef.current) {
         const leftHighlightScrollHeight = leftHighlightRef.current.scrollHeight - leftHighlightRef.current.clientHeight;
         leftHighlightRef.current.scrollTop = leftHighlightScrollHeight * scrollRatio;
       }
     }
     
     // 选中文本（针对 Modified 类型）
-    if (diff.type === DiffType.MODIFIED) {
+    if (compareMode === 'edit' && diff.type === DiffType.MODIFIED) {
       if (leftEditorRef.current && leftLineIndex !== -1) {
         const beforeText = leftLines.slice(0, leftLineIndex).join('\n');
         const startPos = beforeText.length + (leftLineIndex > 0 ? 1 : 0);
@@ -425,11 +432,108 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
     const lines = jsonText.split('\n');
     const highlightedLines: JSX.Element[] = [];
 
-    // 创建路径到差异类型的映射
-    const pathToDiff = new Map<string, DiffType>();
-    diffs.forEach(diff => {
-      pathToDiff.set(diff.path, diff.type);
-    });
+    const lineState = lines.map(() => ({
+      highlightClass: 'highlight-unchanged',
+      priority: 0,
+      isActive: false,
+    }));
+
+    const getHighlightClass = (type: DiffType): string | null => {
+      if (type === DiffType.ADDED && side === 'right') return 'highlight-added';
+      if (type === DiffType.DELETED && side === 'left') return 'highlight-deleted';
+      if (type === DiffType.MODIFIED) return 'highlight-modified';
+      return null;
+    };
+
+    const getClassPriority = (cls: string): number => {
+      if (cls === 'highlight-modified') return 3;
+      if (cls === 'highlight-added' || cls === 'highlight-deleted') return 2;
+      return 1;
+    };
+
+    const getLastPathKey = (path: string): string => {
+      const keyMatches = path.match(/\.([^.\[\]]+)/g);
+      if (!keyMatches || keyMatches.length === 0) return '';
+      return keyMatches[keyMatches.length - 1].slice(1);
+    };
+
+    const findStartLineByKey = (key: string): number => {
+      if (!key) return -1;
+      const token = `"${key}"`;
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes(token)) return i;
+      }
+      return -1;
+    };
+
+    const findMatchingEndLine = (startLine: number, openingChar: '{' | '[', startColumn: number): number => {
+      const closingChar = openingChar === '{' ? '}' : ']';
+      let depth = 0;
+      let inString = false;
+      let escaped = false;
+
+      for (let lineIndex = startLine; lineIndex < lines.length; lineIndex++) {
+        const text = lines[lineIndex];
+        const from = lineIndex === startLine ? Math.max(startColumn, 0) : 0;
+
+        for (let col = from; col < text.length; col++) {
+          const ch = text[col];
+
+          if (escaped) {
+            escaped = false;
+            continue;
+          }
+          if (ch === '\\') {
+            escaped = true;
+            continue;
+          }
+          if (ch === '"') {
+            inString = !inString;
+            continue;
+          }
+          if (inString) continue;
+
+          if (ch === openingChar) depth++;
+          if (ch === closingChar) {
+            depth--;
+            if (depth === 0) return lineIndex;
+          }
+        }
+      }
+
+      return startLine;
+    };
+
+    const findValueEndLine = (startLine: number): number => {
+      const line = lines[startLine] || '';
+      const colonIndex = line.indexOf(':');
+      const valueStartInLine = colonIndex >= 0 ? colonIndex + 1 : 0;
+      const valueText = line.slice(valueStartInLine).trim();
+
+      if (valueText.startsWith('{')) {
+        const openIndex = line.indexOf('{', valueStartInLine);
+        return findMatchingEndLine(startLine, '{', openIndex);
+      }
+      if (valueText.startsWith('[')) {
+        const openIndex = line.indexOf('[', valueStartInLine);
+        return findMatchingEndLine(startLine, '[', openIndex);
+      }
+
+      return startLine;
+    };
+
+    const applyLineHighlight = (startLine: number, endLine: number, cls: string, active: boolean) => {
+      const priority = getClassPriority(cls);
+      for (let i = startLine; i <= endLine && i < lineState.length; i++) {
+        if (priority >= lineState[i].priority) {
+          lineState[i].highlightClass = cls;
+          lineState[i].priority = priority;
+        }
+        if (active) {
+          lineState[i].isActive = true;
+        }
+      }
+    };
 
     // 获取当前激活的差异路径
     const changedDiffs = diffs.filter(diff => diff.type !== DiffType.UNCHANGED);
@@ -437,44 +541,27 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
       ? changedDiffs[currentDiffIndex].path 
       : '';
 
-    // 简单的路径匹配逻辑
+    changedDiffs.forEach(diff => {
+      const highlightClass = getHighlightClass(diff.type);
+      if (!highlightClass) return;
+
+      const key = getLastPathKey(diff.path);
+      const startLine = findStartLineByKey(key);
+      if (startLine === -1) return;
+
+      const endLine = findValueEndLine(startLine);
+      applyLineHighlight(startLine, endLine, highlightClass, diff.path === activeDiffPath);
+    });
+
     lines.forEach((line, index) => {
-      let highlightClass = 'highlight-unchanged';
-      let isActiveLine = false;
-      
-      // 检查行中是否包含任何差异路径的键
-      for (const [path, type] of pathToDiff.entries()) {
-        if (type === DiffType.UNCHANGED) continue;
-        
-        const pathParts = path.split('.');
-        const lastPart = pathParts[pathParts.length - 1];
-        
-        // 检查行中是否包含该键名
-        if (lastPart && line.includes(`"${lastPart}"`)) {
-          if (type === DiffType.ADDED && side === 'right') {
-            highlightClass = 'highlight-added';
-          } else if (type === DiffType.DELETED && side === 'left') {
-            highlightClass = 'highlight-deleted';
-          } else if (type === DiffType.MODIFIED) {
-            highlightClass = 'highlight-modified';
-          }
-          
-          // 检查是否是当前激活的差异
-          if (path === activeDiffPath) {
-            isActiveLine = true;
-          }
-          
-          break;
-        }
-      }
+      const { highlightClass, isActive } = lineState[index];
 
       highlightedLines.push(
         <span 
           key={index} 
-          className={`highlight-line ${highlightClass} ${isActiveLine ? 'highlight-active' : ''}`}
+          className={`highlight-line ${highlightClass} ${isActive ? 'highlight-active' : ''}`}
         >
           {line}
-          {index < lines.length - 1 && '\n'}
         </span>
       );
     });
@@ -576,13 +663,19 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
   /**
    * 同步滚动 - 使用比例同步以处理不同长度的内容
    */
-  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>, source: 'left' | 'right') => {
+  const handleScroll = (e: React.UIEvent<HTMLElement>, source: 'left' | 'right') => {
     if (!syncScroll) return;
 
     const target = e.currentTarget;
-    const other = source === 'left' ? rightEditorRef.current : leftEditorRef.current;
-    const otherHighlight = source === 'left' ? rightHighlightRef.current : leftHighlightRef.current;
-    const selfHighlight = source === 'left' ? leftHighlightRef.current : rightHighlightRef.current;
+    const other = compareMode === 'view'
+      ? (source === 'left' ? rightViewRef.current : leftViewRef.current)
+      : (source === 'left' ? rightEditorRef.current : leftEditorRef.current);
+    const otherHighlight = compareMode === 'edit'
+      ? (source === 'left' ? rightHighlightRef.current : leftHighlightRef.current)
+      : null;
+    const selfHighlight = compareMode === 'edit'
+      ? (source === 'left' ? leftHighlightRef.current : rightHighlightRef.current)
+      : null;
 
     // 计算当前滚动的比例（0-1之间）
     const scrollHeight = target.scrollHeight - target.clientHeight;
@@ -719,6 +812,13 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
           </button>
           <button
             className="toolbar-button"
+            onClick={() => setCompareMode(compareMode === 'view' ? 'edit' : 'view')}
+            title={compareMode === 'view' ? 'Switch to Edit Mode' : 'Switch to View Mode'}
+          >
+            {compareMode === 'view' ? 'Edit' : 'View'}
+          </button>
+          <button
+            className="toolbar-button"
             onClick={() => mergeJsons(MergeStrategy.SMART_MERGE)}
             title={i18n.smartMerge}
           >
@@ -768,22 +868,32 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
                 {i18n.convertDates}
               </button>
             </div>
-            <div className="pane-editor pane-editor-with-highlight">
-              <div ref={leftHighlightRef} className="pane-editor-highlight">
+            {compareMode === 'view' ? (
+              <div
+                ref={leftViewRef}
+                className="pane-editor pane-viewer pane-viewer-highlight"
+                onScroll={(e) => handleScroll(e, 'left')}
+              >
                 {generateHighlightedJson(leftJson, leftObj, 'left')}
               </div>
-              <textarea
-                ref={leftEditorRef}
-                value={leftJson}
-                onChange={(e) => {
-                  setLeftJson(e.target.value);
-                  parseJson(e.target.value, 'left');
-                }}
-                onScroll={(e) => handleScroll(e, 'left')}
-                placeholder={i18n.pasteLeftJsonHere}
-                spellCheck={false}
-              />
-            </div>
+            ) : (
+              <div className="pane-editor pane-editor-with-highlight">
+                <div ref={leftHighlightRef} className="pane-editor-highlight">
+                  {generateHighlightedJson(leftJson, leftObj, 'left')}
+                </div>
+                <textarea
+                  ref={leftEditorRef}
+                  value={leftJson}
+                  onChange={(e) => {
+                    setLeftJson(e.target.value);
+                    parseJson(e.target.value, 'left');
+                  }}
+                  onScroll={(e) => handleScroll(e, 'left')}
+                  placeholder={i18n.pasteLeftJsonHere}
+                  spellCheck={false}
+                />
+              </div>
+            )}
             {leftError && <div className="error-message">{leftError}</div>}
           </div>
 
@@ -826,22 +936,32 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
                 {i18n.convertDates}
               </button>
             </div>
-            <div className="pane-editor pane-editor-with-highlight">
-              <div ref={rightHighlightRef} className="pane-editor-highlight">
+            {compareMode === 'view' ? (
+              <div
+                ref={rightViewRef}
+                className="pane-editor pane-viewer pane-viewer-highlight"
+                onScroll={(e) => handleScroll(e, 'right')}
+              >
                 {generateHighlightedJson(rightJson, rightObj, 'right')}
               </div>
-              <textarea
-                ref={rightEditorRef}
-                value={rightJson}
-                onChange={(e) => {
-                  setRightJson(e.target.value);
-                  parseJson(e.target.value, 'right');
-                }}
-                onScroll={(e) => handleScroll(e, 'right')}
-                placeholder={i18n.pasteRightJsonHere}
-                spellCheck={false}
-              />
-            </div>
+            ) : (
+              <div className="pane-editor pane-editor-with-highlight">
+                <div ref={rightHighlightRef} className="pane-editor-highlight">
+                  {generateHighlightedJson(rightJson, rightObj, 'right')}
+                </div>
+                <textarea
+                  ref={rightEditorRef}
+                  value={rightJson}
+                  onChange={(e) => {
+                    setRightJson(e.target.value);
+                    parseJson(e.target.value, 'right');
+                  }}
+                  onScroll={(e) => handleScroll(e, 'right')}
+                  placeholder={i18n.pasteRightJsonHere}
+                  spellCheck={false}
+                />
+              </div>
+            )}
             {rightError && <div className="error-message">{rightError}</div>}
           </div>
 

@@ -211,6 +211,18 @@ body.dragging * {
   padding: 0;
 }
 
+.pane-viewer {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow: auto;
+  color: #1f2937;
+}
+
+.pane-viewer-highlight {
+  display: block;
+}
+
 /* 编辑器差异高亮容器 */
 .pane-editor-with-highlight {
   position: relative;
@@ -243,7 +255,11 @@ body.dragging * {
 
 /* 差异高亮行样式 */
 .highlight-line {
-  display: inline;
+  display: block;
+  white-space: pre-wrap;
+  line-height: inherit;
+  margin: 0;
+  padding: 0;
 }
 
 .highlight-added {

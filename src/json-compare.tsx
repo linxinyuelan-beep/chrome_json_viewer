@@ -11,6 +11,8 @@ import './assets/styles/json-compare.css';
 const urlParams = new URLSearchParams(window.location.search);
 const leftJson = urlParams.get('left') || '';
 const rightJson = urlParams.get('right') || '';
+const modeParam = urlParams.get('mode');
+const initialMode: 'edit' | 'view' = modeParam === 'view' ? 'view' : 'edit';
 
 // 解码 JSON 数据
 const decodedLeft = leftJson ? decodeURIComponent(leftJson) : '';
@@ -19,7 +21,7 @@ const decodedRight = rightJson ? decodeURIComponent(rightJson) : '';
 // 渲染应用
 ReactDOM.render(
   <React.StrictMode>
-    <JsonCompare initialLeft={decodedLeft} initialRight={decodedRight} />
+    <JsonCompare initialLeft={decodedLeft} initialRight={decodedRight} initialMode={initialMode} />
   </React.StrictMode>,
   document.getElementById('root')
 );
@@ -33,7 +35,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // 重新渲染组件
     ReactDOM.render(
       <React.StrictMode>
-        <JsonCompare initialLeft={left || ''} initialRight={right || ''} />
+        <JsonCompare initialLeft={left || ''} initialRight={right || ''} initialMode={message.mode === 'view' ? 'view' : initialMode} />
       </React.StrictMode>,
       document.getElementById('root')
     );
