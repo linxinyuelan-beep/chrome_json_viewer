@@ -139,6 +139,41 @@ export interface Translations {
   failedToCopyPath: string;
   errorGettingPath: string;
   unknownError: string;
+
+  // JSON compare page
+  jsonCompareTitle: string;
+  sourceJsonLabel: string;
+  targetJsonLabel: string;
+  swapLeftRight: string;
+  smartMerge: string;
+  exportDiffReport: string;
+  exportPatch: string;
+  leftJsonLabelPlaceholder: string;
+  rightJsonLabelPlaceholder: string;
+  charsUnit: string;
+  linesUnit: string;
+  format: string;
+  sortKeysLong: string;
+  removeEmpty: string;
+  convertDates: string;
+  pasteLeftJsonHere: string;
+  pasteRightJsonHere: string;
+  differences: string;
+  prevDiff: string;
+  nextDiff: string;
+  showOnlyDiffs: string;
+  showSidebar: string;
+  addedLabel: string;
+  deletedLabel: string;
+  modifiedLabel: string;
+  jsonParseError: string;
+  mergedJsonTitle: string;
+  mergedJsonResult: string;
+  copyToClipboard: string;
+  deletedValueLabel: string;
+  addedValueLabel: string;
+  beforeValueLabel: string;
+  afterValueLabel: string;
 }
 
 // Language definitions
@@ -275,6 +310,41 @@ export const translations: Record<LanguageCode, Translations> = {
     failedToCopyPath: 'Failed to copy path',
     errorGettingPath: 'Error getting path',
     unknownError: 'Unknown error',
+
+    // JSON compare page
+    jsonCompareTitle: 'JSON Compare',
+    sourceJsonLabel: 'Source JSON',
+    targetJsonLabel: 'Target JSON',
+    swapLeftRight: 'Swap Left and Right',
+    smartMerge: 'Smart Merge',
+    exportDiffReport: 'Export Diff Report',
+    exportPatch: 'Export Patch',
+    leftJsonLabelPlaceholder: 'Left JSON Label',
+    rightJsonLabelPlaceholder: 'Right JSON Label',
+    charsUnit: 'chars',
+    linesUnit: 'lines',
+    format: 'Format',
+    sortKeysLong: 'Sort Keys',
+    removeEmpty: 'Remove Empty',
+    convertDates: 'Convert Dates',
+    pasteLeftJsonHere: 'Paste left JSON here...',
+    pasteRightJsonHere: 'Paste right JSON here...',
+    differences: 'Differences',
+    prevDiff: 'Prev Diff',
+    nextDiff: 'Next Diff',
+    showOnlyDiffs: 'Show Only Diffs',
+    showSidebar: 'Show Sidebar',
+    addedLabel: 'Added',
+    deletedLabel: 'Deleted',
+    modifiedLabel: 'Modified',
+    jsonParseError: 'JSON parse error',
+    mergedJsonTitle: 'Merged JSON',
+    mergedJsonResult: 'Merged JSON Result',
+    copyToClipboard: 'Copy to Clipboard',
+    deletedValueLabel: 'Deleted',
+    addedValueLabel: 'Added',
+    beforeValueLabel: 'Before',
+    afterValueLabel: 'After',
   },
   zh: {
     // General UI
@@ -408,6 +478,41 @@ export const translations: Record<LanguageCode, Translations> = {
     failedToCopyPath: '复制路径失败',
     errorGettingPath: '获取路径失败',
     unknownError: '未知错误',
+
+    // JSON compare page
+    jsonCompareTitle: 'JSON 对比',
+    sourceJsonLabel: '源 JSON',
+    targetJsonLabel: '目标 JSON',
+    swapLeftRight: '交换左右',
+    smartMerge: '智能合并',
+    exportDiffReport: '导出差异报告',
+    exportPatch: '导出补丁',
+    leftJsonLabelPlaceholder: '左侧 JSON 标签',
+    rightJsonLabelPlaceholder: '右侧 JSON 标签',
+    charsUnit: '字符',
+    linesUnit: '行',
+    format: '格式化',
+    sortKeysLong: '排序键',
+    removeEmpty: '移除空值',
+    convertDates: '转换日期',
+    pasteLeftJsonHere: '在此粘贴左侧 JSON...',
+    pasteRightJsonHere: '在此粘贴右侧 JSON...',
+    differences: '差异',
+    prevDiff: '上一个差异',
+    nextDiff: '下一个差异',
+    showOnlyDiffs: '仅显示差异',
+    showSidebar: '显示侧栏',
+    addedLabel: '新增',
+    deletedLabel: '删除',
+    modifiedLabel: '修改',
+    jsonParseError: 'JSON 解析错误',
+    mergedJsonTitle: '合并后的 JSON',
+    mergedJsonResult: '合并结果',
+    copyToClipboard: '复制到剪贴板',
+    deletedValueLabel: '删除',
+    addedValueLabel: '新增',
+    beforeValueLabel: '变更前',
+    afterValueLabel: '变更后',
   },
 };
 

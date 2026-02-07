@@ -14,6 +14,7 @@ import {
 } from '../utils/jsonDiff';
 import { mergeJson, generateJsonPatch, MergeStrategy } from '../utils/jsonMerge';
 import { convertMicrosoftJsonDate } from '../utils/dateConverter';
+import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from '../utils/i18n';
 
 interface JsonCompareProps {
   initialLeft?: string;
@@ -24,8 +25,9 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
   // JSON 文本状态
   const [leftJson, setLeftJson] = useState<string>(initialLeft);
   const [rightJson, setRightJson] = useState<string>(initialRight);
-  const [leftLabel, setLeftLabel] = useState<string>('Source JSON');
-  const [rightLabel, setRightLabel] = useState<string>('Target JSON');
+  const [i18n, setI18n] = useState<Translations>(getTranslations(DEFAULT_LANGUAGE));
+  const [leftLabel, setLeftLabel] = useState<string>(getTranslations(DEFAULT_LANGUAGE).sourceJsonLabel);
+  const [rightLabel, setRightLabel] = useState<string>(getTranslations(DEFAULT_LANGUAGE).targetJsonLabel);
 
   // 解析后的 JSON 对象
   const [leftObj, setLeftObj] = useState<any>(null);
@@ -64,6 +66,47 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
   const rightEditorRef = useRef<HTMLTextAreaElement>(null);
   const leftHighlightRef = useRef<HTMLDivElement>(null);
   const rightHighlightRef = useRef<HTMLDivElement>(null);
+  const defaultLabelsRef = useRef({
+    left: getTranslations(DEFAULT_LANGUAGE).sourceJsonLabel,
+    right: getTranslations(DEFAULT_LANGUAGE).targetJsonLabel,
+  });
+
+  // 加载多语言
+  useEffect(() => {
+    let mounted = true;
+
+    const loadLanguage = async () => {
+      const lang = await getCurrentLanguage();
+      if (mounted) {
+        setI18n(getTranslations(lang));
+      }
+    };
+    loadLanguage();
+
+    const handleLanguageChange = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
+      if (areaName === 'local' && changes.language?.newValue) {
+        setI18n(getTranslations(changes.language.newValue as LanguageCode));
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleLanguageChange);
+
+    return () => {
+      mounted = false;
+      chrome.storage.onChanged.removeListener(handleLanguageChange);
+    };
+  }, []);
+
+  // 当语言切换时，仅在用户未手动改过默认标签的情况下更新左右标签
+  useEffect(() => {
+    const prevDefaults = defaultLabelsRef.current;
+    setLeftLabel(prev => (prev === prevDefaults.left ? i18n.sourceJsonLabel : prev));
+    setRightLabel(prev => (prev === prevDefaults.right ? i18n.targetJsonLabel : prev));
+    defaultLabelsRef.current = {
+      left: i18n.sourceJsonLabel,
+      right: i18n.targetJsonLabel,
+    };
+  }, [i18n]);
 
   // 初始化时解析 JSON
   useEffect(() => {
@@ -109,7 +152,7 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
         setRightError('');
       }
     } catch (error: any) {
-      const errorMsg = `JSON parse error: ${error.message}`;
+      const errorMsg = `${i18n.jsonParseError}: ${error.message}`;
       if (side === 'left') {
         setLeftObj(null);
         setLeftError(errorMsg);
@@ -603,16 +646,16 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
       newWindow.document.write(`
         <html>
           <head>
-            <title>Merged JSON</title>
+            <title>${i18n.mergedJsonTitle}</title>
             <style>
               body { font-family: monospace; padding: 20px; }
               pre { background: #f5f5f5; padding: 15px; border-radius: 5px; }
             </style>
           </head>
           <body>
-            <h2>Merged JSON Result</h2>
+            <h2>${i18n.mergedJsonResult}</h2>
             <button onclick="navigator.clipboard.writeText(document.querySelector('pre').textContent)">
-              Copy to Clipboard
+              ${i18n.copyToClipboard}
             </button>
             <pre>${mergedText}</pre>
           </body>
@@ -668,25 +711,24 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
       {/* 顶部工具栏 */}
       <div className="compare-toolbar">
         <div className="toolbar-title">
-          <span>⚖️</span>
-          <span>JSON Compare Tool</span>
+          <span>{i18n.jsonCompareTitle}</span>
         </div>
         <div className="toolbar-actions">
-          <button className="toolbar-button" onClick={swapJsons} title="Swap Left and Right">
-            🔄 Swap
+          <button className="toolbar-button" onClick={swapJsons} title={i18n.swapLeftRight}>
+            {i18n.swapLeftRight}
           </button>
           <button
             className="toolbar-button"
             onClick={() => mergeJsons(MergeStrategy.SMART_MERGE)}
-            title="Smart Merge"
+            title={i18n.smartMerge}
           >
-            🔗 Merge
+            {i18n.smartMerge}
           </button>
-          <button className="toolbar-button" onClick={exportDiffReport} title="Export Diff Report">
-            📊 Export Report
+          <button className="toolbar-button" onClick={exportDiffReport} title={i18n.exportDiffReport}>
+            {i18n.exportDiffReport}
           </button>
-          <button className="toolbar-button" onClick={exportPatchFile} title="Export Patch">
-            📋 Export Patch
+          <button className="toolbar-button" onClick={exportPatchFile} title={i18n.exportPatch}>
+            {i18n.exportPatch}
           </button>
         </div>
       </div>
@@ -702,28 +744,28 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
                   type="text"
                   value={leftLabel}
                   onChange={(e) => setLeftLabel(e.target.value)}
-                  placeholder="Left JSON Label"
+                  placeholder={i18n.leftJsonLabelPlaceholder}
                 />
               </div>
               <div className="pane-stats">
-                {leftJson.length} chars | {leftJson.split('\n').length} lines
+                {leftJson.length} {i18n.charsUnit} | {leftJson.split('\n').length} {i18n.linesUnit}
               </div>
             </div>
             <div className="pane-toolbar">
               <button className="pane-button" onClick={() => formatJson('left')}>
-                ✨ Format
+                {i18n.format}
               </button>
               <button className="pane-button" onClick={() => minifyJson('left')}>
-                📦 Minify
+                {i18n.minifyJson}
               </button>
               <button className="pane-button" onClick={() => sortKeys('left')}>
-                🔤 Sort Keys
+                {i18n.sortKeysLong}
               </button>
               <button className="pane-button" onClick={() => removeEmpty('left')}>
-                🗑️ Remove Empty
+                {i18n.removeEmpty}
               </button>
               <button className="pane-button" onClick={() => convertDates('left')}>
-                📅 Convert Dates
+                {i18n.convertDates}
               </button>
             </div>
             <div className="pane-editor pane-editor-with-highlight">
@@ -738,7 +780,7 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
                   parseJson(e.target.value, 'left');
                 }}
                 onScroll={(e) => handleScroll(e, 'left')}
-                placeholder="Paste left JSON here..."
+                placeholder={i18n.pasteLeftJsonHere}
                 spellCheck={false}
               />
             </div>
@@ -760,28 +802,28 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
                   type="text"
                   value={rightLabel}
                   onChange={(e) => setRightLabel(e.target.value)}
-                  placeholder="Right JSON Label"
+                  placeholder={i18n.rightJsonLabelPlaceholder}
                 />
               </div>
               <div className="pane-stats">
-                {rightJson.length} chars | {rightJson.split('\n').length} lines
+                {rightJson.length} {i18n.charsUnit} | {rightJson.split('\n').length} {i18n.linesUnit}
               </div>
             </div>
             <div className="pane-toolbar">
               <button className="pane-button" onClick={() => formatJson('right')}>
-                ✨ Format
+                {i18n.format}
               </button>
               <button className="pane-button" onClick={() => minifyJson('right')}>
-                📦 Minify
+                {i18n.minifyJson}
               </button>
               <button className="pane-button" onClick={() => sortKeys('right')}>
-                🔤 Sort Keys
+                {i18n.sortKeysLong}
               </button>
               <button className="pane-button" onClick={() => removeEmpty('right')}>
-                🗑️ Remove Empty
+                {i18n.removeEmpty}
               </button>
               <button className="pane-button" onClick={() => convertDates('right')}>
-                📅 Convert Dates
+                {i18n.convertDates}
               </button>
             </div>
             <div className="pane-editor pane-editor-with-highlight">
@@ -796,7 +838,7 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
                   parseJson(e.target.value, 'right');
                 }}
                 onScroll={(e) => handleScroll(e, 'right')}
-                placeholder="Paste right JSON here..."
+                placeholder={i18n.pasteRightJsonHere}
                 spellCheck={false}
               />
             </div>
@@ -815,13 +857,19 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
           {/* 差异侧边栏 */}
           {showDiffSidebar && (
             <div className="diff-sidebar" style={{ width: `${sidebarWidth}%` }}>
-              <div className="sidebar-header">Differences ({changedDiffs.length})</div>
+              <div className="sidebar-header">{i18n.differences} ({changedDiffs.length})</div>
               <div className="sidebar-content">
                 <JsonDiffViewer
                   diffs={diffs}
                   showOnlyDiffs={showOnlyDiffs}
                   activeDiff={currentDiffIndex >= 0 ? changedDiffs[currentDiffIndex]?.path : ''}
                   onDiffClick={(diff) => scrollToDiff(diff)}
+                  labels={{
+                    deletedValueLabel: i18n.deletedValueLabel,
+                    addedValueLabel: i18n.addedValueLabel,
+                    beforeValueLabel: i18n.beforeValueLabel,
+                    afterValueLabel: i18n.afterValueLabel,
+                  }}
                 />
               </div>
             </div>
@@ -837,14 +885,14 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
             onClick={navigateToPrevDiff}
             disabled={changedDiffs.length === 0}
           >
-            ⏮️ Prev Diff
+            {i18n.prevDiff}
           </button>
           <button
             className="control-button"
             onClick={navigateToNextDiff}
             disabled={changedDiffs.length === 0}
           >
-            ⏭️ Next Diff
+            {i18n.nextDiff}
           </button>
           <label className="option-item">
             <input
@@ -852,7 +900,7 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
               checked={showOnlyDiffs}
               onChange={(e) => setShowOnlyDiffs(e.target.checked)}
             />
-            <span>Show Only Diffs</span>
+            <span>{i18n.showOnlyDiffs}</span>
           </label>
           <label className="option-item">
             <input
@@ -860,22 +908,22 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
               checked={showDiffSidebar}
               onChange={(e) => setShowDiffSidebar(e.target.checked)}
             />
-            <span>Show Sidebar</span>
+            <span>{i18n.showSidebar}</span>
           </label>
         </div>
 
         <div className="controls-right">
           <div className="diff-stats">
             <div className="diff-stat-item">
-              <span>Added:</span>
+              <span>{i18n.addedLabel}:</span>
               <span className="stat-badge added">{stats.added}</span>
             </div>
             <div className="diff-stat-item">
-              <span>Deleted:</span>
+              <span>{i18n.deletedLabel}:</span>
               <span className="stat-badge deleted">{stats.deleted}</span>
             </div>
             <div className="diff-stat-item">
-              <span>Modified:</span>
+              <span>{i18n.modifiedLabel}:</span>
               <span className="stat-badge modified">{stats.modified}</span>
             </div>
           </div>

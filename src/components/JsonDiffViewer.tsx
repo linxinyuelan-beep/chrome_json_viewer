@@ -1,11 +1,19 @@
 import React, { useMemo } from 'react';
 import { DiffResult, DiffType } from '../utils/jsonDiff';
 
+interface DiffViewerLabels {
+  deletedValueLabel: string;
+  addedValueLabel: string;
+  beforeValueLabel: string;
+  afterValueLabel: string;
+}
+
 interface JsonDiffViewerProps {
   diffs: DiffResult[];
   showOnlyDiffs?: boolean;
   onDiffClick?: (diff: DiffResult) => void;
   activeDiff?: string;
+  labels?: DiffViewerLabels;
 }
 
 /**
@@ -16,6 +24,7 @@ const JsonDiffViewer: React.FC<JsonDiffViewerProps> = ({
   showOnlyDiffs = false,
   onDiffClick,
   activeDiff,
+  labels,
 }) => {
   // 过滤要显示的差异
   const displayDiffs = useMemo(() => {
@@ -38,6 +47,7 @@ const JsonDiffViewer: React.FC<JsonDiffViewerProps> = ({
           group={group}
           onDiffClick={onDiffClick}
           activeDiff={activeDiff}
+          labels={labels}
         />
       ))}
     </div>
@@ -55,6 +65,7 @@ interface DiffGroupProps {
   onDiffClick?: (diff: DiffResult) => void;
   activeDiff?: string;
   level?: number;
+  labels?: DiffViewerLabels;
 }
 
 const DiffGroup: React.FC<DiffGroupProps> = ({
@@ -62,6 +73,7 @@ const DiffGroup: React.FC<DiffGroupProps> = ({
   onDiffClick,
   activeDiff,
   level = 0,
+  labels,
 }) => {
   const [expanded, setExpanded] = React.useState(true);
 
@@ -84,6 +96,7 @@ const DiffGroup: React.FC<DiffGroupProps> = ({
               diff={diff}
               onClick={onDiffClick}
               isActive={activeDiff === diff.path}
+              labels={labels}
             />
           ))}
           {group.children.map((child, index) => (
@@ -93,6 +106,7 @@ const DiffGroup: React.FC<DiffGroupProps> = ({
               onDiffClick={onDiffClick}
               activeDiff={activeDiff}
               level={level + 1}
+              labels={labels}
             />
           ))}
         </div>
@@ -105,9 +119,10 @@ interface DiffLineProps {
   diff: DiffResult;
   onClick?: (diff: DiffResult) => void;
   isActive?: boolean;
+  labels?: DiffViewerLabels;
 }
 
-const DiffLine: React.FC<DiffLineProps> = ({ diff, onClick, isActive }) => {
+const DiffLine: React.FC<DiffLineProps> = ({ diff, onClick, isActive, labels }) => {
   const getDiffClassName = (type: DiffType): string => {
     switch (type) {
       case DiffType.ADDED:
@@ -153,24 +168,24 @@ const DiffLine: React.FC<DiffLineProps> = ({ diff, onClick, isActive }) => {
       <div className="diff-values">
         {diff.type === DiffType.DELETED && (
           <div className="diff-value deleted">
-            <span className="value-label">Deleted:</span>
+            <span className="value-label">{labels?.deletedValueLabel || 'Deleted'}:</span>
             <pre>{formatValue(diff.leftValue)}</pre>
           </div>
         )}
         {diff.type === DiffType.ADDED && (
           <div className="diff-value added">
-            <span className="value-label">Added:</span>
+            <span className="value-label">{labels?.addedValueLabel || 'Added'}:</span>
             <pre>{formatValue(diff.rightValue)}</pre>
           </div>
         )}
         {diff.type === DiffType.MODIFIED && (
           <div className="diff-value modified">
             <div className="value-before">
-              <span className="value-label">Before:</span>
+              <span className="value-label">{labels?.beforeValueLabel || 'Before'}:</span>
               <pre>{formatValue(diff.leftValue)}</pre>
             </div>
             <div className="value-after">
-              <span className="value-label">After:</span>
+              <span className="value-label">{labels?.afterValueLabel || 'After'}:</span>
               <pre>{formatValue(diff.rightValue)}</pre>
             </div>
           </div>

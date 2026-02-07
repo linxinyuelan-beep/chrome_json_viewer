@@ -7,9 +7,10 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: #f5f5f5;
+  font-family: 'Avenir Next', 'SF Pro Text', 'Segoe UI', 'Noto Sans', sans-serif;
+  background: linear-gradient(180deg, #f7f9fc 0%, #eef3f9 100%);
   overflow: hidden;
+  color: #1f2937;
 }
 
 /* 拖拽时禁用文本选择 */
@@ -27,6 +28,8 @@ body.dragging * {
   flex-direction: column;
   height: 100vh;
   width: 100vw;
+  padding: 10px;
+  gap: 10px;
 }
 
 /* 顶部工具栏 */
@@ -34,43 +37,47 @@ body.dragging * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px 14px;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #d7deea;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
   z-index: 10;
 }
 
 .toolbar-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 10px;
+  letter-spacing: 0.2px;
 }
 
 .toolbar-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .toolbar-button {
   padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-radius: 4px;
+  border: 1px solid #ced7e6;
+  background: #f8fbff;
+  color: #1e293b;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
-  transition: all 0.2s;
+  font-weight: 500;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  gap: 5px;
+  line-height: 1.2;
 }
 
 .toolbar-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
+  border-color: #99a8c2;
+  background: #eef4ff;
 }
 
 .toolbar-button:active {
@@ -82,6 +89,7 @@ body.dragging * {
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-height: 0;
 }
 
 /* 左右编辑器容器 */
@@ -89,15 +97,20 @@ body.dragging * {
   display: flex;
   flex: 1;
   overflow: hidden;
+  border: 1px solid #d7deea;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
 }
 
 .compare-pane {
   display: flex;
   flex-direction: column;
   min-width: 200px;
-  border-right: 1px solid #ddd;
-  background: white;
+  border-right: 1px solid #e5eaf2;
+  background: #ffffff;
   transition: width 0.05s ease-out;
+  min-height: 0;
 }
 
 .compare-pane:last-child {
@@ -109,9 +122,9 @@ body.dragging * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background: #fafafa;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 10px 12px;
+  background: #f9fbff;
+  border-bottom: 1px solid #e5eaf2;
 }
 
 .pane-title {
@@ -122,50 +135,52 @@ body.dragging * {
 }
 
 .pane-title input {
-  border: 1px solid transparent;
+  border: 1px solid #e2e8f0;
   background: transparent;
   padding: 4px 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: #1f2937;
   width: 100%;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .pane-title input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #6b7280;
   background: white;
 }
 
 .pane-stats {
   font-size: 12px;
-  color: #666;
+  color: #64748b;
   margin-left: 12px;
+  white-space: nowrap;
 }
 
 .pane-toolbar {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   padding: 8px 12px;
-  background: #f5f5f5;
-  border-bottom: 1px solid #e0e0e0;
+  background: #f4f8ff;
+  border-bottom: 1px solid #e5eaf2;
   flex-wrap: wrap;
 }
 
 .pane-button {
   padding: 4px 10px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 3px;
+  border: 1px solid #d2dbe8;
+  background: #ffffff;
+  border-radius: 999px;
   cursor: pointer;
   font-size: 12px;
-  transition: all 0.2s;
+  color: #334155;
+  transition: all 0.15s ease;
 }
 
 .pane-button:hover {
-  background: #f0f0f0;
-  border-color: #999;
+  background: #edf2f9;
+  border-color: #a7b4c8;
 }
 
 .pane-button:active {
@@ -177,9 +192,11 @@ body.dragging * {
   flex: 1;
   overflow: auto;
   padding: 12px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, monospace;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.65;
+  background: #fcfdff;
+  min-height: 0;
 }
 
 .pane-editor textarea {
@@ -204,7 +221,7 @@ body.dragging * {
   position: relative;
   z-index: 2;
   color: transparent;
-  caret-color: black;
+  caret-color: #111827;
 }
 
 .pane-editor-highlight {
@@ -230,18 +247,18 @@ body.dragging * {
 }
 
 .highlight-added {
-  background-color: #e6ffed;
-  color: #155724;
+  background-color: #e8f7ee;
+  color: #166534;
 }
 
 .highlight-deleted {
-  background-color: #ffeef0;
-  color: #721c24;
+  background-color: #fff0f1;
+  color: #991b1b;
 }
 
 .highlight-modified {
-  background-color: #fff3cd;
-  color: #856404;
+  background-color: #fff6dd;
+  color: #9a6700;
 }
 
 .highlight-unchanged {
@@ -250,8 +267,8 @@ body.dragging * {
 
 /* 当前激活的差异行（通过导航定位的） */
 .highlight-active {
-  background-color: #fff59d !important;
-  box-shadow: 0 0 0 2px #fdd835;
+  background-color: #ffef9f !important;
+  box-shadow: 0 0 0 2px #f5c84a;
   animation: highlight-pulse 0.5s ease-in-out;
 }
 
@@ -354,22 +371,24 @@ body.dragging * {
 
 /* 分隔条 */
 .compare-divider {
-  width: 5px;
-  background: #e0e0e0;
+  width: 6px;
+  background: #eef2f8;
   cursor: col-resize;
   position: relative;
   transition: background 0.2s;
   flex-shrink: 0;
   user-select: none;
   z-index: 5;
+  border-left: 1px solid #d8e0ec;
+  border-right: 1px solid #d8e0ec;
 }
 
 .compare-divider:hover {
-  background: #667eea;
+  background: #d6e2f5;
 }
 
 .compare-divider:active {
-  background: #5568d3;
+  background: #b9cbe6;
 }
 
 .compare-divider::after {
@@ -380,13 +399,13 @@ body.dragging * {
   transform: translate(-50%, -50%);
   width: 2px;
   height: 40px;
-  background: #999;
+  background: #8ea1bc;
   border-radius: 1px;
   pointer-events: none;
 }
 
 .compare-divider:hover::after {
-  background: white;
+  background: #4b6288;
 }
 
 /* 底部对比控制栏 */
@@ -394,16 +413,19 @@ body.dragging * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
-  background: white;
-  border-top: 1px solid #e0e0e0;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #d7deea;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  gap: 12px;
 }
 
 .controls-left {
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .controls-right {
@@ -414,8 +436,9 @@ body.dragging * {
 
 .diff-stats {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   font-size: 13px;
+  flex-wrap: wrap;
 }
 
 .diff-stat-item {
@@ -438,34 +461,35 @@ body.dragging * {
 }
 
 .stat-badge.added {
-  background-color: #28a745;
+  background-color: #1f9d5a;
 }
 
 .stat-badge.deleted {
-  background-color: #dc3545;
+  background-color: #dc2626;
 }
 
 .stat-badge.modified {
-  background-color: #ffc107;
-  color: #333;
+  background-color: #f4c645;
+  color: #3f2f05;
 }
 
 .control-button {
   padding: 6px 14px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 4px;
+  border: 1px solid #ced7e6;
+  background: #f8fbff;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   gap: 5px;
+  color: #1e293b;
 }
 
 .control-button:hover {
-  background: #f0f0f0;
-  border-color: #999;
+  background: #eef4ff;
+  border-color: #99a8c2;
 }
 
 .control-button:disabled {
@@ -474,30 +498,31 @@ body.dragging * {
 }
 
 .control-button.primary {
-  background: #667eea;
+  background: #5f7393;
   color: white;
-  border-color: #667eea;
+  border-color: #5f7393;
 }
 
 .control-button.primary:hover {
-  background: #5568d3;
+  background: #4f617e;
 }
 
 /* 差异侧边栏 */
 .diff-sidebar {
   min-width: 200px;
-  background: white;
-  border-left: 1px solid #ddd;
+  background: #ffffff;
+  border-left: 1px solid #e5eaf2;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   transition: width 0.05s ease-out;
+  min-height: 0;
 }
 
 .sidebar-header {
   padding: 12px;
-  background: #fafafa;
-  border-bottom: 1px solid #e0e0e0;
+  background: #f9fbff;
+  border-bottom: 1px solid #e5eaf2;
   font-weight: 600;
   font-size: 14px;
 }
@@ -563,7 +588,9 @@ body.dragging * {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
+  padding: 4px 2px;
+  font-size: 13px;
+  color: #334155;
 }
 
 .option-item input[type="checkbox"] {
@@ -580,10 +607,10 @@ body.dragging * {
 .error-message {
   padding: 12px;
   margin: 12px;
-  background: #fff3cd;
-  border: 1px solid #ffc107;
-  border-radius: 4px;
-  color: #856404;
+  background: #fff5d6;
+  border: 1px solid #f0cf72;
+  border-radius: 8px;
+  color: #8c5e00;
   font-size: 13px;
 }
 
@@ -612,7 +639,7 @@ body.dragging * {
 
 .loading-spinner {
   border: 3px solid #f3f3f3;
-  border-top: 3px solid #667eea;
+  border-top: 3px solid #6b7280;
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -662,11 +689,11 @@ body.dragging * {
 
 .pane-editor::-webkit-scrollbar-thumb,
 .sidebar-content::-webkit-scrollbar-thumb {
-  background: #888;
+  background: #9aa9bf;
   border-radius: 4px;
 }
 
 .pane-editor::-webkit-scrollbar-thumb:hover,
 .sidebar-content::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: #7486a1;
 }
