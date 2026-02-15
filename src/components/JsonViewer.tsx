@@ -564,43 +564,70 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
       ) : (
         <>
           {/* Info and actions bar */}
-          <div className="json-viewer-header">
-            <div className="json-viewer-info">
+          <div className="json-drawer-header">
+            <div className="json-viewer-actions left-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {/* Navigation buttons */}
-              <div className="json-viewer-navigation">
-                <button
-                  className={`json-viewer-nav-button ${!canGoBack ? 'disabled' : ''}`}
-                  onClick={handleNavigateBack}
-                  disabled={!canGoBack}
-                  title={i18n.backToPreviousJson}
-                >
-                  ◀
-                </button>
-                <button
-                  className={`json-viewer-nav-button ${!canGoForward ? 'disabled' : ''}`}
-                  onClick={handleNavigateForward}
-                  disabled={!canGoForward}
-                  title={i18n.forwardToNextJson}
-                >
-                  ▶
-                </button>
+              <button
+                className={`json-viewer-button ${!canGoBack ? 'disabled' : ''}`}
+                onClick={handleNavigateBack}
+                disabled={!canGoBack}
+                title={i18n.backToPreviousJson}
+                style={{ padding: '0 8px' }}
+              >
+                ◀
+              </button>
+              <button
+                className={`json-viewer-button ${!canGoForward ? 'disabled' : ''}`}
+                onClick={handleNavigateForward}
+                disabled={!canGoForward}
+                title={i18n.forwardToNextJson}
+                style={{ padding: '0 8px' }}
+              >
+                ▶
+              </button>
 
-                <span className="json-viewer-size">{i18n.sizeLabel}: {jsonSize}</span>
-              </div>
+              <span className="json-viewer-size" style={{ fontSize: '12px', color: '#6b7280', marginLeft: '8px' }}>
+                {i18n.sizeLabel}: {jsonSize}
+              </span>
             </div>
+
             {/* JSON Path display */}
             {currentJsonPath && (
-              <div className="json-viewer-path-display">
-                <code className="json-viewer-path-value">{currentJsonPath}</code>
+              <div className="json-viewer-path-display" style={{ 
+                flex: 1, 
+                margin: '0 16px', 
+                background: '#f3f4f6', 
+                padding: '4px 8px', 
+                borderRadius: '4px',
+                fontSize: '12px',
+                color: '#374151',
+                fontFamily: 'monospace',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <code className="json-viewer-path-value" style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentJsonPath}</code>
                 <button
                   className={`json-viewer-path-copy-btn ${pathCopySuccess ? 'success' : ''}`}
                   onClick={copyCurrentPath}
                   title={i18n.copyPathToClipboard}
+                  style={{ 
+                    border: 'none', 
+                    background: 'transparent', 
+                    cursor: 'pointer', 
+                    fontSize: '14px',
+                    marginLeft: '8px',
+                    padding: '0 4px' 
+                  }}
                 >
                   {pathCopySuccess ? '✓' : '📋'}
                 </button>
               </div>
             )}
+
             <div className="json-viewer-actions">
               <button
                 className="json-viewer-button"
