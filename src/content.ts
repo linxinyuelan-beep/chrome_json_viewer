@@ -13,8 +13,6 @@ console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_
 
 
 // 导入工具函数
-import { isValidNestedJson } from './utils/nestedJsonHandler';
-import { getCurrentLanguage, getTranslations } from "./utils/i18n";
 import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_ACTIONS } from './config/messageActions';
@@ -29,6 +27,7 @@ import {
 } from './drawer/drawerHost';
 import { detectJsonInElement } from './content/jsonDetection';
 import { highlightJsonInElement } from './content/highlight';
+import { registerContentMessageHandler } from './content/messages';
 import { showNotification } from './content/notification';
 
 // 是否启用悬停检测，从存储中加载
@@ -64,9 +63,6 @@ async function initializeSettings() {
 
 // 调用初始化函数
 initializeSettings();
-
-// 使用导入的 isValidNestedJson 函数，不再需要本地定义
-const isValidJson = isValidNestedJson;
 
 // 在新窗口中打开JSON
 async function openJsonInWindow(jsonString: string): Promise<void> {
@@ -269,143 +265,21 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeJsonFormatter();
 });
 
-// 监听来自背景脚本的消息
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-    const lang = await getCurrentLanguage();
-    const i18n = getTranslations(lang);
-
-    if (request.action === MESSAGE_ACTIONS.FORMAT_SELECTED_JSON && request.selectedText) {
-        // 尝试格式化选中的 JSON
-        if (isValidJson(request.selectedText)) {
-            showJsonInDrawer(request.selectedText)
-                .then(() => {
-                    sendResponse({ success: true });
-                })
-                .catch((error) => {
-                    console.error('Error showing JSON in drawer:', error);
-                    sendResponse({ success: false, error: (error as Error).message });
-                });
-        } else {
-            showNotification(i18n.invalidJsonFormat, 'error');
-            sendResponse({ success: false, error: 'Invalid JSON format' });
-        }
-        return true; // 支持异步响应
-
-    } else if (request.action === MESSAGE_ACTIONS.SET_HOVER_DETECTION) {
-        // 设置悬停检测状态
-        enableHoverDetection = request.enabled;
-
-        // 显示状态变化通知
-        showNotification(
-            `${i18n.hoverDetection}: ${enableHoverDetection ? i18n.statusEnabled : i18n.statusDisabled}`,
-            enableHoverDetection ? 'success' : 'info'
-        );
-
-        // 如果启用悬停检测，刷新页面以应用更改
-        if (enableHoverDetection) {
-            location.reload();
-        }
-
-        sendResponse({ enabled: enableHoverDetection });
-        return true; // 支持异步响应
-
-    } else if (request.action === MESSAGE_ACTIONS.TOGGLE_HOVER_DETECTION) {
-        // 保持兼容性，但现在也会保存到存储
-        enableHoverDetection = !enableHoverDetection;
-
-        // 保存到存储
-        chrome.storage.local.set({ [STORAGE_KEYS.HOVER_DETECTION_ENABLED]: enableHoverDetection });
-
-        // 显示状态变化通知
-        showNotification(
-            `${i18n.hoverDetection}: ${enableHoverDetection ? i18n.statusEnabled : i18n.statusDisabled}`,
-            enableHoverDetection ? 'success' : 'info'
-        );
-
-        // 刷新页面以应用更改（如果启用悬停检测）
-        if (enableHoverDetection) {
-            location.reload();
-        }
-
-        // 发送响应
-        sendResponse({ enabled: enableHoverDetection });
-        return true; // 支持异步响应
-
-    } else if (request.action === MESSAGE_ACTIONS.GET_HOVER_DETECTION_STATE) {
-        // 返回当前悬停检测状态
-        sendResponse({ enabled: enableHoverDetection });
-        return true; // 支持异步响应
-
-    } else if (request.action === MESSAGE_ACTIONS.SHOW_JSON_FROM_POPUP) {
-        // 处理来自弹出窗口的JSON格式化请求
-        console.log('Received showJsonFromPopup message with JSON length:', request.jsonString?.length);
-        if (request.jsonString) {
-            showJsonInDrawer(request.jsonString)
-                .then(() => {
-                    console.log('JSON drawer should be displayed now');
-                    sendResponse({ success: true });
-                })
-                .catch((error) => {
-                    console.error('Error showing JSON in drawer:', error);
-                    sendResponse({ success: false, error: (error as Error).message });
-                });
-        } else {
-            console.error('No JSON string provided in popup request');
-            sendResponse({ success: false, error: 'No JSON string provided' });
-        }
-        return true; // 支持异步响应
-
-    } else if (request.action === MESSAGE_ACTIONS.SHOW_JSON_IN_DRAWER) {
-        // 处理来自background script的在抽屉中显示JSON的请求
-        console.log('Received showJsonInDrawer message with JSON length:', request.jsonString?.length);
-        if (request.jsonString) {
-            showJsonInDrawer(request.jsonString)
-                .then(() => {
-                    console.log('JSON drawer displayed successfully');
-                    sendResponse({ success: true });
-                })
-                .catch((error) => {
-                    console.error('Error showing JSON in drawer:', error);
-                    sendResponse({ success: false, error: (error as Error).message });
-                });
-        } else {
-            console.error('No JSON string provided in showJsonInDrawer request');
-            sendResponse({ success: false, error: 'No JSON string provided' });
-        }
-        return true; // 支持异步响应
-
-    } else if (request.action === MESSAGE_ACTIONS.TOGGLE_AUTO_DETECTION_TEMPORARILY) {
-        // 智能切换自动检测状态（临时开启或关闭，直到页面刷新）
-        // 如果当前悬停检测已启用，则临时关闭；如果已禁用，则临时开启
-        if (enableHoverDetection && !autoDetectionTemporarilyEnabled) {
-            // 当前是开启状态（且不是临时启用的），临时关闭
-            autoDetectionTemporarilyDisabled = true;
-            autoDetectionTemporarilyEnabled = false;
-
-            showNotification(
-                `${i18n.autoDetectionDisabled}. ${i18n.autoDetectionWillResumeOnRefresh}`,
-                'info'
-            );
-        } else {
-            // 当前是关闭状态或临时启用状态，临时开启
-            autoDetectionTemporarilyDisabled = false;
-            autoDetectionTemporarilyEnabled = true;
-
-            // 直接启用悬停检测功能，不需要刷新页面
-            enableHoverDetectionFeature();
-
-            showNotification(
-                `${i18n.autoDetectionEnabled}. ${i18n.autoDetectionWillResumeOnRefresh}`,
-                'success'
-            );
-        }
-
-        sendResponse({ success: true, temporarilyDisabled: autoDetectionTemporarilyDisabled });
-        return true; // 支持异步响应
-    }
-
-    // 对于不识别的action，返回false表示不需要异步响应
-    return false;
+registerContentMessageHandler({
+    getHoverDetectionEnabled: () => enableHoverDetection,
+    setHoverDetectionEnabled: (enabled) => {
+        enableHoverDetection = enabled;
+    },
+    getAutoDetectionTemporarilyEnabled: () => autoDetectionTemporarilyEnabled,
+    getAutoDetectionTemporarilyDisabled: () => autoDetectionTemporarilyDisabled,
+    setAutoDetectionTemporarilyEnabled: (enabled) => {
+        autoDetectionTemporarilyEnabled = enabled;
+    },
+    setAutoDetectionTemporarilyDisabled: (disabled) => {
+        autoDetectionTemporarilyDisabled = disabled;
+    },
+    enableHoverDetectionFeature,
+    showJsonInDrawer,
 });
 
 window.addEventListener('load', () => {
