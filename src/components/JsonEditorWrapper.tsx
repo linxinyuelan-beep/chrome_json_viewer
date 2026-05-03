@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { JSONEditor, Mode, Content, JSONContent } from 'vanilla-jsoneditor';
+import { parseJsonPreserveLargeNumbers } from '../utils/jsonParse';
 
 // Note: vanilla-jsoneditor usually supplies its own CSS via import, 
 // but sometimes valid css import is needed depending on bundler
@@ -79,7 +80,7 @@ const JsonEditorWrapper = forwardRef<JsonEditorRef, JsonEditorWrapperProps>(({
                             onChange((updatedContent as JSONContent).json);
                         } else if ('text' in updatedContent) {
                             try {
-                                const parsed = JSON.parse((updatedContent as any).text);
+                                const parsed = parseJsonPreserveLargeNumbers((updatedContent as any).text);
                                 onChange(parsed);
                             } catch (e) {
                                 // ignore invalid json during typing

@@ -1,7 +1,7 @@
 import { MESSAGE_ACTIONS } from '../config/messageActions';
 import { STORAGE_KEYS } from '../config/storageKeys';
 import { getCurrentLanguage, getTranslations } from '../utils/i18n';
-import { isValidNestedJson } from '../utils/nestedJsonHandler';
+import { isDisplayableJson, isJsonSyntaxValid, parseJsonPreserveLargeNumbers } from '../utils/jsonParse';
 import { showNotification } from './notification';
 
 export interface ContentMessageHandlerOptions {
@@ -23,7 +23,10 @@ export function registerContentMessageHandler(options: ContentMessageHandlerOpti
 
     if (request.action === MESSAGE_ACTIONS.FORMAT_SELECTED_JSON && request.selectedText) {
       // 尝试格式化选中的 JSON
-      if (isValidNestedJson(request.selectedText)) {
+      if (
+        isJsonSyntaxValid(request.selectedText) &&
+        isDisplayableJson(parseJsonPreserveLargeNumbers(request.selectedText))
+      ) {
         options.showJsonInDrawer(request.selectedText)
           .then(() => {
             sendResponse({ success: true });

@@ -15,6 +15,7 @@ import {
 import { mergeJson, generateJsonPatch, MergeStrategy } from '../utils/jsonMerge';
 import { convertMicrosoftJsonDate } from '../utils/dateConverter';
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from '../utils/i18n';
+import { parseJsonPreserveLargeNumbers } from '../utils/jsonParse';
 
 interface JsonCompareProps {
   initialLeft?: string;
@@ -147,7 +148,7 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
     }
 
     try {
-      const parsed = JSON.parse(text);
+      const parsed = parseJsonPreserveLargeNumbers(text);
       if (side === 'left') {
         setLeftObj(parsed);
         setLeftError('');
@@ -173,7 +174,7 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
   const formatJson = (side: 'left' | 'right', indent: number = 2) => {
     const text = side === 'left' ? leftJson : rightJson;
     try {
-      const parsed = JSON.parse(text);
+      const parsed = parseJsonPreserveLargeNumbers(text);
       const formatted = JSON.stringify(parsed, null, indent);
       if (side === 'left') {
         setLeftJson(formatted);
@@ -193,7 +194,7 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
   const minifyJson = (side: 'left' | 'right') => {
     const text = side === 'left' ? leftJson : rightJson;
     try {
-      const parsed = JSON.parse(text);
+      const parsed = parseJsonPreserveLargeNumbers(text);
       const minified = JSON.stringify(parsed);
       if (side === 'left') {
         setLeftJson(minified);

@@ -7,6 +7,7 @@ import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Tr
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_COMMANDS } from './config/messageActions';
 import { consumeJsonPayload } from './utils/jsonPayloadStore';
+import { parseJsonPreserveLargeNumbers } from './utils/jsonParse';
 
 // JSON Window React Component
 const JsonWindowApp: React.FC = () => {
@@ -78,7 +79,7 @@ const JsonWindowApp: React.FC = () => {
           console.log('No JSON payload found for id:', payloadId);
           return null;
         }
-        return JSON.parse(jsonString);
+        return parseJsonPreserveLargeNumbers(jsonString);
       } catch (e) {
         console.error('Error loading JSON payload:', e);
         return null;
@@ -99,7 +100,7 @@ const JsonWindowApp: React.FC = () => {
               try {
                 // 如果响应是字符串，尝试解析为JSON
                 if (typeof response === 'string') {
-                  resolve(JSON.parse(response));
+                  resolve(parseJsonPreserveLargeNumbers(response));
                 } else {
                   // 如果已经是对象，直接返回
                   resolve(response);

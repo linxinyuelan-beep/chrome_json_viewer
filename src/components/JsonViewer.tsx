@@ -30,6 +30,7 @@ import History from './History';
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from '../utils/i18n';
 import { STORAGE_KEYS } from '../config/storageKeys';
 import { MESSAGE_ACTIONS } from '../config/messageActions';
+import { isJsonSyntaxValid } from '../utils/jsonParse';
 import '../assets/styles/history.css';
 
 // Declare global function that will be added to window by reactJsonDrawer.tsx
@@ -491,7 +492,9 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
   // Handle selecting JSON from history (full history panel)
   const handleSelectFromHistory = (jsonString: string) => {
     try {
-      JSON.parse(jsonString); // Validate JSON
+      if (!isJsonSyntaxValid(jsonString)) {
+        throw new Error('Invalid JSON');
+      }
       // Replace the current JSON with the selected one from history
       if (window.showJsonInDrawerWithReact) {
         window.showJsonInDrawerWithReact(jsonString, version);

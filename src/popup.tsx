@@ -3,10 +3,10 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './assets/styles/main.css';
 import { VERSION } from './config/version';
-import { isValidNestedJson } from './utils/nestedJsonHandler';
 import { processJsonDates } from './utils/dateConverter';
 import { parseJsonSafely } from './utils/jsonParser';
 import { extractJsonFromString } from './utils/jsonExtractor';
+import { isJsonSyntaxValid } from './utils/jsonParse';
 import {
   LanguageCode,
   DEFAULT_LANGUAGE,
@@ -209,7 +209,7 @@ const App: React.FC = () => {
         jsonToFormat = extractedJson;
       }
 
-      if (!isValidNestedJson(jsonToFormat)) {
+      if (!isJsonSyntaxValid(jsonToFormat)) {
         setJsonFormatError(translations.invalidJsonFormat);
         return;
       }
@@ -303,7 +303,7 @@ const App: React.FC = () => {
         jsonToConvert = extractedJson;
       }
 
-      if (!isValidNestedJson(jsonToConvert)) {
+      if (!isJsonSyntaxValid(jsonToConvert)) {
         setJsonFormatError(translations.invalidJsonFormat);
         return;
       }
@@ -403,7 +403,7 @@ const App: React.FC = () => {
         return;
       }
 
-      if (!isValidNestedJson(jsonInput)) {
+      if (!isJsonSyntaxValid(jsonInput)) {
         setJsonFormatError(translations.invalidJsonFormat);
         return;
       }
@@ -439,7 +439,7 @@ const App: React.FC = () => {
 
       // If input is valid JSON, format it first
       let inputToEscape = jsonInput;
-      if (isValidNestedJson(jsonInput)) {
+      if (isJsonSyntaxValid(jsonInput)) {
         const parsedJson = parseJsonSafely(jsonInput);
         inputToEscape = JSON.stringify(parsedJson);
       }
