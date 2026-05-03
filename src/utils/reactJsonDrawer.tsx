@@ -3,8 +3,14 @@ import ReactDOM from 'react-dom';
 import React from 'react';
 import JsonViewerComponent from '../components/JsonViewer';
 import { parseJsonSafely } from './jsonParser';
-import { STORAGE_KEYS } from '../config/storageKeys';
-import { DRAWER_UI } from '../config/uiConstants';
+import {
+  closeJsonDrawer,
+  ensureJsonDrawerMounted,
+  getJsonDrawerContent,
+  getOrCreateJsonDrawer,
+  openJsonDrawer,
+  setJsonDrawerOutsideClickHandler,
+} from '../drawer/drawerHost';
 
 // Store React root references for proper cleanup
 const reactRoots = new Map<HTMLElement, any>();
@@ -143,151 +149,6 @@ function unmountReactComponent(container: HTMLElement): void {
   }
 }
 
-// Function to create a drawer element with React mounting point
-export function createJsonDrawerWithReactMount(): HTMLElement {
-  const drawer = document.createElement('div');
-  drawer.className = 'json-drawer';
-  drawer.innerHTML = `
-    <div class="json-drawer-resize-handle" title="拖动调整宽度"></div>
-    <div class="json-drawer-content"></div>
-  `;
-
-  // 添加拖动调整宽度功能
-  const resizeHandle = drawer.querySelector('.json-drawer-resize-handle') as HTMLElement;
-  if (resizeHandle) {
-    let isResizing = false;
-    let startX = 0;
-    let startWidth = 0;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      isResizing = true;
-      startX = e.clientX;
-      startWidth = drawer.offsetWidth;
-
-      // 添加拖动状态样式
-      drawer.classList.add('resizing');
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-
-      // 阻止默认行为和事件冒泡
-      e.preventDefault();
-      e.stopPropagation();
-
-      console.log('开始拖动调整宽度', { startX, startWidth });
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return;
-
-      const deltaX = startX - e.clientX; // 向左拖动为正值
-      const newWidth = startWidth + deltaX;
-
-      // 限制最小和最大宽度
-      const minWidth = DRAWER_UI.MIN_WIDTH_PX;
-      const maxWidth = Math.min(window.innerWidth * DRAWER_UI.MAX_VIEWPORT_RATIO, DRAWER_UI.MAX_WIDTH_PX);
-      const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-
-      // 计算宽度百分比
-      const widthPercentage = (constrainedWidth / window.innerWidth) * 100;
-
-      // 应用新宽度
-      drawer.style.width = `${constrainedWidth}px`;
-
-      console.log('拖动中', {
-        deltaX,
-        newWidth,
-        constrainedWidth,
-        widthPercentage: widthPercentage.toFixed(1) + '%'
-      });
-
-      // 阻止默认行为
-      e.preventDefault();
-    };
-
-    const handleMouseUp = (e: MouseEvent) => {
-      if (!isResizing) return;
-
-      isResizing = false;
-
-      // 移除拖动状态样式
-      drawer.classList.remove('resizing');
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-
-      // 保存用户设置的宽度到localStorage
-      const finalWidth = drawer.offsetWidth;
-      try {
-        localStorage.setItem(STORAGE_KEYS.DRAWER_WIDTH, finalWidth.toString());
-        console.log('保存抽屉宽度设置', { finalWidth });
-      } catch (error) {
-        console.warn('无法保存抽屉宽度设置到localStorage:', error);
-      }
-
-      console.log('结束拖动调整宽度', { finalWidth });
-
-      // 阻止默认行为
-      e.preventDefault();
-    };
-
-    // 绑定拖动事件
-    resizeHandle.addEventListener('mousedown', handleMouseDown);
-
-    // 全局鼠标事件（在document上监听以确保在快速拖动时也能捕获）
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    // 防止选中文本
-    resizeHandle.addEventListener('selectstart', (e) => e.preventDefault());
-    resizeHandle.addEventListener('dragstart', (e) => e.preventDefault());
-  }
-
-  // 从localStorage恢复保存的宽度设置
-  try {
-    const savedWidth = localStorage.getItem(STORAGE_KEYS.DRAWER_WIDTH);
-    if (savedWidth) {
-      const width = parseInt(savedWidth, 10);
-      if (width >= DRAWER_UI.MIN_WIDTH_PX && width <= window.innerWidth * DRAWER_UI.MAX_VIEWPORT_RATIO) {
-        drawer.style.width = `${width}px`;
-      }
-    }
-  } catch (error) {
-    console.warn('无法从localStorage恢复抽屉宽度设置:', error);
-  }
-
-  // Click outside to close - with check to prevent closing when clicking inside the JSON tree
-  document.addEventListener('click', (event: MouseEvent) => {
-    // 抽屉必须是打开的
-    if (!drawer.classList.contains('open')) {
-      return;
-    }
-
-    // 获取点击目标
-    const target = event.target as Element;
-
-    // 忽略抽屉内部的点击
-    if (drawer.contains(target)) {
-      return;
-    }
-
-    // 忽略react-json-view组件内部的点击（它们可能在Portal外渲染）
-    if (isJsonViewerElement(target)) {
-      return;
-    }
-
-    // 如果点击在抽屉外部，关闭抽屉
-    const drawerContent = drawer.querySelector('.json-drawer-content');
-    if (drawerContent) {
-      const reactRoot = drawerContent.querySelector('.json-viewer-react-root') as HTMLElement;
-      if (reactRoot) {
-        unmountReactComponent(reactRoot);
-      }
-    }
-    drawer.classList.remove('open');
-  });
-
-  return drawer;
-}
-
 // Show JSON in drawer with React component
 export function showJsonInDrawerWithReact(jsonString: string, version: string): void {
   if (!jsonString) return;
@@ -297,13 +158,11 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
     const jsonData = parseJsonSafely(jsonString);
 
     // Get or create drawer
-    const drawer = document.querySelector('.json-drawer') as HTMLElement || createJsonDrawerWithReactMount();
-    if (!document.body.contains(drawer)) {
-      document.body.appendChild(drawer);
-    }
+    const drawer = getOrCreateJsonDrawer();
+    ensureJsonDrawerMounted(drawer);
 
     // Get drawer content container
-    const drawerContent = drawer.querySelector('.json-drawer-content');
+    const drawerContent = getJsonDrawerContent(drawer);
     if (!drawerContent) return;
 
     // Clear previous content and create a fresh container for React
@@ -327,14 +186,14 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
           unmountReactComponent(reactRoot);
         }
       }
-      drawer.classList.remove('open');
+      closeJsonDrawer(drawer);
     };
 
     // Mount React component in drawer
     mountJsonViewer(jsonData, reactRoot, version, onClose);
 
     // Open drawer
-    drawer.classList.add('open');
+    openJsonDrawer(drawer);
 
     // 添加标记以帮助识别抽屉是由哪次显示创建的
     drawer.dataset.openedAt = Date.now().toString();
@@ -342,20 +201,8 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
     // Add the function to the window object so it can be called from the JsonViewer component
     window.showJsonInDrawerWithReact = showJsonInDrawerWithReact;
 
-    // 重新绑定点击外部关闭事件（首先移除所有已存在的事件监听器）
-    const clickOutsideHandler = (event: MouseEvent) => {
-      // 抽屉必须是打开的
-      if (!drawer.classList.contains('open')) {
-        return;
-      }
-
-      // 获取点击目标
+    setJsonDrawerOutsideClickHandler(drawer, (event: MouseEvent) => {
       const target = event.target as Element;
-
-      // 忽略抽屉内部的点击
-      if (drawer.contains(target)) {
-        return;
-      }
 
       // 忽略react-json-view组件内部的点击（它们可能在Portal外渲染）
       if (isJsonViewerElement(target)) {
@@ -370,30 +217,8 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
           unmountReactComponent(reactRoot);
         }
       }
-      drawer.classList.remove('open');
-    };
-
-    // 先移除现有的所有点击事件监听器
-    const oldHandlerId = drawer.getAttribute('data-click-handler-id');
-    if (oldHandlerId) {
-      try {
-        const oldHandler = (window as any)[`jsonDrawerClickHandler_${oldHandlerId}`];
-        if (typeof oldHandler === 'function') {
-          document.removeEventListener('click', oldHandler);
-          delete (window as any)[`jsonDrawerClickHandler_${oldHandlerId}`];
-        }
-      } catch (e) {
-        console.error('Error removing old click handler:', e);
-      }
-    }
-
-    // 添加新的点击事件监听器
-    document.addEventListener('click', clickOutsideHandler);
-
-    // 存储事件监听器引用以便后续移除
-    const handlerId = Date.now().toString();
-    drawer.setAttribute('data-click-handler-id', handlerId);
-    (window as any)[`jsonDrawerClickHandler_${handlerId}`] = clickOutsideHandler;
+      closeJsonDrawer(drawer);
+    });
 
   } catch (e) {
     console.error('Error showing JSON in drawer:', e);

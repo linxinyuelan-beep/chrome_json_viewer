@@ -19,7 +19,15 @@ import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
 import { parseJsonSafely } from './utils/jsonParser';
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_ACTIONS } from './config/messageActions';
-import { DETECTION_UI, DRAWER_UI, NOTIFICATION_UI } from './config/uiConstants';
+import { DETECTION_UI, NOTIFICATION_UI } from './config/uiConstants';
+import {
+    closeJsonDrawer,
+    ensureJsonDrawerMounted,
+    getJsonDrawerContent,
+    getOrCreateJsonDrawer,
+    openJsonDrawer,
+    setJsonDrawerOutsideClickHandler,
+} from './drawer/drawerHost';
 
 // 是否启用悬停检测，从存储中加载
 let enableHoverDetection = true;
@@ -301,12 +309,10 @@ async function showJsonInDrawer(jsonString: string): Promise<void> {
         console.error('Error importing React JSON drawer:', e);
 
         // Create a simple error message if React component fails to load
-        const drawer = document.querySelector('.json-drawer') as HTMLElement || createJsonDrawer();
-        if (!document.body.contains(drawer)) {
-            document.body.appendChild(drawer);
-        }
+        const drawer = getOrCreateJsonDrawer();
+        ensureJsonDrawerMounted(drawer);
 
-        const drawerContent = drawer.querySelector('.json-drawer-content');
+        const drawerContent = getJsonDrawerContent(drawer);
         if (!drawerContent) return;
 
         drawerContent.innerHTML = `
@@ -318,126 +324,12 @@ async function showJsonInDrawer(jsonString: string): Promise<void> {
             </div>
         `;
 
-        drawer.classList.add('open');
+        setJsonDrawerOutsideClickHandler(drawer, () => {
+            closeJsonDrawer(drawer);
+        });
+        openJsonDrawer(drawer);
         throw e; // 重新抛出错误以便调用者处理
     }
-}
-
-// These JSON rendering functions were removed as they are not used.
-// The extension now uses React-based JSON viewer component.
-// Create a simplified JSON drawer element
-function createJsonDrawer(): HTMLElement {
-    // Use a simple drawer implementation since we're now primarily using the React-based drawer
-    // from reactJsonDrawer.tsx for the actual JSON viewing
-    const drawer = document.createElement('div');
-    drawer.className = 'json-drawer';
-    drawer.innerHTML = `
-        <div class="json-drawer-resize-handle" title="拖动调整宽度"></div>
-        <div class="json-drawer-content"></div>
-    `;
-
-    // The close button is removed from here as the main UI is handled by React.
-    // The fallback can be closed by clicking outside.
-
-    // 添加拖动调整宽度功能
-    const resizeHandle = drawer.querySelector('.json-drawer-resize-handle') as HTMLElement;
-    if (resizeHandle) {
-        let isResizing = false;
-        let startX = 0;
-        let startWidth = 0;
-
-        const handleMouseDown = (e: MouseEvent) => {
-            isResizing = true;
-            startX = e.clientX;
-            startWidth = drawer.offsetWidth;
-
-            // 添加拖动状态样式
-            drawer.classList.add('resizing');
-            document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none';
-
-            // 阻止默认行为和事件冒泡
-            e.preventDefault();
-            e.stopPropagation();
-        };
-
-        const handleMouseMove = (e: MouseEvent) => {
-            if (!isResizing) return;
-
-            const deltaX = startX - e.clientX; // 向左拖动为正值
-            const newWidth = startWidth + deltaX;
-
-            // 限制最小和最大宽度
-            const minWidth = DRAWER_UI.MIN_WIDTH_PX;
-            const maxWidth = Math.min(window.innerWidth * DRAWER_UI.MAX_VIEWPORT_RATIO, DRAWER_UI.MAX_WIDTH_PX);
-            const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-
-            // 应用新宽度
-            drawer.style.width = `${constrainedWidth}px`;
-
-            // 阻止默认行为
-            e.preventDefault();
-        };
-
-        const handleMouseUp = (e: MouseEvent) => {
-            if (!isResizing) return;
-
-            isResizing = false;
-
-            // 移除拖动状态样式
-            drawer.classList.remove('resizing');
-            document.body.style.cursor = '';
-            document.body.style.userSelect = '';
-
-            // 保存用户设置的宽度到localStorage
-            const finalWidth = drawer.offsetWidth;
-            try {
-                localStorage.setItem(STORAGE_KEYS.DRAWER_WIDTH, finalWidth.toString());
-            } catch (error) {
-                console.warn('无法保存抽屉宽度设置到localStorage:', error);
-            }
-
-            // 阻止默认行为
-            e.preventDefault();
-        };
-
-        // 绑定拖动事件
-        resizeHandle.addEventListener('mousedown', handleMouseDown);
-
-        // 全局鼠标事件
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-
-        // 防止选中文本
-        resizeHandle.addEventListener('selectstart', (e) => e.preventDefault());
-        resizeHandle.addEventListener('dragstart', (e) => e.preventDefault());
-    }
-
-    // 从localStorage恢复保存的宽度设置
-    try {
-        const savedWidth = localStorage.getItem(STORAGE_KEYS.DRAWER_WIDTH);
-        if (savedWidth) {
-            const width = parseInt(savedWidth, 10);
-            if (width >= DRAWER_UI.MIN_WIDTH_PX && width <= window.innerWidth * DRAWER_UI.MAX_VIEWPORT_RATIO) {
-                drawer.style.width = `${width}px`;
-            }
-        }
-    } catch (error) {
-        console.warn('无法从localStorage恢复抽屉宽度设置:', error);
-    }
-
-    // 点击抽屉外部关闭
-    const clickOutsideHandler = (event: MouseEvent) => {
-        if (drawer.classList.contains('open') &&
-            !drawer.contains(event.target as Node)) {
-            drawer.classList.remove('open');
-        }
-    };
-
-    // 添加全局点击监听，确保点击抽屉外部时关闭抽屉
-    document.addEventListener('click', clickOutsideHandler);
-
-    return drawer;
 }
 
 // 获取元素内所有文本节点的辅助函数
@@ -693,8 +585,8 @@ function initializeJsonFormatter() {
     console.log('Initializing JSON formatter...');
 
     // 创建抽屉元素以便随时使用
-    const drawer = createJsonDrawer();
-    document.body.appendChild(drawer);
+    const drawer = getOrCreateJsonDrawer();
+    ensureJsonDrawerMounted(drawer);
 }
 
 // 在DOMContentLoaded事件中初始化基本功能
