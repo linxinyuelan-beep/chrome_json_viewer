@@ -12,8 +12,6 @@ const EXTENSION_VERSION = VERSION;
 console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_VERSION}`);
 
 
-// 导入工具函数
-import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_ACTIONS } from './config/messageActions';
 import { DETECTION_UI } from './config/uiConstants';
@@ -29,6 +27,7 @@ import { detectJsonInElement } from './content/jsonDetection';
 import { highlightJsonInElement } from './content/highlight';
 import { registerContentMessageHandler } from './content/messages';
 import { showNotification } from './content/notification';
+import { loadContentSettings } from './content/settings';
 
 // 是否启用悬停检测，从存储中加载
 let enableHoverDetection = true;
@@ -43,22 +42,9 @@ let extensionEnabledOnCurrentSite = true;
 
 // 初始化时加载设置
 async function initializeSettings() {
-  // 检查网站过滤设置
-  const filterConfig = await getSiteFilterConfig();
-  const currentUrl = window.location.href;
-  extensionEnabledOnCurrentSite = shouldEnableOnSite(currentUrl, filterConfig);
-  
-  // 如果在当前网站上禁用，直接返回，不加载其他设置
-  if (!extensionEnabledOnCurrentSite) {
-    console.log(`%c🚫 JSON Detector v${EXTENSION_VERSION}: Disabled on this site`,
-      'background: #f44336; color: white; padding: 2px 6px; border-radius: 2px;');
-    return;
-  }
-  
-  // 加载悬停检测设置
-  chrome.storage.local.get(STORAGE_KEYS.HOVER_DETECTION_ENABLED, (result) => {
-    enableHoverDetection = result[STORAGE_KEYS.HOVER_DETECTION_ENABLED] !== undefined ? result[STORAGE_KEYS.HOVER_DETECTION_ENABLED] : true;
-  });
+    const settings = await loadContentSettings(EXTENSION_VERSION);
+    extensionEnabledOnCurrentSite = settings.extensionEnabledOnCurrentSite;
+    enableHoverDetection = settings.hoverDetectionEnabled;
 }
 
 // 调用初始化函数
