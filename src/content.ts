@@ -28,6 +28,7 @@ import {
     setJsonDrawerOutsideClickHandler,
 } from './drawer/drawerHost';
 import { detectJsonInElement } from './content/jsonDetection';
+import { highlightJsonInElement } from './content/highlight';
 import { showNotification } from './content/notification';
 
 // 是否启用悬停检测，从存储中加载
@@ -148,59 +149,6 @@ async function showJsonInDrawer(jsonString: string): Promise<void> {
     }
 }
 
-// 获取元素内所有文本节点的辅助函数
-function getAllTextNodes(element: HTMLElement): Node[] {
-    const textNodes: Node[] = [];
-    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
-
-    let node;
-    while ((node = walker.nextNode())) {
-        textNodes.push(node);
-    }
-
-    return textNodes;
-}
-
-// 恢复原始文本的辅助函数
-function restoreOriginalText(highlightSpan: HTMLElement): void {
-    const parent = highlightSpan.parentNode;
-    if (!parent) return;
-
-    // 获取span前后的相邻文本节点
-    let prevTextNode = highlightSpan.previousSibling;
-    let nextTextNode = highlightSpan.nextSibling;
-
-    // 提取span中的文本
-    const spanText = highlightSpan.textContent || '';
-
-    // 移除span
-    parent.removeChild(highlightSpan);
-
-    // 创建新的文本节点包含span的内容
-    const newTextNode = document.createTextNode(spanText);
-
-    // 插入到适当的位置
-    if (nextTextNode) {
-        parent.insertBefore(newTextNode, nextTextNode);
-    } else {
-        parent.appendChild(newTextNode);
-    }
-
-    // 合并相邻的文本节点，避免文本碎片
-    if (prevTextNode && prevTextNode.nodeType === Node.TEXT_NODE &&
-        newTextNode.nodeType === Node.TEXT_NODE) {
-        prevTextNode.textContent = (prevTextNode.textContent || '') + newTextNode.textContent;
-        parent.removeChild(newTextNode);
-    }
-
-    // 合并后续文本节点，如果有的话
-    if (nextTextNode && nextTextNode.nodeType === Node.TEXT_NODE &&
-        newTextNode.parentNode && newTextNode.nodeType === Node.TEXT_NODE) {
-        newTextNode.textContent = (newTextNode.textContent || '') + nextTextNode.textContent;
-        parent.removeChild(nextTextNode);
-    }
-}
-
 // 节流函数
 function throttle<T extends (...args: any[]) => any>(
     func: T,
@@ -283,105 +231,16 @@ function enableHoverDetectionFeature(): void {
                 const jsonContents = detectJsonInElement(target);
 
                 if (jsonContents.length > 0) {
-                    // 找到所有JSON在原始文本中的位置，分别高亮每一个
                     const htmlTarget = target as HTMLElement;
-                    const originalText = htmlTarget.textContent || '';
-
-                    // 为了防止处理过程中文本改变导致的位置错误，先记录所有要处理的JSON及其位置
-                    const jsonPositions: { json: string, position: number }[] = [];
-
-                    // 查找每个JSON的位置
-                    for (const jsonContent of jsonContents) {
-                        const position = originalText.indexOf(jsonContent);
-                        if (position !== -1) {
-                            jsonPositions.push({ json: jsonContent, position });
-                        }
-                    }
-
-                    // 按位置排序，确保从后向前处理，避免前面的处理影响后面的位置
-                    jsonPositions.sort((a, b) => b.position - a.position);
-
-                    for (const { json, position } of jsonPositions) {
-                        try {
-                            // 为每个JSON查找包含它的文本节点
-                            const textNodes = getAllTextNodes(htmlTarget);
-                            let processedNode = false;
-
-                            for (const textNode of textNodes) {
-                                if (!textNode.textContent) continue;
-
-                                const nodeText = textNode.textContent;
-                                const jsonPosInNode = nodeText.indexOf(json);
-
-                                if (jsonPosInNode !== -1) {
-                                    // 创建一个ID来标识这个JSON的高亮
-                                    const jsonHighlightId = `json-highlight-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-
-                                    // 分割文本节点
-                                    const beforeTextNode = document.createTextNode(
-                                        nodeText.substring(0, jsonPosInNode)
-                                    );
-                                    const jsonSpan = document.createElement('span');
-                                    jsonSpan.className = 'json-text-hover';
-                                    jsonSpan.dataset.jsonContent = json;
-                                    jsonSpan.id = jsonHighlightId;
-                                    jsonSpan.textContent = json;
-                                    const afterTextNode = document.createTextNode(
-                                        nodeText.substring(jsonPosInNode + json.length)
-                                    );
-
-                                    // 替换原始文本节点
-                                    const parentNode = textNode.parentNode;
-                                    if (!parentNode) continue;
-
-                                    // 将分割后的节点插入DOM
-                                    parentNode.insertBefore(beforeTextNode, textNode);
-                                    parentNode.insertBefore(jsonSpan, textNode);
-                                    parentNode.insertBefore(afterTextNode, textNode);
-                                    parentNode.removeChild(textNode);
-
-                                    // 添加临时双击事件处理器
-                                    const dblClickHandlerForJson = ((jsonString: string) => (ce: Event) => {
-                                        const mouseEvent = ce as MouseEvent;
-                                        mouseEvent.preventDefault();
-                                        mouseEvent.stopPropagation();
-
-                                        // 根据用户设置显示JSON
-                                        showJsonByPreference(jsonString).catch(error => {
-                                            console.error('Error showing JSON:', error);
-                                            showNotification('无法显示JSON', 'error');
-                                        });
-                                    })(json);
-
-                                    // 为当前jsonSpan添加双击处理
-                                    jsonSpan.addEventListener('dblclick', dblClickHandlerForJson);
-
-                                    // 鼠标移出时安全移除高亮
-                                    const currentHighlightId = jsonHighlightId; // 保存当前ID以便在闭包中访问
-                                    htmlTarget.addEventListener('mouseleave', () => {
-                                        try {
-                                            // 找到我们添加的span元素
-                                            const highlightSpan = document.getElementById(currentHighlightId);
-                                            if (highlightSpan && highlightSpan.parentNode) {
-                                                restoreOriginalText(highlightSpan);
-                                            }
-                                        } catch (e) {
-                                            console.error('Error removing JSON highlight:', e);
-                                        }
-                                    }, { once: true });
-
-                                    processedNode = true;
-                                    break;
-                                }
+                    highlightJsonInElement(htmlTarget, jsonContents, {
+                        onOpenJson: showJsonByPreference,
+                        onError: (message, error) => {
+                            console.error(message, error);
+                            if (message === 'Error showing JSON:') {
+                                showNotification('无法显示JSON', 'error');
                             }
-
-                            if (!processedNode) {
-                                // console.log(`Could not find text node containing JSON: ${json.substring(0, 30)}...`);
-                            }
-                        } catch (e) {
-                            console.error("Error highlighting JSON:", e);
                         }
-                    }
+                    });
                 }
             }
         }
