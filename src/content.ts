@@ -18,7 +18,7 @@ import { getCurrentLanguage, getTranslations } from "./utils/i18n";
 import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_ACTIONS } from './config/messageActions';
-import { DETECTION_UI, NOTIFICATION_UI } from './config/uiConstants';
+import { DETECTION_UI } from './config/uiConstants';
 import {
     closeJsonDrawer,
     ensureJsonDrawerMounted,
@@ -28,6 +28,7 @@ import {
     setJsonDrawerOutsideClickHandler,
 } from './drawer/drawerHost';
 import { detectJsonInElement } from './content/jsonDetection';
+import { showNotification } from './content/notification';
 
 // 是否启用悬停检测，从存储中加载
 let enableHoverDetection = true;
@@ -62,51 +63,6 @@ async function initializeSettings() {
 
 // 调用初始化函数
 initializeSettings();
-
-// 显示通知
-function showNotification(message: string, type: 'success' | 'error' | 'info' = 'info'): void {
-    // 创建通知元素
-    const notification = document.createElement('div');
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.left = '50%';
-    notification.style.transform = 'translateX(-50%)';
-    notification.style.padding = '10px 20px';
-    notification.style.color = 'white';
-    notification.style.borderRadius = '4px';
-    notification.style.zIndex = NOTIFICATION_UI.Z_INDEX;
-    notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-    notification.style.transition = 'opacity 0.5s';
-    notification.style.fontSize = '14px';
-
-    // 根据类型设置样式
-    switch (type) {
-        case 'success':
-            notification.style.backgroundColor = '#4caf50';
-            break;
-        case 'error':
-            notification.style.backgroundColor = '#f44336';
-            break;
-        case 'info':
-            notification.style.backgroundColor = '#2196f3';
-            break;
-    }
-
-    notification.textContent = message;
-
-    // 添加到页面
-    document.body.appendChild(notification);
-
-    // 3秒后淡出
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, NOTIFICATION_UI.FADE_MS);
-    }, NOTIFICATION_UI.DURATION_MS);
-}
 
 // 使用导入的 isValidNestedJson 函数，不再需要本地定义
 const isValidJson = isValidNestedJson;
