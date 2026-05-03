@@ -14,9 +14,17 @@ const rightJson = urlParams.get('right') || '';
 const modeParam = urlParams.get('mode');
 const initialMode: 'edit' | 'view' = modeParam === 'view' ? 'view' : 'edit';
 
-// 解码 JSON 数据
-const decodedLeft = leftJson ? decodeURIComponent(leftJson) : '';
-const decodedRight = rightJson ? decodeURIComponent(rightJson) : '';
+// 解码 JSON 数据，兼容 URL 参数格式不合法的情况
+function safeDecodeURIComponent(str: string): string {
+  try {
+    return decodeURIComponent(str);
+  } catch {
+    return str;
+  }
+}
+
+const decodedLeft = leftJson ? safeDecodeURIComponent(leftJson) : '';
+const decodedRight = rightJson ? safeDecodeURIComponent(rightJson) : '';
 
 // 渲染应用
 ReactDOM.render(
