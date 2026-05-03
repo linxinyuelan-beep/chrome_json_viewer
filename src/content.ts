@@ -247,14 +247,15 @@ function findBalancedPatterns(text: string, openChar: string, closeChar: string)
 async function openJsonInWindow(jsonString: string): Promise<void> {
     try {
         // 先保存JSON数据到background script的全局变量中
-        await chrome.runtime.sendMessage({
+        const payloadResponse = await chrome.runtime.sendMessage({
             action: MESSAGE_ACTIONS.SET_JSON_DATA,
             jsonString: jsonString
         });
 
         // 然后打开新标签页
         const response = await chrome.runtime.sendMessage({
-            action: MESSAGE_ACTIONS.OPEN_JSON_IN_TAB
+            action: MESSAGE_ACTIONS.OPEN_JSON_IN_TAB,
+            payloadId: payloadResponse?.payloadId
         });
 
         if (!response || !response.success) {

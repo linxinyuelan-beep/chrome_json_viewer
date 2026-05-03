@@ -7,6 +7,9 @@ import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_ACTIONS, MESSAGE_COMMANDS } from './config/messageActions';
 import { COMMAND_IDS, CONTEXT_MENU_IDS } from './config/contextMenus';
 import { WINDOW_UI } from './config/uiConstants';
+import { saveJsonPayload } from './utils/jsonPayloadStore';
+
+let pendingJsonPayloadId: string | null = null;
 
 // Function to create or update the context menu based on current tab
 async function setupContextMenu(tabUrl?: string) {
@@ -126,9 +129,6 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
     });
 });
 
-// 全局变量用于临时存储选中的JSON内容
-(chrome as any).action = (chrome as any).action || {};
-
 // 处理右键菜单点击
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === CONTEXT_MENU_IDS.TOGGLE_AUTO_DETECTION) {
@@ -140,9 +140,10 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         }
     } else if (info.menuItemId === CONTEXT_MENU_IDS.FORMAT_SELECTED_JSON) {
         if (!tab || tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
-            // 保存选中文本到全局变量并打开新窗口
-            (chrome as any).action.sJson = info.selectionText;
-            openJsonWindow();
+            // 保存选中文本并打开新窗口
+            void openJsonWindowWithPayload(info.selectionText || '').catch((error) => {
+                console.error('Error opening JSON window from selection:', error);
+            });
             return;
         }
         // 读取用户设置，决定显示方式
@@ -150,8 +151,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             const displayMode = result[STORAGE_KEYS.JSON_DISPLAY_MODE] || 'drawer';
 
             if (displayMode === 'window') {
-                (chrome as any).action.sJson = info.selectionText;
-                openJsonWindow();
+                void openJsonWindowWithPayload(info.selectionText || '').catch((error) => {
+                    console.error('Error opening JSON window from selection:', error);
+                });
             } else {
                 // 在当前页面的抽屉中显示
                 chrome.tabs.sendMessage(tab.id as number, {
@@ -164,14 +166,20 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 // 打开JSON窗口的函数
-function openJsonWindow() {
-    const jsonH_url = chrome.runtime.getURL("json-window.html");
+function openJsonWindow(payloadId?: string) {
+    const path = payloadId ? `json-window.html?payloadId=${encodeURIComponent(payloadId)}` : 'json-window.html';
+    const jsonH_url = chrome.runtime.getURL(path);
     chrome.windows.create({
         url: jsonH_url,
         type: "popup",
         width: WINDOW_UI.JSON_WINDOW_WIDTH,
         height: WINDOW_UI.JSON_WINDOW_HEIGHT
     });
+}
+
+async function openJsonWindowWithPayload(jsonString: string): Promise<void> {
+    const payloadId = await saveJsonPayload(jsonString);
+    openJsonWindow(payloadId);
 }
 
 // 监听命令快捷键
@@ -208,29 +216,32 @@ chrome.commands.onCommand.addListener(async (command) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Background script received message:', request);
 
-    // 处理获取JSON数据的请求（新的实现方式）
+    // Legacy request kept for older windows without a payloadId.
     if (request.cmd === MESSAGE_COMMANDS.GET_JSON) {
-        const jsonData = (chrome as any).action?.sJson || null;
-        sendResponse(jsonData);
-        // 清空缓存，避免重复使用
-        if ((chrome as any).action) {
-            (chrome as any).action.sJson = null;
-        }
+        sendResponse(null);
         return true;
     }
 
     // 处理设置JSON数据的请求（新的实现方式）
     if (request.action === MESSAGE_ACTIONS.SET_JSON_DATA) {
-        (chrome as any).action = (chrome as any).action || {};
-        (chrome as any).action.sJson = request.jsonString;
-        sendResponse({ success: true });
+        saveJsonPayload(request.jsonString)
+            .then((payloadId) => {
+                pendingJsonPayloadId = payloadId;
+                sendResponse({ success: true, payloadId });
+            })
+            .catch((error) => {
+                console.error('Error saving JSON payload:', error);
+                sendResponse({ success: false, error: String(error) });
+            });
         return true;
     }
 
     // 处理打开JSON标签页的请求（新的实现方式）
     if (request.action === MESSAGE_ACTIONS.OPEN_JSON_IN_TAB) {
         try {
-            openJsonWindow();
+            const payloadId = request.payloadId || pendingJsonPayloadId;
+            pendingJsonPayloadId = null;
+            openJsonWindow(payloadId);
             sendResponse({ success: true });
         } catch (error) {
             console.error('Error in openJsonInTab:', error);
@@ -258,12 +269,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === MESSAGE_ACTIONS.OPEN_JSON_WINDOW) {
         console.log('Background script received openJsonWindow request');
         try {
-            // 使用新的方式：保存到全局变量并打开窗口
+            // 保存 payload 并打开窗口
             if (request.jsonData) {
-                (chrome as any).action = (chrome as any).action || {};
-                (chrome as any).action.sJson = request.jsonData;
-                openJsonWindow();
-                sendResponse({ success: true });
+                saveJsonPayload(request.jsonData)
+                    .then((payloadId) => {
+                        openJsonWindow(payloadId);
+                        sendResponse({ success: true, payloadId });
+                    })
+                    .catch((error) => {
+                        console.error('Error saving JSON payload:', error);
+                        sendResponse({ success: false, error: String(error) });
+                    });
             } else {
                 sendResponse({ success: false, error: 'No JSON data provided' });
             }

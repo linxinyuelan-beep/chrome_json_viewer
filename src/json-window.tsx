@@ -6,6 +6,7 @@ import JsonEditorWrapper, { JsonEditorRef } from './components/JsonEditorWrapper
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from './utils/i18n';
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_COMMANDS } from './config/messageActions';
+import { consumeJsonPayload } from './utils/jsonPayloadStore';
 
 // JSON Window React Component
 const JsonWindowApp: React.FC = () => {
@@ -67,6 +68,23 @@ const JsonWindowApp: React.FC = () => {
 
   // 通过消息机制从后台脚本获取JSON数据
   const getJsonFromBackground = async (): Promise<any> => {
+    const params = new URLSearchParams(window.location.search);
+    const payloadId = params.get('payloadId');
+
+    if (payloadId) {
+      try {
+        const jsonString = await consumeJsonPayload(payloadId);
+        if (!jsonString) {
+          console.log('No JSON payload found for id:', payloadId);
+          return null;
+        }
+        return JSON.parse(jsonString);
+      } catch (e) {
+        console.error('Error loading JSON payload:', e);
+        return null;
+      }
+    }
+
     if (typeof chrome !== 'undefined' && chrome.runtime) {
       try {
         return new Promise((resolve) => {
