@@ -1,27 +1,38 @@
 import './config/public-path';
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import ReactJson from '@microlink/react-json-view';
-import JsonEditorWrapper, { JsonEditorRef } from './components/JsonEditorWrapper';
+import { JsonEditorRef } from './components/JsonEditorWrapper';
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from './utils/i18n';
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_COMMANDS } from './config/messageActions';
 import { consumeJsonPayload } from './utils/jsonPayloadStore';
 import { parseJsonPreserveLargeNumbers } from './utils/jsonParse';
+import { formatJsonSize } from './utils/jsonViewer';
+import JsonViewerPathBar from './components/jsonViewer/JsonViewerPathBar';
+import JsonViewerShell from './components/jsonViewer/JsonViewerShell';
+import { useJsonClipboard } from './components/jsonViewer/useJsonClipboard';
+import { useJsonPath } from './components/jsonViewer/useJsonPath';
+import { useJsonViewerMode } from './components/jsonViewer/useJsonViewerMode';
 
 // JSON Window React Component
 const JsonWindowApp: React.FC = () => {
   const [jsonData, setJsonData] = useState<any>(null);
   const [jsonSize, setJsonSize] = useState<string>('');
-  const [copySuccess, setCopySuccess] = useState(false);
-
-  // JSON path related states
-  const [currentJsonPath, setCurrentJsonPath] = useState<string>('');
-  const [pathCopySuccess, setPathCopySuccess] = useState(false);
   const [i18n, setI18n] = useState<Translations>(getTranslations(DEFAULT_LANGUAGE));
-
-  // View mode state: 'default' (microlink) or 'editor' (jsoneditor)
-  const [viewMode, setViewMode] = useState<'default' | 'editor'>('default');
+  const { copySuccess, copyJson } = useJsonClipboard();
+  const {
+    currentJsonPath,
+    pathCopySuccess,
+    handleJsonPathSelect,
+    copyCurrentPath,
+  } = useJsonPath({
+    errorText: i18n.errorGettingPath,
+    copyErrorText: i18n.failedToCopyPath,
+  });
+  const { viewMode, toggleViewMode } = useJsonViewerMode({
+    storageKey: STORAGE_KEYS.PREFERRED_VIEW_MODE,
+    persistOnToggle: true,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -50,22 +61,6 @@ const JsonWindowApp: React.FC = () => {
   useEffect(() => {
     document.title = i18n.jsonViewerTitle;
   }, [i18n]);
-
-  // Load view mode preference
-  useEffect(() => {
-    chrome.storage.local.get([STORAGE_KEYS.PREFERRED_VIEW_MODE], (result) => {
-      if (result[STORAGE_KEYS.PREFERRED_VIEW_MODE]) {
-        setViewMode(result[STORAGE_KEYS.PREFERRED_VIEW_MODE]);
-      }
-    });
-  }, []);
-
-  // Toggle view mode
-  const toggleViewMode = () => {
-    const newMode = viewMode === 'default' ? 'editor' : 'default';
-    setViewMode(newMode);
-    chrome.storage.local.set({ [STORAGE_KEYS.PREFERRED_VIEW_MODE]: newMode });
-  };
 
   // 通过消息机制从后台脚本获取JSON数据
   const getJsonFromBackground = async (): Promise<any> => {
@@ -123,15 +118,6 @@ const JsonWindowApp: React.FC = () => {
     return null;
   };
 
-  // 格式化JSON大小
-  const formatJsonSize = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
   // 初始化数据
   useEffect(() => {
     const loadData = async () => {
@@ -167,133 +153,6 @@ const JsonWindowApp: React.FC = () => {
     }
   };
 
-  // 复制JSON到剪贴板
-  const copyJson = async () => {
-    if (!jsonData) return;
-
-    const jsonString = JSON.stringify(jsonData, null, 2);
-    try {
-      await navigator.clipboard.writeText(jsonString);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-      alert(i18n.failedToCopyJsonToClipboard);
-    }
-  };
-
-  // Handle JSON path selection and display
-  const handleJsonPathSelect = (selectInfo: any) => {
-    try {
-      console.log('Select info:', selectInfo); // Debug log to see what we get
-
-      // Build JSON path from namespace and current key
-      let pathParts: (string | number)[] = [];
-
-      // Add namespace parts if available
-      if (selectInfo.namespace && selectInfo.namespace.length > 0) {
-        pathParts = [...selectInfo.namespace];
-      }
-
-      // Add current key name if available and not null
-      if (selectInfo.name !== null && selectInfo.name !== undefined) {
-        pathParts.push(selectInfo.name);
-      }
-
-      let path = '';
-      if (pathParts.length > 0) {
-        // Convert path parts array to dot notation
-        path = pathParts.map((key: any) => {
-          // Handle array indices and object keys
-          if (typeof key === 'number') {
-            return `[${key}]`;
-          } else if (typeof key === 'string') {
-            // 如果是数字字符串，则作为数组索引处理
-            if (/^\d+$/.test(key)) {
-              return `[${key}]`;
-            }
-            // Check if key contains special characters that need bracket notation
-            if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)) {
-              return `.${key}`;
-            } else {
-              return `["${key}"]`;
-            }
-          }
-          return `.${key}`;
-        }).join('');
-
-        // Remove leading dot if present
-        if (path.startsWith('.')) {
-          path = path.substring(1);
-        }
-
-        // Add root prefix if needed
-        if (path) {
-          path = `$${path.startsWith('[') ? '' : '.'}${path}`;
-        } else {
-          path = '$';
-        }
-      } else {
-        path = '$';
-      }
-
-      // Update current path display
-      setCurrentJsonPath(path);
-
-      // Log the path for debugging
-      console.log('JSON Path selected:', path);
-      console.log('Path parts:', pathParts);
-    } catch (err: unknown) {
-      console.error('Failed to process JSON path:', err);
-      setCurrentJsonPath(i18n.errorGettingPath);
-    }
-  };
-
-  // Copy current path to clipboard
-  const copyCurrentPath = async () => {
-    if (!currentJsonPath) {
-      return;
-    }
-
-    try {
-      // Copy path to clipboard
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(currentJsonPath);
-      } else {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = currentJsonPath;
-        textArea.style.position = 'fixed';
-        textArea.style.left = '-999999px';
-        textArea.style.top = '-999999px';
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-
-        const successful = document.execCommand('copy');
-        if (!successful) {
-          throw new Error('Failed to copy using execCommand');
-        }
-
-        document.body.removeChild(textArea);
-      }
-
-      // Show success feedback
-      setPathCopySuccess(true);
-      setTimeout(() => setPathCopySuccess(false), 2000);
-
-      console.log('JSON Path copied:', currentJsonPath);
-    } catch (err: unknown) {
-      console.error('Failed to copy JSON path:', err);
-      let errorMessage = i18n.unknownError;
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      alert(`${i18n.failedToCopyPath}: ${errorMessage}`);
-    }
-  };
-
-
   // 如果没有JSON数据
   if (!jsonData) {
     return (
@@ -319,19 +178,15 @@ const JsonWindowApp: React.FC = () => {
           <span className="json-window-title">{i18n.jsonViewerTitle}</span>
           {jsonSize && <span className="json-window-size-info">{i18n.sizeLabel}: {jsonSize}</span>}
         </div>
-        {/* JSON Path display */}
-        {currentJsonPath && (
-          <div className="json-window-path-display">
-            <code className="json-window-path-value">{currentJsonPath}</code>
-            <button
-              className={`json-window-path-copy-btn ${pathCopySuccess ? 'success' : ''}`}
-              onClick={copyCurrentPath}
-              title={i18n.copyPathToClipboard}
-            >
-              {pathCopySuccess ? '✓' : '📋'}
-            </button>
-          </div>
-        )}
+        <JsonViewerPathBar
+          path={currentJsonPath}
+          copySuccess={pathCopySuccess}
+          onCopy={copyCurrentPath}
+          title={i18n.copyPathToClipboard}
+          containerClassName="json-window-path-display"
+          valueClassName="json-window-path-value"
+          buttonClassName="json-window-path-copy-btn"
+        />
         <div className="json-window-actions">
           <button
             className="json-window-button secondary"
@@ -348,7 +203,7 @@ const JsonWindowApp: React.FC = () => {
           </button>
           <button
             className={`json-window-button ${copySuccess ? 'success' : ''}`}
-            onClick={copyJson}
+            onClick={() => copyJson(jsonData, i18n.failedToCopyJsonToClipboard)}
           >
             {copySuccess ? `✓ ${i18n.copied}` : i18n.copyJson}
           </button>
@@ -356,42 +211,17 @@ const JsonWindowApp: React.FC = () => {
       </div>
       <div className="json-window-content">
         <div className="json-display">
-          <div className="json-tree-container" style={{ height: 'calc(100vh - 80px)' }}>
-            {viewMode === 'default' ? (
-              <ReactJson
-                src={jsonData}
-                theme="rjv-default"
-                style={{ backgroundColor: 'transparent' }}
-                collapsed={!expanded}
-                collapseStringsAfterLength={false}
-                displayDataTypes={false}
-                displayObjectSize={true}
-                enableClipboard={true}
-                escapeStrings={false}
-                name={null}
-                iconStyle="triangle"
-                indentWidth={2}
-                quotesOnKeys={false}
-                sortKeys={false}
-                validationMessage={i18n.invalidJsonFormat}
-                onSelect={(select) => {
-                  // Handle JSON path display functionality
-                  handleJsonPathSelect(select);
-                }}
-              />
-            ) : (
-              <JsonEditorWrapper
-                ref={jsonEditorRef}
-                data={jsonData}
-                mode="view"
-                expanded={expanded} // Pass expanded state
-                onChange={(newData) => {
-                  // Optional: update data if we want edits to reflect immediately
-                  // setJsonData(newData);
-                }}
-              />
-            )}
-          </div>
+          <JsonViewerShell
+            data={jsonData}
+            expanded={expanded}
+            viewMode={viewMode}
+            editorRef={jsonEditorRef}
+            onPathSelect={handleJsonPathSelect}
+            loadingText={i18n.loading}
+            height="calc(100vh - 80px)"
+            windowMode
+            invalidJsonText={i18n.invalidJsonFormat}
+          />
         </div>
       </div>
     </div>
