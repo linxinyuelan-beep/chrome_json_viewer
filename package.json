@@ -9,7 +9,8 @@
     "predev": "npm run version-sync",
     "build": "webpack --mode production",
     "dev": "webpack --mode development",
-    "watch": "webpack --watch"
+    "watch": "webpack --watch",
+    "smoke:build-output": "node scripts/check-build-output.js"
   },
   "dependencies": {
     "@microlink/react-json-view": "^1.27.0",
