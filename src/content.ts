@@ -16,7 +16,6 @@ console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_
 import { isValidNestedJson } from './utils/nestedJsonHandler';
 import { getCurrentLanguage, getTranslations } from "./utils/i18n";
 import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
-import { parseJsonSafely } from './utils/jsonParser';
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_ACTIONS } from './config/messageActions';
 import { DETECTION_UI, NOTIFICATION_UI } from './config/uiConstants';
@@ -28,6 +27,7 @@ import {
     openJsonDrawer,
     setJsonDrawerOutsideClickHandler,
 } from './drawer/drawerHost';
+import { detectJsonInElement } from './content/jsonDetection';
 
 // 是否启用悬停检测，从存储中加载
 let enableHoverDetection = true;
@@ -110,146 +110,6 @@ function showNotification(message: string, type: 'success' | 'error' | 'info' = 
 
 // 使用导入的 isValidNestedJson 函数，不再需要本地定义
 const isValidJson = isValidNestedJson;
-
-// 在元素中检测JSON内容
-function detectJsonInElement(element: Element): string[] {
-    // 获取元素的文本内容
-    const text = element.textContent || '';
-    if (text.length < 5) return [];
-
-    const detectedJsons: string[] = [];
-
-    // 查找文本中可能包含的所有JSON
-    const allPotentialJsons = findAllPotentialJsons(text);
-    detectedJsons.push(...allPotentialJsons);
-
-    // 去除重复的JSON
-    const uniqueJsons = Array.from(new Set(detectedJsons));
-
-    // 按长度排序，优先选择较长的JSON (通常包含更多信息)
-    return uniqueJsons.sort((a, b) => b.length - a.length);
-}
-
-// 查找文本中所有潜在的JSON，增强精确度
-function findAllPotentialJsons(text: string): string[] {
-    const validJsons: string[] = [];
-    const candidateJsons: string[] = [];
-
-    // 首先检查整个文本是否是JSON
-    const trimmedText = text.trim();
-    if ((trimmedText.startsWith('{') && trimmedText.endsWith('}')) ||
-        (trimmedText.startsWith('[') && trimmedText.endsWith(']'))) {
-        try {
-            if (isValidJson(trimmedText)) {
-                validJsons.push(trimmedText);
-                return validJsons; // 如果整个文本是有效JSON，直接返回
-            }
-        } catch (e) {
-            // 继续尝试查找嵌套JSON
-        }
-    }
-
-    // 查找大括号配对的JSON对象
-    findBalancedPatterns(text, '{', '}').forEach(jsonStr => {
-        candidateJsons.push(jsonStr);
-    });
-
-    // 查找方括号配对的JSON数组
-    findBalancedPatterns(text, '[', ']').forEach(jsonStr => {
-        candidateJsons.push(jsonStr);
-    });
-
-    // 查找常见的格式，如req:后面跟着的JSON
-    // 使用更精确的模式匹配，优先查找完整的JSON
-    const reqPatterns = [
-        /req:\s*(\{[\s\S]*?[^\\]\})/g, // 匹配最后一个非转义的大括号
-        /res:\s*(\{[\s\S]*?[^\\]\})/g,
-        /param=\s*(\{[\s\S]*?[^\\]\}|\[[\s\S]*?[^\\]\])/g,
-        /"params":\s*(\{[\s\S]*?[^\\]\}|\[[\s\S]*?[^\\]\])/g,
-        /"data":\s*(\{[\s\S]*?[^\\]\}|\[[\s\S]*?[^\\]\])/g,
-        // 具体匹配用户示例中的格式
-        /\[\{"success".*?\}\]/g,
-        /\[\{"orderItemId".*?\}\]/g
-    ];
-
-    for (const pattern of reqPatterns) {
-        let match;
-        while ((match = pattern.exec(text)) !== null) {
-            const jsonStr = match[1] || match[0]; // 使用完整匹配或第一个捕获组
-            candidateJsons.push(jsonStr);
-        }
-    }
-
-    // 验证所有候选JSON
-    for (const jsonStr of candidateJsons) {
-        try {
-            if (isValidJson(jsonStr) && jsonStr.length > 10) {
-                // 进行更严格的验证，确保是完整的JSON对象/数组
-                const jsonObj = parseJsonSafely(jsonStr);
-                if (typeof jsonObj === 'object' && jsonObj !== null) {
-                    // 检查是否为顶层JSON（不是其他JSON的子集）
-                    let isSubset = false;
-                    for (const otherJson of candidateJsons) {
-                        if (otherJson !== jsonStr && otherJson.includes(jsonStr) &&
-                            isValidJson(otherJson) && otherJson.length > jsonStr.length) {
-                            // 如果当前JSON是另一个更长有效JSON的子集，跳过它
-                            isSubset = true;
-                            break;
-                        }
-                    }
-                    if (!isSubset) {
-                        validJsons.push(jsonStr);
-                    }
-                }
-            }
-        } catch (e) {
-            // 忽略无效JSON
-        }
-    }
-
-    // 去除重复项
-    const uniqueJsons = Array.from(new Set(validJsons));
-    return uniqueJsons;
-}
-
-// 查找文本中所有平衡的括号对，优化查找完整JSON
-function findBalancedPatterns(text: string, openChar: string, closeChar: string): string[] {
-    const results: string[] = [];
-    const stack: number[] = [];
-    const positions: number[][] = []; // 存储所有可能的起始-结束位置对
-
-    // 遍历文本，找出所有可能的平衡括号对
-    for (let i = 0; i < text.length; i++) {
-        if (text[i] === openChar) {
-            stack.push(i);
-        } else if (text[i] === closeChar && stack.length > 0) {
-            const startIdx = stack.pop()!;
-            // 如果这是最外层的括号对，保存结果位置
-            if (stack.length === 0) {
-                positions.push([startIdx, i]);
-            }
-        }
-    }
-
-    // 筛选出顶层的括号对（不是其他括号对的子集）
-    const topLevelPositions = positions.filter(([start, end]) => {
-        return !positions.some(([otherStart, otherEnd]) => {
-            // 检查当前括号对是否完全包含在另一个括号对内
-            return (start > otherStart && end < otherEnd);
-        });
-    });
-
-    // 从文本中提取顶层括号对的内容
-    topLevelPositions.forEach(([start, end]) => {
-        const jsonStr = text.substring(start, end + 1);
-        // 验证提取的字符串长度合理且格式正确
-        if (jsonStr.length > 5 && jsonStr.length <= text.length) {
-            results.push(jsonStr);
-        }
-    });
-
-    return results;
-}
 
 // 在新窗口中打开JSON
 async function openJsonInWindow(jsonString: string): Promise<void> {
