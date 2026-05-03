@@ -17,6 +17,9 @@ import { isValidNestedJson } from './utils/nestedJsonHandler';
 import { getCurrentLanguage, getTranslations } from "./utils/i18n";
 import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
 import { parseJsonSafely } from './utils/jsonParser';
+import { STORAGE_KEYS } from './config/storageKeys';
+import { MESSAGE_ACTIONS } from './config/messageActions';
+import { DETECTION_UI, DRAWER_UI, NOTIFICATION_UI } from './config/uiConstants';
 
 // 是否启用悬停检测，从存储中加载
 let enableHoverDetection = true;
@@ -44,8 +47,8 @@ async function initializeSettings() {
   }
   
   // 加载悬停检测设置
-  chrome.storage.local.get('hoverDetectionEnabled', (result) => {
-    enableHoverDetection = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
+  chrome.storage.local.get(STORAGE_KEYS.HOVER_DETECTION_ENABLED, (result) => {
+    enableHoverDetection = result[STORAGE_KEYS.HOVER_DETECTION_ENABLED] !== undefined ? result[STORAGE_KEYS.HOVER_DETECTION_ENABLED] : true;
   });
 }
 
@@ -63,7 +66,7 @@ function showNotification(message: string, type: 'success' | 'error' | 'info' = 
     notification.style.padding = '10px 20px';
     notification.style.color = 'white';
     notification.style.borderRadius = '4px';
-    notification.style.zIndex = '100000';
+    notification.style.zIndex = NOTIFICATION_UI.Z_INDEX;
     notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
     notification.style.transition = 'opacity 0.5s';
     notification.style.fontSize = '14px';
@@ -93,8 +96,8 @@ function showNotification(message: string, type: 'success' | 'error' | 'info' = 
             if (notification.parentNode) {
                 notification.parentNode.removeChild(notification);
             }
-        }, 500);
-    }, 3000);
+        }, NOTIFICATION_UI.FADE_MS);
+    }, NOTIFICATION_UI.DURATION_MS);
 }
 
 // 使用导入的 isValidNestedJson 函数，不再需要本地定义
@@ -245,13 +248,13 @@ async function openJsonInWindow(jsonString: string): Promise<void> {
     try {
         // 先保存JSON数据到background script的全局变量中
         await chrome.runtime.sendMessage({
-            action: 'setJsonData',
+            action: MESSAGE_ACTIONS.SET_JSON_DATA,
             jsonString: jsonString
         });
 
         // 然后打开新标签页
         const response = await chrome.runtime.sendMessage({
-            action: 'openJsonInTab'
+            action: MESSAGE_ACTIONS.OPEN_JSON_IN_TAB
         });
 
         if (!response || !response.success) {
@@ -269,8 +272,8 @@ async function openJsonInWindow(jsonString: string): Promise<void> {
 async function showJsonByPreference(jsonString: string): Promise<void> {
     try {
         // 获取用户的显示偏好设置
-        const result = await chrome.storage.local.get('jsonDisplayMode');
-        const displayMode = result.jsonDisplayMode || 'drawer';
+        const result = await chrome.storage.local.get(STORAGE_KEYS.JSON_DISPLAY_MODE);
+        const displayMode = result[STORAGE_KEYS.JSON_DISPLAY_MODE] || 'drawer';
 
         if (displayMode === 'window') {
             await openJsonInWindow(jsonString);
@@ -364,8 +367,8 @@ function createJsonDrawer(): HTMLElement {
             const newWidth = startWidth + deltaX;
 
             // 限制最小和最大宽度
-            const minWidth = 300;
-            const maxWidth = Math.min(window.innerWidth * 0.9, 1600); // 增加到90%和1600px
+            const minWidth = DRAWER_UI.MIN_WIDTH_PX;
+            const maxWidth = Math.min(window.innerWidth * DRAWER_UI.MAX_VIEWPORT_RATIO, DRAWER_UI.MAX_WIDTH_PX);
             const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
 
             // 应用新宽度
@@ -388,7 +391,7 @@ function createJsonDrawer(): HTMLElement {
             // 保存用户设置的宽度到localStorage
             const finalWidth = drawer.offsetWidth;
             try {
-                localStorage.setItem('jsonDrawerWidth', finalWidth.toString());
+                localStorage.setItem(STORAGE_KEYS.DRAWER_WIDTH, finalWidth.toString());
             } catch (error) {
                 console.warn('无法保存抽屉宽度设置到localStorage:', error);
             }
@@ -411,10 +414,10 @@ function createJsonDrawer(): HTMLElement {
 
     // 从localStorage恢复保存的宽度设置
     try {
-        const savedWidth = localStorage.getItem('jsonDrawerWidth');
+        const savedWidth = localStorage.getItem(STORAGE_KEYS.DRAWER_WIDTH);
         if (savedWidth) {
             const width = parseInt(savedWidth, 10);
-            if (width >= 300 && width <= window.innerWidth * 0.9) { // 更新到90%
+            if (width >= DRAWER_UI.MIN_WIDTH_PX && width <= window.innerWidth * DRAWER_UI.MAX_VIEWPORT_RATIO) {
                 drawer.style.width = `${width}px`;
             }
         }
@@ -673,7 +676,7 @@ function enableHoverDetectionFeature(): void {
                 }
             }
         }
-    }, 150)); // 150ms的节流，保持响应性但不过度消耗性能
+    }, DETECTION_UI.HOVER_THROTTLE_MS));
 
     // 标记为已添加
     hoverDetectionListenerAdded = true;
@@ -703,7 +706,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     const lang = await getCurrentLanguage();
     const i18n = getTranslations(lang);
 
-    if (request.action === 'formatSelectedJson' && request.selectedText) {
+    if (request.action === MESSAGE_ACTIONS.FORMAT_SELECTED_JSON && request.selectedText) {
         // 尝试格式化选中的 JSON
         if (isValidJson(request.selectedText)) {
             showJsonInDrawer(request.selectedText)
@@ -720,7 +723,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         }
         return true; // 支持异步响应
 
-    } else if (request.action === 'setHoverDetection') {
+    } else if (request.action === MESSAGE_ACTIONS.SET_HOVER_DETECTION) {
         // 设置悬停检测状态
         enableHoverDetection = request.enabled;
 
@@ -738,12 +741,12 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         sendResponse({ enabled: enableHoverDetection });
         return true; // 支持异步响应
 
-    } else if (request.action === 'toggleHoverDetection') {
+    } else if (request.action === MESSAGE_ACTIONS.TOGGLE_HOVER_DETECTION) {
         // 保持兼容性，但现在也会保存到存储
         enableHoverDetection = !enableHoverDetection;
 
         // 保存到存储
-        chrome.storage.local.set({ hoverDetectionEnabled: enableHoverDetection });
+        chrome.storage.local.set({ [STORAGE_KEYS.HOVER_DETECTION_ENABLED]: enableHoverDetection });
 
         // 显示状态变化通知
         showNotification(
@@ -760,12 +763,12 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         sendResponse({ enabled: enableHoverDetection });
         return true; // 支持异步响应
 
-    } else if (request.action === 'getHoverDetectionState') {
+    } else if (request.action === MESSAGE_ACTIONS.GET_HOVER_DETECTION_STATE) {
         // 返回当前悬停检测状态
         sendResponse({ enabled: enableHoverDetection });
         return true; // 支持异步响应
 
-    } else if (request.action === 'showJsonFromPopup') {
+    } else if (request.action === MESSAGE_ACTIONS.SHOW_JSON_FROM_POPUP) {
         // 处理来自弹出窗口的JSON格式化请求
         console.log('Received showJsonFromPopup message with JSON length:', request.jsonString?.length);
         if (request.jsonString) {
@@ -784,7 +787,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         }
         return true; // 支持异步响应
 
-    } else if (request.action === 'showJsonInDrawer') {
+    } else if (request.action === MESSAGE_ACTIONS.SHOW_JSON_IN_DRAWER) {
         // 处理来自background script的在抽屉中显示JSON的请求
         console.log('Received showJsonInDrawer message with JSON length:', request.jsonString?.length);
         if (request.jsonString) {
@@ -803,7 +806,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         }
         return true; // 支持异步响应
 
-    } else if (request.action === 'toggleAutoDetectionTemporarily') {
+    } else if (request.action === MESSAGE_ACTIONS.TOGGLE_AUTO_DETECTION_TEMPORARILY) {
         // 智能切换自动检测状态（临时开启或关闭，直到页面刷新）
         // 如果当前悬停检测已启用，则临时关闭；如果已禁用，则临时开启
         if (enableHoverDetection && !autoDetectionTemporarilyEnabled) {
@@ -850,5 +853,5 @@ window.addEventListener('load', () => {
         if (enableHoverDetection || autoDetectionTemporarilyEnabled) {
             enableHoverDetectionFeature();
         }
-    }, 500); // 等待500ms确保页面内容完全加载
+    }, DETECTION_UI.LOAD_INIT_DELAY_MS);
 });

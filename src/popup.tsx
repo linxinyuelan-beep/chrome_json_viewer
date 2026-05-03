@@ -24,6 +24,8 @@ import {
   addSiteToFilter,
   removeSiteFromFilter
 } from './utils/siteFilter';
+import { STORAGE_KEYS } from './config/storageKeys';
+import { MESSAGE_ACTIONS } from './config/messageActions';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<'settings' | 'json-input' | 'site-filter'>('json-input');
@@ -53,20 +55,20 @@ const App: React.FC = () => {
         setTranslations(getTranslations(currentLang));
 
         // Load JSON display mode setting
-        chrome.storage.local.get('jsonDisplayMode', (result) => {
-          const mode = result.jsonDisplayMode || 'drawer';
+        chrome.storage.local.get(STORAGE_KEYS.JSON_DISPLAY_MODE, (result) => {
+          const mode = result[STORAGE_KEYS.JSON_DISPLAY_MODE] || 'drawer';
           setJsonDisplayMode(mode);
         });
 
         // Load default viewer mode setting
-        chrome.storage.local.get('defaultViewerMode', (result) => {
-          const mode = result.defaultViewerMode || 'default';
+        chrome.storage.local.get(STORAGE_KEYS.DEFAULT_VIEWER_MODE, (result) => {
+          const mode = result[STORAGE_KEYS.DEFAULT_VIEWER_MODE] || 'default';
           setDefaultViewerMode(mode);
         });
 
         // Load hover detection setting from storage
-        chrome.storage.local.get('hoverDetectionEnabled', (result) => {
-          const enabled = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
+        chrome.storage.local.get(STORAGE_KEYS.HOVER_DETECTION_ENABLED, (result) => {
+          const enabled = result[STORAGE_KEYS.HOVER_DETECTION_ENABLED] !== undefined ? result[STORAGE_KEYS.HOVER_DETECTION_ENABLED] : true;
           setJsonHoverEnabled(enabled);
         });
         
@@ -100,13 +102,13 @@ const App: React.FC = () => {
     setJsonHoverEnabled(enabled);
 
     // Save to storage
-    chrome.storage.local.set({ hoverDetectionEnabled: enabled });
+    chrome.storage.local.set({ [STORAGE_KEYS.HOVER_DETECTION_ENABLED]: enabled });
 
     // Send message to content script to update hover detection
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]?.id) {
         chrome.tabs.sendMessage(tabs[0].id, {
-          action: 'setHoverDetection',
+          action: MESSAGE_ACTIONS.SET_HOVER_DETECTION,
           enabled: enabled
         });
       }
@@ -125,14 +127,14 @@ const App: React.FC = () => {
   const handleDisplayModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newMode = e.target.value as 'drawer' | 'window';
     setJsonDisplayMode(newMode);
-    chrome.storage.local.set({ jsonDisplayMode: newMode });
+    chrome.storage.local.set({ [STORAGE_KEYS.JSON_DISPLAY_MODE]: newMode });
   };
 
   // Change default viewer mode
   const handleDefaultViewerModeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newMode = e.target.value as 'default' | 'editor';
     setDefaultViewerMode(newMode);
-    chrome.storage.local.set({ defaultViewerMode: newMode });
+    chrome.storage.local.set({ [STORAGE_KEYS.DEFAULT_VIEWER_MODE]: newMode });
   };
 
   // 新增：打开 Chrome 快捷键设置页面
@@ -231,7 +233,7 @@ const App: React.FC = () => {
       // 先通过background.js发送消息（这样可以处理跨域问题）
       chrome.runtime.sendMessage(
         {
-          action: 'showJsonFromPopup',
+          action: MESSAGE_ACTIONS.SHOW_JSON_FROM_POPUP,
           jsonString: formattedJson,
           version: version
         },
@@ -245,7 +247,7 @@ const App: React.FC = () => {
                 chrome.tabs.sendMessage(
                   tabs[0].id,
                   {
-                    action: 'showJsonFromPopup',
+                    action: MESSAGE_ACTIONS.SHOW_JSON_FROM_POPUP,
                     jsonString: formattedJson,
                     version: version
                   },
@@ -339,7 +341,7 @@ const App: React.FC = () => {
           // 先通过background.js发送消息（这样可以处理跨域问题）
           chrome.runtime.sendMessage(
             {
-              action: 'showJsonFromPopup',
+              action: MESSAGE_ACTIONS.SHOW_JSON_FROM_POPUP,
               jsonString: formattedJson,
               version: version
             },
@@ -353,7 +355,7 @@ const App: React.FC = () => {
                     chrome.tabs.sendMessage(
                       tabs[0].id,
                       {
-                        action: 'showJsonFromPopup',
+                        action: MESSAGE_ACTIONS.SHOW_JSON_FROM_POPUP,
                         jsonString: formattedJson,
                         version: version
                       },
@@ -595,7 +597,7 @@ const App: React.FC = () => {
           // 先通过background.js发送消息（这样可以处理跨域问题）
           chrome.runtime.sendMessage(
             {
-              action: 'showJsonFromPopup',
+              action: MESSAGE_ACTIONS.SHOW_JSON_FROM_POPUP,
               jsonString: formattedJson,
               version: version
             },
@@ -609,7 +611,7 @@ const App: React.FC = () => {
                     chrome.tabs.sendMessage(
                       tabs[0].id,
                       {
-                        action: 'showJsonFromPopup',
+                        action: MESSAGE_ACTIONS.SHOW_JSON_FROM_POPUP,
                         jsonString: formattedJson,
                         version: version
                       },

@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 import React from 'react';
 import JsonViewerComponent from '../components/JsonViewer';
 import { parseJsonSafely } from './jsonParser';
+import { STORAGE_KEYS } from '../config/storageKeys';
+import { DRAWER_UI } from '../config/uiConstants';
 
 // Store React root references for proper cleanup
 const reactRoots = new Map<HTMLElement, any>();
@@ -181,8 +183,8 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
       const newWidth = startWidth + deltaX;
 
       // 限制最小和最大宽度
-      const minWidth = 300;
-      const maxWidth = Math.min(window.innerWidth * 0.9, 1600); // 增加到90%和1600px
+      const minWidth = DRAWER_UI.MIN_WIDTH_PX;
+      const maxWidth = Math.min(window.innerWidth * DRAWER_UI.MAX_VIEWPORT_RATIO, DRAWER_UI.MAX_WIDTH_PX);
       const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
 
       // 计算宽度百分比
@@ -215,7 +217,7 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
       // 保存用户设置的宽度到localStorage
       const finalWidth = drawer.offsetWidth;
       try {
-        localStorage.setItem('jsonDrawerWidth', finalWidth.toString());
+        localStorage.setItem(STORAGE_KEYS.DRAWER_WIDTH, finalWidth.toString());
         console.log('保存抽屉宽度设置', { finalWidth });
       } catch (error) {
         console.warn('无法保存抽屉宽度设置到localStorage:', error);
@@ -241,10 +243,10 @@ export function createJsonDrawerWithReactMount(): HTMLElement {
 
   // 从localStorage恢复保存的宽度设置
   try {
-    const savedWidth = localStorage.getItem('jsonDrawerWidth');
+    const savedWidth = localStorage.getItem(STORAGE_KEYS.DRAWER_WIDTH);
     if (savedWidth) {
       const width = parseInt(savedWidth, 10);
-      if (width >= 300 && width <= window.innerWidth * 0.9) { // 更新到90%
+      if (width >= DRAWER_UI.MIN_WIDTH_PX && width <= window.innerWidth * DRAWER_UI.MAX_VIEWPORT_RATIO) {
         drawer.style.width = `${width}px`;
       }
     }

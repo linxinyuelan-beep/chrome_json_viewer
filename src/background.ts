@@ -3,9 +3,10 @@ import { detectLanguageByLocale, getCurrentLanguage, getTranslations } from "./u
 import './config/public-path';
 import { VERSION } from './config/version';
 import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
-
-const CONTEXT_MENU_ID = 'formatSelectedJson';
-const TOGGLE_AUTO_DETECTION_MENU_ID = 'toggleAutoDetection';
+import { STORAGE_KEYS } from './config/storageKeys';
+import { MESSAGE_ACTIONS, MESSAGE_COMMANDS } from './config/messageActions';
+import { COMMAND_IDS, CONTEXT_MENU_IDS } from './config/contextMenus';
+import { WINDOW_UI } from './config/uiConstants';
 
 // Function to create or update the context menu based on current tab
 async function setupContextMenu(tabUrl?: string) {
@@ -45,19 +46,19 @@ async function setupContextMenu(tabUrl?: string) {
         try {
             // Create format JSON menu item
             chrome.contextMenus.create({
-                id: CONTEXT_MENU_ID,
+                id: CONTEXT_MENU_IDS.FORMAT_SELECTED_JSON,
                 title: i18n.formatSelectedJson,
                 contexts: ['selection'],
             });
 
             // Get current hover detection setting to determine menu text
-            const result = await chrome.storage.local.get('hoverDetectionEnabled');
-            const hoverDetectionEnabled = result.hoverDetectionEnabled !== undefined ? result.hoverDetectionEnabled : true;
+            const result = await chrome.storage.local.get(STORAGE_KEYS.HOVER_DETECTION_ENABLED);
+            const hoverDetectionEnabled = result[STORAGE_KEYS.HOVER_DETECTION_ENABLED] !== undefined ? result[STORAGE_KEYS.HOVER_DETECTION_ENABLED] : true;
             const menuTitle = hoverDetectionEnabled ? i18n.disableAutoDetection : i18n.enableAutoDetection;
 
             // Create toggle auto-detection menu item
             chrome.contextMenus.create({
-                id: TOGGLE_AUTO_DETECTION_MENU_ID,
+                id: CONTEXT_MENU_IDS.TOGGLE_AUTO_DETECTION,
                 title: menuTitle,
                 contexts: ['page', 'selection'],
             });
@@ -81,16 +82,20 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 
     // Initialize language settings if not already set
-    chrome.storage.local.get('language', (result) => {
-        if (!result.language) {
-            chrome.storage.local.set({ language: detectLanguageByLocale(navigator.language) });
+    chrome.storage.local.get(STORAGE_KEYS.LANGUAGE, (result) => {
+        if (!result[STORAGE_KEYS.LANGUAGE]) {
+            chrome.storage.local.set({ [STORAGE_KEYS.LANGUAGE]: detectLanguageByLocale(navigator.language) });
         }
     });
 });
 
 // Listen for language changes, hover detection changes, or site filter changes to update the context menu
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local' && (changes.language || changes.hoverDetectionEnabled || changes.siteFilterConfig)) {
+    if (namespace === 'local' && (
+        changes[STORAGE_KEYS.LANGUAGE] ||
+        changes[STORAGE_KEYS.HOVER_DETECTION_ENABLED] ||
+        changes[STORAGE_KEYS.SITE_FILTER_CONFIG]
+    )) {
         // Get current tab URL and update menu
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const currentTabUrl = tabs[0]?.url;
@@ -126,14 +131,14 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 
 // 处理右键菜单点击
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === TOGGLE_AUTO_DETECTION_MENU_ID) {
+    if (info.menuItemId === CONTEXT_MENU_IDS.TOGGLE_AUTO_DETECTION) {
         // 切换自动检测状态（临时开启或关闭）
         if (tab && tab.id && !tab.url?.startsWith('chrome://') && !tab.url?.startsWith('chrome-extension://')) {
             chrome.tabs.sendMessage(tab.id, {
-                action: 'toggleAutoDetectionTemporarily'
+                action: MESSAGE_ACTIONS.TOGGLE_AUTO_DETECTION_TEMPORARILY
             });
         }
-    } else if (info.menuItemId === 'formatSelectedJson') {
+    } else if (info.menuItemId === CONTEXT_MENU_IDS.FORMAT_SELECTED_JSON) {
         if (!tab || tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
             // 保存选中文本到全局变量并打开新窗口
             (chrome as any).action.sJson = info.selectionText;
@@ -141,8 +146,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             return;
         }
         // 读取用户设置，决定显示方式
-        chrome.storage.local.get('jsonDisplayMode', (result) => {
-            const displayMode = result.jsonDisplayMode || 'drawer';
+        chrome.storage.local.get(STORAGE_KEYS.JSON_DISPLAY_MODE, (result) => {
+            const displayMode = result[STORAGE_KEYS.JSON_DISPLAY_MODE] || 'drawer';
 
             if (displayMode === 'window') {
                 (chrome as any).action.sJson = info.selectionText;
@@ -150,7 +155,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
             } else {
                 // 在当前页面的抽屉中显示
                 chrome.tabs.sendMessage(tab.id as number, {
-                    action: 'showJsonInDrawer',
+                    action: MESSAGE_ACTIONS.SHOW_JSON_IN_DRAWER,
                     jsonString: info.selectionText
                 });
             }
@@ -164,8 +169,8 @@ function openJsonWindow() {
     chrome.windows.create({
         url: jsonH_url,
         type: "popup",
-        width: 1024,
-        height: 768
+        width: WINDOW_UI.JSON_WINDOW_WIDTH,
+        height: WINDOW_UI.JSON_WINDOW_HEIGHT
     });
 }
 
@@ -177,7 +182,7 @@ chrome.commands.onCommand.addListener(async (command) => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.id) return;
 
-    if (command === 'format-selected-json') {
+    if (command === COMMAND_IDS.FORMAT_SELECTED_JSON) {
         // 获取选中的文本
         chrome.scripting.executeScript({
             target: { tabId: tab.id },
@@ -186,15 +191,15 @@ chrome.commands.onCommand.addListener(async (command) => {
             const selectedText = injectionResults[0].result;
             if (selectedText) {
                 chrome.tabs.sendMessage(tab.id as number, {
-                    action: 'formatSelectedJson',
+                    action: MESSAGE_ACTIONS.FORMAT_SELECTED_JSON,
                     selectedText
                 });
             }
         });
-    } else if (command === 'toggle-hover-detection') {
+    } else if (command === COMMAND_IDS.TOGGLE_HOVER_DETECTION) {
         // 发送切换悬停检测模式的消息
         chrome.tabs.sendMessage(tab.id, {
-            action: 'toggleHoverDetection'
+            action: MESSAGE_ACTIONS.TOGGLE_HOVER_DETECTION
         });
     }
 });
@@ -204,7 +209,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Background script received message:', request);
 
     // 处理获取JSON数据的请求（新的实现方式）
-    if (request.cmd === 'getJson') {
+    if (request.cmd === MESSAGE_COMMANDS.GET_JSON) {
         const jsonData = (chrome as any).action?.sJson || null;
         sendResponse(jsonData);
         // 清空缓存，避免重复使用
@@ -215,7 +220,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     // 处理设置JSON数据的请求（新的实现方式）
-    if (request.action === 'setJsonData') {
+    if (request.action === MESSAGE_ACTIONS.SET_JSON_DATA) {
         (chrome as any).action = (chrome as any).action || {};
         (chrome as any).action.sJson = request.jsonString;
         sendResponse({ success: true });
@@ -223,7 +228,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     // 处理打开JSON标签页的请求（新的实现方式）
-    if (request.action === 'openJsonInTab') {
+    if (request.action === MESSAGE_ACTIONS.OPEN_JSON_IN_TAB) {
         try {
             openJsonWindow();
             sendResponse({ success: true });
@@ -234,7 +239,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
-    if (request.action === 'showJsonFromPopup') {
+    if (request.action === MESSAGE_ACTIONS.SHOW_JSON_FROM_POPUP) {
         console.log('Background script received showJsonFromPopup request');
         // 转发消息到当前活动标签页
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -250,7 +255,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true; // 保持消息通道开放
     }
 
-    if (request.action === 'openJsonWindow') {
+    if (request.action === MESSAGE_ACTIONS.OPEN_JSON_WINDOW) {
         console.log('Background script received openJsonWindow request');
         try {
             // 使用新的方式：保存到全局变量并打开窗口
@@ -270,7 +275,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     // 处理打开 JSON Compare 页面的请求
-    if (request.action === 'openJsonCompare') {
+    if (request.action === MESSAGE_ACTIONS.OPEN_JSON_COMPARE) {
         console.log('Background script received openJsonCompare request');
         try {
             if (request.url) {

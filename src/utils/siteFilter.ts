@@ -1,5 +1,6 @@
 // Site filter management for blacklist/whitelist functionality
 // Used to control which websites the extension is active on
+import { STORAGE_KEYS } from '../config/storageKeys';
 
 export type FilterMode = 'disabled' | 'blacklist' | 'whitelist';
 
@@ -13,7 +14,7 @@ const DEFAULT_CONFIG: SiteFilterConfig = {
   sites: []
 };
 
-const STORAGE_KEY = 'siteFilterConfig';
+const STORAGE_KEY = STORAGE_KEYS.SITE_FILTER_CONFIG;
 
 /**
  * Get the current site filter configuration

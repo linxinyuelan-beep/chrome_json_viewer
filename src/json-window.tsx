@@ -4,6 +4,8 @@ import ReactDOM from 'react-dom';
 import ReactJson from '@microlink/react-json-view';
 import JsonEditorWrapper, { JsonEditorRef } from './components/JsonEditorWrapper';
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from './utils/i18n';
+import { STORAGE_KEYS } from './config/storageKeys';
+import { MESSAGE_COMMANDS } from './config/messageActions';
 
 // JSON Window React Component
 const JsonWindowApp: React.FC = () => {
@@ -49,9 +51,9 @@ const JsonWindowApp: React.FC = () => {
 
   // Load view mode preference
   useEffect(() => {
-    chrome.storage.local.get(['preferredViewMode'], (result) => {
-      if (result.preferredViewMode) {
-        setViewMode(result.preferredViewMode);
+    chrome.storage.local.get([STORAGE_KEYS.PREFERRED_VIEW_MODE], (result) => {
+      if (result[STORAGE_KEYS.PREFERRED_VIEW_MODE]) {
+        setViewMode(result[STORAGE_KEYS.PREFERRED_VIEW_MODE]);
       }
     });
   }, []);
@@ -60,7 +62,7 @@ const JsonWindowApp: React.FC = () => {
   const toggleViewMode = () => {
     const newMode = viewMode === 'default' ? 'editor' : 'default';
     setViewMode(newMode);
-    chrome.storage.local.set({ preferredViewMode: newMode });
+    chrome.storage.local.set({ [STORAGE_KEYS.PREFERRED_VIEW_MODE]: newMode });
   };
 
   // 通过消息机制从后台脚本获取JSON数据
@@ -68,7 +70,7 @@ const JsonWindowApp: React.FC = () => {
     if (typeof chrome !== 'undefined' && chrome.runtime) {
       try {
         return new Promise((resolve) => {
-          chrome.runtime.sendMessage({ cmd: 'getJson' }, (response) => {
+          chrome.runtime.sendMessage({ cmd: MESSAGE_COMMANDS.GET_JSON }, (response) => {
             if (chrome.runtime.lastError) {
               console.error('Error getting JSON from background:', chrome.runtime.lastError);
               resolve(null);

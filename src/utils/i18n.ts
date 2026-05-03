@@ -1,4 +1,5 @@
 // Language configuration for the JSON Formatter & Viewer Extension
+import { STORAGE_KEYS } from '../config/storageKeys';
 
 // Define language codes
 export type LanguageCode = 'en' | 'zh';
@@ -553,15 +554,15 @@ export function detectLanguageByLocale(locale?: string): LanguageCode {
 // Function to get stored language or default
 export async function getCurrentLanguage(): Promise<LanguageCode> {
   return new Promise((resolve) => {
-    chrome.storage.local.get('language', (result) => {
-      const storedLanguage = result.language as LanguageCode | undefined;
+    chrome.storage.local.get(STORAGE_KEYS.LANGUAGE, (result) => {
+      const storedLanguage = result[STORAGE_KEYS.LANGUAGE] as LanguageCode | undefined;
       if (storedLanguage) {
         resolve(storedLanguage);
         return;
       }
 
       const detectedLanguage = detectLanguageByLocale(navigator.language) || DEFAULT_LANGUAGE;
-      chrome.storage.local.set({ language: detectedLanguage }, () => {
+      chrome.storage.local.set({ [STORAGE_KEYS.LANGUAGE]: detectedLanguage }, () => {
         resolve(detectedLanguage);
       });
     });
@@ -571,7 +572,7 @@ export async function getCurrentLanguage(): Promise<LanguageCode> {
 // Function to save selected language
 export async function saveLanguage(lang: LanguageCode): Promise<void> {
   return new Promise((resolve) => {
-    chrome.storage.local.set({ language: lang }, () => {
+    chrome.storage.local.set({ [STORAGE_KEYS.LANGUAGE]: lang }, () => {
       resolve();
     });
   });

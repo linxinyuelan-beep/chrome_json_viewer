@@ -2,9 +2,12 @@
  * JSON History management utility
  * Handles storing, retrieving, and managing history of viewed JSON data
  */
+import { HISTORY_UI } from '../config/uiConstants';
+import { STORAGE_KEYS } from '../config/storageKeys';
 
 // Maximum number of history entries to store
-const MAX_HISTORY_ITEMS = 50;
+const MAX_HISTORY_ITEMS = HISTORY_UI.MAX_ITEMS;
+const HISTORY_PREVIEW_LENGTH = HISTORY_UI.PREVIEW_LENGTH;
 
 // Interface for JSON history entry
 export interface JsonHistoryItem {
@@ -26,8 +29,8 @@ export async function addToHistory(jsonData: string, url: string): Promise<strin
     // Create a unique ID for this history entry
     const id = `json-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     
-    // Get preview (first 50 chars)
-    const preview = jsonData.substring(0, 50) + (jsonData.length > 50 ? '...' : '');
+    // Get preview
+    const preview = jsonData.substring(0, HISTORY_PREVIEW_LENGTH) + (jsonData.length > HISTORY_PREVIEW_LENGTH ? '...' : '');
     
     // Create history item
     const historyItem: JsonHistoryItem = {
@@ -67,8 +70,8 @@ export async function addToHistory(jsonData: string, url: string): Promise<strin
  */
 export async function getHistory(): Promise<JsonHistoryItem[]> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(['jsonHistory'], (result) => {
-      const history = result.jsonHistory || [];
+    chrome.storage.local.get([STORAGE_KEYS.JSON_HISTORY], (result) => {
+      const history = result[STORAGE_KEYS.JSON_HISTORY] || [];
       resolve(history);
     });
   });
@@ -80,7 +83,7 @@ export async function getHistory(): Promise<JsonHistoryItem[]> {
  */
 async function saveHistory(history: JsonHistoryItem[]): Promise<void> {
   return new Promise((resolve) => {
-    chrome.storage.local.set({ jsonHistory: history }, () => {
+    chrome.storage.local.set({ [STORAGE_KEYS.JSON_HISTORY]: history }, () => {
       resolve();
     });
   });
@@ -91,7 +94,7 @@ async function saveHistory(history: JsonHistoryItem[]): Promise<void> {
  */
 export async function clearHistory(): Promise<void> {
   return new Promise((resolve) => {
-    chrome.storage.local.set({ jsonHistory: [] }, () => {
+    chrome.storage.local.set({ [STORAGE_KEYS.JSON_HISTORY]: [] }, () => {
       resolve();
     });
   });

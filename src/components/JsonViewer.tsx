@@ -28,6 +28,8 @@ import {
 } from '../utils/jsonNavigation';
 import History from './History';
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from '../utils/i18n';
+import { STORAGE_KEYS } from '../config/storageKeys';
+import { MESSAGE_ACTIONS } from '../config/messageActions';
 import '../assets/styles/history.css';
 
 // Declare global function that will be added to window by reactJsonDrawer.tsx
@@ -92,9 +94,9 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
 
   // Load view mode from settings (defaultViewerMode)
   useEffect(() => {
-    chrome.storage.local.get(['defaultViewerMode'], (result) => {
+    chrome.storage.local.get([STORAGE_KEYS.DEFAULT_VIEWER_MODE], (result) => {
       // Set the mode from settings, or default to 'default' if not set
-      setViewMode(result.defaultViewerMode || 'default');
+      setViewMode(result[STORAGE_KEYS.DEFAULT_VIEWER_MODE] || 'default');
     });
   }, []);
 
@@ -210,7 +212,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
       // 发送消息给background script来打开新窗口
       if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
         chrome.runtime.sendMessage({
-          action: 'openJsonWindow',
+          action: MESSAGE_ACTIONS.OPEN_JSON_WINDOW,
           jsonData: jsonString // 直接传递JSON字符串，不进行URL编码
         }, (response) => {
           if (chrome.runtime.lastError) {
@@ -644,7 +646,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
                   // 通过消息传递让 background script 创建标签页
                   if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
                     chrome.runtime.sendMessage({
-                      action: 'openJsonCompare',
+                      action: MESSAGE_ACTIONS.OPEN_JSON_COMPARE,
                       url: url
                     }, (response) => {
                       if (chrome.runtime.lastError) {
