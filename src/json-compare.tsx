@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import JsonCompare from './components/JsonCompare';
 import './assets/styles/json-compare.css';
 
@@ -25,14 +25,17 @@ function safeDecodeURIComponent(str: string): string {
 
 const decodedLeft = leftJson ? safeDecodeURIComponent(leftJson) : '';
 const decodedRight = rightJson ? safeDecodeURIComponent(rightJson) : '';
+const container = document.getElementById('root');
+const root = container ? createRoot(container) : null;
 
 // 渲染应用
-ReactDOM.render(
-  <React.StrictMode>
-    <JsonCompare initialLeft={decodedLeft} initialRight={decodedRight} initialMode={initialMode} />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+if (root) {
+  root.render(
+    <React.StrictMode>
+      <JsonCompare initialLeft={decodedLeft} initialRight={decodedRight} initialMode={initialMode} />
+    </React.StrictMode>
+  );
+}
 
 // 监听来自 popup 或 content script 的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -41,11 +44,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const { left, right } = message;
     
     // 重新渲染组件
-    ReactDOM.render(
+    root?.render(
       <React.StrictMode>
         <JsonCompare initialLeft={left || ''} initialRight={right || ''} initialMode={message.mode === 'view' ? 'view' : initialMode} />
-      </React.StrictMode>,
-      document.getElementById('root')
+      </React.StrictMode>
     );
     
     sendResponse({ success: true });

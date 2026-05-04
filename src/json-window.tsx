@@ -1,6 +1,6 @@
 import './config/public-path';
 import React, { useState, useEffect, useRef } from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { JsonEditorRef } from './components/JsonEditorWrapper';
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from './utils/i18n';
 import { STORAGE_KEYS } from './config/storageKeys';
@@ -195,7 +195,7 @@ const JsonWindowApp: React.FC = () => {
 // 渲染应用到DOM
 const container = document.getElementById('react-root');
 if (container) {
-  ReactDOM.render(<JsonWindowApp />, container);
+  createRoot(container).render(<JsonWindowApp />);
 } else {
   console.error('React root container not found');
 }

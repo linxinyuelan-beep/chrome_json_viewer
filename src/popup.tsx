@@ -1,6 +1,6 @@
 import './config/public-path';
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import './assets/styles/main.css';
 import { VERSION } from './config/version';
 import { processJsonDates } from './utils/dateConverter';
@@ -738,4 +738,6 @@ const App: React.FC = () => {
 };
 
 const container = document.getElementById('app');
-ReactDOM.render(<App />, container);
+if (container) {
+  createRoot(container).render(<App />);
+}

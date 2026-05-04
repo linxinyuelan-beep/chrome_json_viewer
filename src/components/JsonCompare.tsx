@@ -425,13 +425,13 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
     jsonText: string,
     jsonObj: any,
     side: 'left' | 'right'
-  ): JSX.Element => {
+  ): React.ReactElement => {
     if (!jsonText || !jsonObj) {
       return <span>{jsonText}</span>;
     }
 
     const lines = jsonText.split('\n');
-    const highlightedLines: JSX.Element[] = [];
+    const highlightedLines: React.ReactElement[] = [];
 
     const lineState = lines.map(() => ({
       highlightClass: 'highlight-unchanged',
@@ -554,10 +554,10 @@ const JsonCompare: React.FC<JsonCompareProps> = ({ initialLeft = '', initialRigh
       applyLineHighlight(startLine, endLine, highlightClass, diff.path === activeDiffPath);
     });
 
-    const renderJsonLine = (line: string, enableSyntaxHighlight: boolean): JSX.Element[] | string => {
+    const renderJsonLine = (line: string, enableSyntaxHighlight: boolean): React.ReactElement[] | string => {
       if (!enableSyntaxHighlight) return line;
 
-      const tokens: JSX.Element[] = [];
+      const tokens: React.ReactElement[] = [];
       const tokenRegex = /"(?:\\.|[^"\\])*"|true|false|null|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g;
       let lastIndex = 0;
       let tokenIndex = 0;

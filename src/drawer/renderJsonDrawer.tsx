@@ -1,6 +1,6 @@
 // Integration helper for the content script with React JSON viewer
-import ReactDOM from 'react-dom';
 import React from 'react';
+import { createRoot, Root } from 'react-dom/client';
 import JsonViewerComponent from '../components/JsonViewer';
 import { parseJsonSafely } from '../utils/jsonParser';
 import {
@@ -12,7 +12,7 @@ import {
   setJsonDrawerOutsideClickHandler,
 } from './drawerHost';
 
-const reactRoots = new Map<HTMLElement, any>();
+const reactRoots = new Map<HTMLElement, Root>();
 
 function isJsonViewerElement(element: Element): boolean {
   if (!element) return false;
@@ -82,31 +82,18 @@ export function mountJsonViewer(
 
     const renderKey = Date.now().toString();
 
-    if ('createRoot' in ReactDOM) {
-      const root = (ReactDOM as any).createRoot(container);
-      reactRoots.set(container, root);
+    const root = createRoot(container);
+    reactRoots.set(container, root);
 
-      root.render(
-        React.createElement(JsonViewerComponent, {
-          jsonData,
-          version,
-          onClose,
-          onOpenJson,
-          key: renderKey
-        })
-      );
-    } else {
-      ReactDOM.render(
-        React.createElement(JsonViewerComponent, {
-          jsonData,
-          version,
-          onClose,
-          onOpenJson,
-          key: renderKey
-        }),
-        container
-      );
-    }
+    root.render(
+      React.createElement(JsonViewerComponent, {
+        jsonData,
+        version,
+        onClose,
+        onOpenJson,
+        key: renderKey
+      })
+    );
 
   } catch (e) {
     console.error('Error mounting JSON viewer:', e);
@@ -130,9 +117,6 @@ function unmountReactComponent(container: HTMLElement): void {
       }
     }
 
-    if ('unmountComponentAtNode' in ReactDOM) {
-      ReactDOM.unmountComponentAtNode(container);
-    }
   } catch (e) {
     console.warn('Error during React component unmount:', e);
   } finally {
@@ -202,4 +186,3 @@ export function showJsonInDrawerWithReact(jsonString: string, version: string): 
     console.error('Error showing JSON in drawer:', e);
   }
 }
-

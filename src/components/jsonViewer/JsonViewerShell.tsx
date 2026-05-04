@@ -8,7 +8,7 @@ interface JsonViewerShellProps {
   data: unknown;
   expanded: boolean;
   viewMode: JsonViewerMode | null;
-  editorRef: React.RefObject<JsonEditorRef>;
+  editorRef: React.RefObject<JsonEditorRef | null>;
   onPathSelect: (selectInfo: any) => void;
   loadingText: string;
   height: string;
@@ -72,4 +72,3 @@ const JsonViewerShell: React.FC<JsonViewerShellProps> = ({
 };
 
 export default JsonViewerShell;
-
