@@ -13,7 +13,6 @@ import {
   getTranslations,
   getCurrentLanguage,
   saveLanguage,
-  languageOptions,
   Translations
 } from './utils/i18n';
 import {
@@ -26,6 +25,9 @@ import {
 } from './utils/siteFilter';
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_ACTIONS } from './config/messageActions';
+import JsonInputPanel from './popup/JsonInputPanel';
+import SettingsPanel from './popup/SettingsPanel';
+import SiteFilterPanel from './popup/SiteFilterPanel';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = React.useState<'settings' | 'json-input' | 'site-filter'>('json-input');
@@ -675,227 +677,46 @@ const App: React.FC = () => {
 
       <div className="content">
         {activeTab === 'settings' ? (
-          <>
-            <div className="section">
-              <h2>{translations.settingsHeading}</h2>
-              <div className="settings-compact">
-                <label className="language-select-label">
-                  {translations.hoverDetection}:
-                  <select
-                    className="language-select"
-                    value={jsonHoverEnabled ? 'enabled' : 'disabled'}
-                    onChange={handleHoverDetectionChange}
-                  >
-                    <option value="enabled">{translations.statusEnabled}</option>
-                    <option value="disabled">{translations.statusDisabled}</option>
-                  </select>
-                </label>
-
-                <label className="language-select-label">
-                  {translations.language}:
-                  <select
-                    className="language-select"
-                    value={language}
-                    onChange={handleLanguageChange}
-                  >
-                    {languageOptions.map(option => (
-                      <option key={option.code} value={option.code}>
-                        {option.flag} {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="language-select-label">
-                  {translations.jsonDisplayMode}:
-                  <select
-                    className="language-select"
-                    value={jsonDisplayMode}
-                    onChange={handleDisplayModeChange}
-                  >
-                    <option value="drawer">{translations.jsonDisplayModeDrawer}</option>
-                    <option value="window">{translations.jsonDisplayModeWindow}</option>
-                  </select>
-                </label>
-
-                <label className="language-select-label">
-                  {translations.defaultViewerMode}:
-                  <select
-                    className="language-select"
-                    value={defaultViewerMode}
-                    onChange={handleDefaultViewerModeChange}
-                  >
-                    <option value="default">{translations.viewerModeTreeView}</option>
-                    <option value="editor">{translations.viewerModeEditor}</option>
-                  </select>
-                </label>
-
-                <div className="settings-actions">
-                  <button className="button" onClick={openShortcutsPage} aria-label="Open Chrome shortcuts settings">
-                    {translations.configureShortcuts}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </>
+          <SettingsPanel
+            translations={translations}
+            jsonHoverEnabled={jsonHoverEnabled}
+            language={language}
+            jsonDisplayMode={jsonDisplayMode}
+            defaultViewerMode={defaultViewerMode}
+            onHoverDetectionChange={handleHoverDetectionChange}
+            onLanguageChange={handleLanguageChange}
+            onDisplayModeChange={handleDisplayModeChange}
+            onDefaultViewerModeChange={handleDefaultViewerModeChange}
+            onOpenShortcuts={openShortcutsPage}
+          />
         ) : activeTab === 'site-filter' ? (
-          <div className="section">
-            <h2>{translations.siteFilterHeading}</h2>
-            
-            <div className="settings-compact">
-              <label className="language-select-label">
-                {translations.filterMode}:
-                <select
-                  className="language-select"
-                  value={filterMode}
-                  onChange={handleFilterModeChange}
-                >
-                  <option value="disabled">{translations.filterModeDisabled}</option>
-                  <option value="blacklist">{translations.filterModeBlacklist}</option>
-                  <option value="whitelist">{translations.filterModeWhitelist}</option>
-                </select>
-              </label>
-              
-              <div className="filter-mode-description">
-                {filterMode === 'disabled' && translations.filterModeDisabledDesc}
-                {filterMode === 'blacklist' && translations.filterModeBlacklistDesc}
-                {filterMode === 'whitelist' && translations.filterModeWhitelistDesc}
-              </div>
-              
-              <div className="filter-warning">
-                💡 {translations.refreshPageToApply}
-              </div>
-            </div>
-            
-            {filterMode !== 'disabled' && (
-              <>
-                <div className="site-filter-panel">
-                  <h3 className="site-list-title">{translations.siteList}</h3>
-                  
-                  <div className="site-input-row">
-                    <input
-                      type="text"
-                      value={newSiteInput}
-                      onChange={(e) => setNewSiteInput(e.target.value)}
-                      placeholder={translations.sitePatternPlaceholder}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleAddSite();
-                        }
-                      }}
-                      className="site-input"
-                    />
-                    <button 
-                      className="json-button format site-add-btn"
-                      onClick={handleAddSite}
-                    >
-                      {translations.addSite}
-                    </button>
-                  </div>
-                  
-                  {currentSite && (
-                    <div className="site-current-row">
-                      <button
-                        className="json-button secondary"
-                        onClick={handleAddCurrentSite}
-                      >
-                        {translations.addCurrentSite}: {currentSite}
-                      </button>
-                    </div>
-                  )}
-                  
-                  <div className="site-pattern-help">
-                    {translations.sitePatternHelp}
-                  </div>
-                  
-                  <div className="site-list-container">
-                    {siteList.length === 0 ? (
-                      <div className="site-empty">
-                        {translations.noSitesAdded}
-                      </div>
-                    ) : (
-                      <ul className="site-list">
-                        {siteList.map((site, index) => (
-                          <li
-                            key={index}
-                            className={`site-item ${index < siteList.length - 1 ? 'with-divider' : ''}`}
-                          >
-                            <span className="site-name">{site}</span>
-                            <button
-                              onClick={() => handleRemoveSite(site)}
-                              className="site-remove-btn"
-                            >
-                              {translations.remove}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <SiteFilterPanel
+            translations={translations}
+            filterMode={filterMode}
+            siteList={siteList}
+            newSiteInput={newSiteInput}
+            currentSite={currentSite}
+            onFilterModeChange={handleFilterModeChange}
+            onNewSiteInputChange={setNewSiteInput}
+            onAddSite={handleAddSite}
+            onAddCurrentSite={handleAddCurrentSite}
+            onRemoveSite={handleRemoveSite}
+          />
         ) : (
-          <div className="json-input-section">
-            <div className="json-input-container">
-              <textarea
-                className="json-textarea"
-                value={jsonInput}
-                onChange={(e) => setJsonInput(e.target.value)}
-                placeholder={translations.pasteJsonHere}
-                rows={10}
-                autoFocus
-              />
-              {jsonFormatError && (
-                <div className={`json-error-message ${jsonFormatError === translations.processing ? 'success' : ''}`}>
-                  {jsonFormatError}
-                </div>
-              )}
-            </div>
-            <div className="json-input-actions">
-              <div className="action-row">
-                <button className="json-button format" onClick={formatJsonInput}>
-                  {translations.formatAndView}
-                </button>
-                <button className="json-button convert" onClick={convertJsonDates}>
-                  {translations.formatAndConvert}
-                </button>
-                <button className="json-button clear" onClick={clearJsonInput}>
-                  {translations.clear}
-                </button>
-              </div>
-              <div className="action-row">
-                <button className="json-button minify" onClick={minifyJson}>
-                  {translations.minifyJson}
-                </button>
-                <button className="json-button escape" onClick={escapeJsonString}>
-                  {translations.escapeString}
-                </button>
-                <button className="json-button unescape" onClick={unescapeJsonString}>
-                  {translations.unescapeString}
-                </button>
-              </div>
-              <div className="action-row">
-                <button className="json-button convert-kv" onClick={convertKeyValueToJson}>
-                  {translations.convertKeyValue}
-                </button>
-                <button className="json-button compare" onClick={openJsonComparePage}>
-                  {translations.compare}
-                </button>
-                <div className="action-spacer"></div>
-              </div>
-            </div>
-            <div className="json-input-help">
-              <ul>
-                <li>{translations.jsonInputHelp1}</li>
-                <li>{translations.jsonInputHelp2}</li>
-                <li>{translations.jsonInputHelp3}</li>
-                <li>{translations.jsonInputHelp4}</li>
-              </ul>
-            </div>
-          </div>
+          <JsonInputPanel
+            translations={translations}
+            jsonInput={jsonInput}
+            jsonFormatError={jsonFormatError}
+            onJsonInputChange={setJsonInput}
+            onFormatJson={formatJsonInput}
+            onConvertDates={convertJsonDates}
+            onClear={clearJsonInput}
+            onMinify={minifyJson}
+            onEscape={escapeJsonString}
+            onUnescape={unescapeJsonString}
+            onConvertKeyValue={convertKeyValueToJson}
+            onOpenCompare={openJsonComparePage}
+          />
         )}
       </div>
 

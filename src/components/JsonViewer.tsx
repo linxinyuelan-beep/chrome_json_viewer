@@ -22,9 +22,12 @@ import History from './History';
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from '../utils/i18n';
 import { STORAGE_KEYS } from '../config/storageKeys';
 import { MESSAGE_ACTIONS } from '../config/messageActions';
+import { WINDOW_UI } from '../config/uiConstants';
 import { isJsonSyntaxValid } from '../utils/jsonParse';
-import JsonViewerPathBar from './jsonViewer/JsonViewerPathBar';
+import { saveJsonPayload } from '../utils/jsonPayloadStore';
+import { createJsonWindowPath, createPopupWindowFeatures } from '../utils/jsonWindowUrl';
 import JsonViewerShell from './jsonViewer/JsonViewerShell';
+import JsonViewerToolbar from './jsonViewer/JsonViewerToolbar';
 import { useJsonClipboard } from './jsonViewer/useJsonClipboard';
 import { useJsonHistoryDropdown } from './jsonViewer/useJsonHistoryDropdown';
 import { useJsonNavigation } from './jsonViewer/useJsonNavigation';
@@ -32,21 +35,15 @@ import { useJsonPath } from './jsonViewer/useJsonPath';
 import { useJsonViewerMode } from './jsonViewer/useJsonViewerMode';
 import '../assets/styles/history.css';
 
-// Declare global function that will be added to window by reactJsonDrawer.tsx
-declare global {
-  interface Window {
-    showJsonInDrawerWithReact?: (jsonString: string, version: string) => void;
-  }
-}
-
 interface JsonViewerProps {
   jsonData: any;
   version: string;
   onClose?: () => void;
+  onOpenJson?: (jsonString: string) => void;
   key?: string; // 添加可选的 key 属性
 }
 
-const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onClose }) => {
+const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onClose, onOpenJson }) => {
   const [expanded, setExpanded] = useState<boolean>(true);
   const [jsonSize, setJsonSize] = useState<string>('');
   const [showHistory, setShowHistory] = useState<boolean>(false);
@@ -77,7 +74,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
     trackJson,
     handleNavigateBack,
     handleNavigateForward,
-  } = useJsonNavigation(version);
+  } = useJsonNavigation(onOpenJson);
   const openFullHistory = React.useCallback(() => {
     setShowHistory(current => !current);
   }, []);
@@ -87,7 +84,7 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
     toggleDropdown,
     viewAllHistory,
     handleSelectFromDropdown,
-  } = useJsonHistoryDropdown(version, openFullHistory);
+  } = useJsonHistoryDropdown(openFullHistory, onOpenJson);
 
   useEffect(() => {
     let mounted = true;
@@ -208,28 +205,45 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
     }
   };
 
-  // 回退方案：使用存储API + window.open
+  // 回退方案：使用 payload store + window.open
   const fallbackOpenWindow = async (jsonString: string) => {
     try {
-      // 生成唯一的键名用于存储
-      const storageKey = `json_data_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-      // 将JSON数据存储到Chrome存储中
-      if (typeof chrome !== 'undefined' && chrome.storage) {
-        chrome.storage.local.set({ [storageKey]: jsonString }, () => {
-          const windowUrl = chrome.runtime.getURL(`json-window.html?key=${storageKey}`);
-          window.open(windowUrl, '_blank', 'width=1000,height=700,scrollbars=yes,resizable=yes');
-        });
-      } else {
-        // 最后的回退方案：使用sessionStorage
-        const storageKey = `json_data_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        sessionStorage.setItem(storageKey, jsonString);
-        const windowUrl = `/json-window.html?sessionKey=${storageKey}`;
-        window.open(windowUrl, '_blank', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+      if (typeof chrome === 'undefined' || !chrome.storage || !chrome.runtime) {
+        throw new Error('Chrome extension APIs are not available');
       }
+
+      const payloadId = await saveJsonPayload(jsonString);
+      const windowUrl = chrome.runtime.getURL(createJsonWindowPath(payloadId));
+      window.open(
+        windowUrl,
+        '_blank',
+        createPopupWindowFeatures(WINDOW_UI.JSON_WINDOW_WIDTH, WINDOW_UI.JSON_WINDOW_HEIGHT)
+      );
     } catch (error) {
       console.error('Error in fallback window opening:', error);
-      alert('Failed to open JSON in new window');
+      if (onOpenJson) {
+        onOpenJson(jsonString);
+      } else {
+        alert('Failed to open JSON in new window');
+      }
+    }
+  };
+
+  const openCompare = () => {
+    const jsonString = JSON.stringify(jsonData, null, 2);
+    const url = chrome.runtime.getURL('json-compare.html?left=' + encodeURIComponent(jsonString));
+
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      chrome.runtime.sendMessage({
+        action: MESSAGE_ACTIONS.OPEN_JSON_COMPARE,
+        url: url
+      }, () => {
+        if (chrome.runtime.lastError) {
+          console.error('Error opening compare page:', chrome.runtime.lastError);
+        }
+      });
+    } else {
+      console.error('Chrome runtime API not available');
     }
   };
 
@@ -256,11 +270,10 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
       if (!isJsonSyntaxValid(jsonString)) {
         throw new Error('Invalid JSON');
       }
-      // Replace the current JSON with the selected one from history
-      if (window.showJsonInDrawerWithReact) {
-        window.showJsonInDrawerWithReact(jsonString, version);
+      if (onOpenJson) {
+        onOpenJson(jsonString);
       } else {
-        console.error('showJsonInDrawerWithReact function not available');
+        console.error('onOpenJson callback not available');
       }
     } catch (e) {
       console.error('Error parsing JSON from history:', e);
@@ -286,141 +299,33 @@ const JsonViewerComponent: React.FC<JsonViewerProps> = ({ jsonData, version, onC
         />
       ) : (
         <>
-          {/* Info and actions bar */}
-          <div className="json-viewer-header">
-            <div className="json-viewer-info">
-              {/* Navigation buttons */}
-              <div className="json-viewer-navigation">
-                <button
-                  className={`json-viewer-nav-button ${!canGoBack ? 'disabled' : ''}`}
-                  onClick={handleNavigateBack}
-                  disabled={!canGoBack}
-                  title={i18n.backToPreviousJson}
-                >
-                  ◀
-                </button>
-                <button
-                  className={`json-viewer-nav-button ${!canGoForward ? 'disabled' : ''}`}
-                  onClick={handleNavigateForward}
-                  disabled={!canGoForward}
-                  title={i18n.forwardToNextJson}
-                >
-                  ▶
-                </button>
-
-                <span className="json-viewer-size">{i18n.sizeLabel}: {jsonSize}</span>
-              </div>
-            </div>
-            <JsonViewerPathBar
-              path={currentJsonPath}
-              copySuccess={pathCopySuccess}
-              onCopy={copyCurrentPath}
-              title={i18n.copyPathToClipboard}
-              containerClassName="json-viewer-path-display"
-              valueClassName="json-viewer-path-value"
-              buttonClassName="json-viewer-path-copy-btn"
-            />
-            <div className="json-viewer-actions">
-              <button
-                className="json-viewer-button"
-                onClick={toggleExpand}
-              >
-                {expanded ? i18n.collapseAll : i18n.expandAll}
-              </button>
-              <button
-                className={`json-viewer-button ${viewMode === 'editor' ? 'active' : ''}`}
-                onClick={toggleViewMode}
-                title={i18n.switchBetweenTreeAndEditor}
-              >
-                {viewMode === 'default' ? i18n.switchToEditor : i18n.switchToTree}
-              </button>
-              <button
-                className={`json-viewer-button ${isKeySorted ? 'active' : ''}`}
-                onClick={toggleKeySort}
-                title={i18n.sortJsonKeysAlphabetically}
-              >
-                {isKeySorted ? i18n.unsortKeys : i18n.sortKeys}
-              </button>
-              <button
-                className={`json-viewer-button ${copySuccess ? 'success' : ''}`}
-                onClick={() => copyJson(jsonData, 'Failed to copy')}
-              >
-                {copySuccess ? `✓ ${i18n.copied}` : i18n.copyJson}
-              </button>
-              <button
-                className="json-viewer-button"
-                onClick={openInNewWindow}
-                title={i18n.openJsonInNewWindow}
-              >
-                {i18n.newWindow}
-              </button>
-              <button
-                className="json-viewer-button"
-                onClick={() => {
-                  const jsonString = JSON.stringify(jsonData, null, 2);
-                  const url = chrome.runtime.getURL('json-compare.html?left=' + encodeURIComponent(jsonString));
-
-                  // 通过消息传递让 background script 创建标签页
-                  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-                    chrome.runtime.sendMessage({
-                      action: MESSAGE_ACTIONS.OPEN_JSON_COMPARE,
-                      url: url
-                    }, (response) => {
-                      if (chrome.runtime.lastError) {
-                        console.error('Error opening compare page:', chrome.runtime.lastError);
-                      }
-                    });
-                  } else {
-                    console.error('Chrome runtime API not available');
-                  }
-                }}
-                title={i18n.compareWithAnotherJson}
-              >
-                {`${i18n.compare}`}
-              </button>
-
-              {/* History dropdown */}
-              <div className="json-viewer-dropdown-container">
-                <button
-                  className="json-viewer-button history-dropdown-button"
-                  onClick={toggleDropdown}
-                  title={i18n.viewHistory}
-                >
-                  {`${i18n.history} ▾`}
-                </button>
-                {isDropdownOpen && (
-                  <div className="json-viewer-dropdown-menu">
-                    <div className="json-viewer-dropdown-header">
-                      <span>{i18n.recentJson}</span>
-                      <button
-                        className="json-viewer-dropdown-view-all"
-                        onClick={viewAllHistory}
-                      >
-                        {i18n.viewAll}
-                      </button>
-                    </div>
-                    {historyItems.length === 0 ? (
-                      <div className="json-viewer-dropdown-empty">{i18n.noHistoryFound}</div>
-                    ) : (
-                      <>
-                        {historyItems.slice(0, 10).map(item => (
-                          <div
-                            key={item.id}
-                            className="json-viewer-dropdown-item"
-                            onClick={() => handleSelectFromDropdown(item.id)}
-                            title={new Date(item.timestamp).toLocaleString()}
-                          >
-                            {item.preview}
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-              <button className="json-drawer-close" onClick={onClose}>&times;</button>
-            </div>
-          </div>
+          <JsonViewerToolbar
+            i18n={i18n}
+            jsonSize={jsonSize}
+            currentJsonPath={currentJsonPath}
+            pathCopySuccess={pathCopySuccess}
+            onCopyPath={copyCurrentPath}
+            canGoBack={canGoBack}
+            canGoForward={canGoForward}
+            onNavigateBack={handleNavigateBack}
+            onNavigateForward={handleNavigateForward}
+            expanded={expanded}
+            onToggleExpand={toggleExpand}
+            viewMode={viewMode}
+            onToggleViewMode={toggleViewMode}
+            isKeySorted={isKeySorted}
+            onToggleKeySort={toggleKeySort}
+            copySuccess={copySuccess}
+            onCopyJson={() => copyJson(jsonData, 'Failed to copy')}
+            onOpenInNewWindow={openInNewWindow}
+            onOpenCompare={openCompare}
+            historyItems={historyItems}
+            isDropdownOpen={isDropdownOpen}
+            onToggleDropdown={toggleDropdown}
+            onViewAllHistory={viewAllHistory}
+            onSelectHistoryItem={handleSelectFromDropdown}
+            onClose={onClose}
+          />
 
           <JsonViewerShell
             data={sortedData}

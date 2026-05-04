@@ -54,16 +54,9 @@ initializeSettings();
 // 在新窗口中打开JSON
 async function openJsonInWindow(jsonString: string): Promise<void> {
     try {
-        // 先保存JSON数据到background script的全局变量中
-        const payloadResponse = await chrome.runtime.sendMessage({
-            action: MESSAGE_ACTIONS.SET_JSON_DATA,
-            jsonString: jsonString
-        });
-
-        // 然后打开新标签页
         const response = await chrome.runtime.sendMessage({
-            action: MESSAGE_ACTIONS.OPEN_JSON_IN_TAB,
-            payloadId: payloadResponse?.payloadId
+            action: MESSAGE_ACTIONS.OPEN_JSON_WINDOW,
+            jsonData: jsonString
         });
 
         if (!response || !response.success) {
@@ -101,7 +94,7 @@ async function showJsonInDrawer(jsonString: string): Promise<void> {
 
     try {
         // 导入React渲染器 - 使用动态导入确保只在需要时加载
-        const { showJsonInDrawerWithReact } = await import('./utils/reactJsonDrawer');
+        const { showJsonInDrawerWithReact } = await import('./drawer/renderJsonDrawer');
 
         // 使用React组件显示JSON
         showJsonInDrawerWithReact(jsonString, EXTENSION_VERSION);

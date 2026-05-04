@@ -4,12 +4,11 @@ import './config/public-path';
 import { VERSION } from './config/version';
 import { getSiteFilterConfig, shouldEnableOnSite } from './utils/siteFilter';
 import { STORAGE_KEYS } from './config/storageKeys';
-import { MESSAGE_ACTIONS, MESSAGE_COMMANDS } from './config/messageActions';
+import { MESSAGE_ACTIONS } from './config/messageActions';
 import { COMMAND_IDS, CONTEXT_MENU_IDS } from './config/contextMenus';
 import { WINDOW_UI } from './config/uiConstants';
 import { saveJsonPayload } from './utils/jsonPayloadStore';
-
-let pendingJsonPayloadId: string | null = null;
+import { createJsonWindowPath } from './utils/jsonWindowUrl';
 
 // Function to create or update the context menu based on current tab
 async function setupContextMenu(tabUrl?: string) {
@@ -167,8 +166,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 // 打开JSON窗口的函数
 function openJsonWindow(payloadId?: string) {
-    const path = payloadId ? `json-window.html?payloadId=${encodeURIComponent(payloadId)}` : 'json-window.html';
-    const jsonH_url = chrome.runtime.getURL(path);
+    const jsonH_url = chrome.runtime.getURL(createJsonWindowPath(payloadId));
     chrome.windows.create({
         url: jsonH_url,
         type: "popup",
@@ -215,40 +213,6 @@ chrome.commands.onCommand.addListener(async (command) => {
 // 监听来自各个页面的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log('Background script received message:', request);
-
-    // Legacy request kept for older windows without a payloadId.
-    if (request.cmd === MESSAGE_COMMANDS.GET_JSON) {
-        sendResponse(null);
-        return true;
-    }
-
-    // 处理设置JSON数据的请求（新的实现方式）
-    if (request.action === MESSAGE_ACTIONS.SET_JSON_DATA) {
-        saveJsonPayload(request.jsonString)
-            .then((payloadId) => {
-                pendingJsonPayloadId = payloadId;
-                sendResponse({ success: true, payloadId });
-            })
-            .catch((error) => {
-                console.error('Error saving JSON payload:', error);
-                sendResponse({ success: false, error: String(error) });
-            });
-        return true;
-    }
-
-    // 处理打开JSON标签页的请求（新的实现方式）
-    if (request.action === MESSAGE_ACTIONS.OPEN_JSON_IN_TAB) {
-        try {
-            const payloadId = request.payloadId || pendingJsonPayloadId;
-            pendingJsonPayloadId = null;
-            openJsonWindow(payloadId);
-            sendResponse({ success: true });
-        } catch (error) {
-            console.error('Error in openJsonInTab:', error);
-            sendResponse({ success: false, error: String(error) });
-        }
-        return true;
-    }
 
     if (request.action === MESSAGE_ACTIONS.SHOW_JSON_FROM_POPUP) {
         console.log('Background script received showJsonFromPopup request');

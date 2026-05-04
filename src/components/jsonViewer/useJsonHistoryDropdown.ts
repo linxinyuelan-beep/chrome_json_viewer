@@ -6,7 +6,10 @@ interface HistoryDropdownItem {
   timestamp: number;
 }
 
-export function useJsonHistoryDropdown(version: string, onOpenFullHistory: () => void) {
+export function useJsonHistoryDropdown(
+  onOpenFullHistory: () => void,
+  onOpenJson?: (jsonString: string) => void
+) {
   const [historyItems, setHistoryItems] = useState<HistoryDropdownItem[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -43,16 +46,16 @@ export function useJsonHistoryDropdown(version: string, onOpenFullHistory: () =>
       const item = await getHistoryItem(id);
 
       if (item && item.jsonData) {
-        if (window.showJsonInDrawerWithReact) {
-          window.showJsonInDrawerWithReact(item.jsonData, version);
+        if (onOpenJson) {
+          onOpenJson(item.jsonData);
         } else {
-          console.error('showJsonInDrawerWithReact function not available');
+          console.error('onOpenJson callback not available');
         }
       }
     } catch (e) {
       console.error('Error selecting from dropdown:', e);
     }
-  }, [version]);
+  }, [onOpenJson]);
 
   useEffect(() => {
     if (!isDropdownOpen) {
@@ -80,4 +83,3 @@ export function useJsonHistoryDropdown(version: string, onOpenFullHistory: () =>
     handleSelectFromDropdown,
   };
 }
-

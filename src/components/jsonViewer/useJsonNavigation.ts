@@ -7,7 +7,7 @@ import {
   navigateForward,
 } from '../../utils/jsonNavigation';
 
-export function useJsonNavigation(version: string) {
+export function useJsonNavigation(onOpenJson?: (jsonString: string) => void) {
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
 
@@ -23,17 +23,17 @@ export function useJsonNavigation(version: string) {
 
   const handleNavigateBack = useCallback(() => {
     const previousJson = navigateBack();
-    if (previousJson && window.showJsonInDrawerWithReact) {
-      window.showJsonInDrawerWithReact(previousJson, version);
+    if (previousJson && onOpenJson) {
+      onOpenJson(previousJson);
     }
-  }, [version]);
+  }, [onOpenJson]);
 
   const handleNavigateForward = useCallback(() => {
     const nextJson = navigateForward();
-    if (nextJson && window.showJsonInDrawerWithReact) {
-      window.showJsonInDrawerWithReact(nextJson, version);
+    if (nextJson && onOpenJson) {
+      onOpenJson(nextJson);
     }
-  }, [version]);
+  }, [onOpenJson]);
 
   useEffect(() => {
     const handleNavigationUpdate = (event: Event) => {
@@ -58,4 +58,3 @@ export function useJsonNavigation(version: string) {
     handleNavigateForward,
   };
 }
-

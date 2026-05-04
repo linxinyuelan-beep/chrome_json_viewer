@@ -10,7 +10,8 @@
     "build": "webpack --mode production",
     "dev": "webpack --mode development",
     "watch": "webpack --watch",
-    "smoke:build-output": "node scripts/check-build-output.js"
+    "smoke:build-output": "node scripts/check-build-output.js",
+    "test": "node test-json-parse-semantics.js && node test-json-window-url.js"
   },
   "dependencies": {
     "@microlink/react-json-view": "^1.27.0",

@@ -4,7 +4,6 @@ import ReactDOM from 'react-dom';
 import { JsonEditorRef } from './components/JsonEditorWrapper';
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from './utils/i18n';
 import { STORAGE_KEYS } from './config/storageKeys';
-import { MESSAGE_COMMANDS } from './config/messageActions';
 import { consumeJsonPayload } from './utils/jsonPayloadStore';
 import { parseJsonPreserveLargeNumbers } from './utils/jsonParse';
 import { formatJsonSize } from './utils/jsonViewer';
@@ -62,66 +61,31 @@ const JsonWindowApp: React.FC = () => {
     document.title = i18n.jsonViewerTitle;
   }, [i18n]);
 
-  // 通过消息机制从后台脚本获取JSON数据
-  const getJsonFromBackground = async (): Promise<any> => {
+  const getJsonFromPayload = async (): Promise<any> => {
     const params = new URLSearchParams(window.location.search);
     const payloadId = params.get('payloadId');
 
-    if (payloadId) {
-      try {
-        const jsonString = await consumeJsonPayload(payloadId);
-        if (!jsonString) {
-          console.log('No JSON payload found for id:', payloadId);
-          return null;
-        }
-        return parseJsonPreserveLargeNumbers(jsonString);
-      } catch (e) {
-        console.error('Error loading JSON payload:', e);
+    if (!payloadId) {
+      return null;
+    }
+
+    try {
+      const jsonString = await consumeJsonPayload(payloadId);
+      if (!jsonString) {
+        console.log('No JSON payload found for id:', payloadId);
         return null;
       }
+      return parseJsonPreserveLargeNumbers(jsonString);
+    } catch (e) {
+      console.error('Error loading JSON payload:', e);
+      return null;
     }
-
-    if (typeof chrome !== 'undefined' && chrome.runtime) {
-      try {
-        return new Promise((resolve) => {
-          chrome.runtime.sendMessage({ cmd: MESSAGE_COMMANDS.GET_JSON }, (response) => {
-            if (chrome.runtime.lastError) {
-              console.error('Error getting JSON from background:', chrome.runtime.lastError);
-              resolve(null);
-              return;
-            }
-
-            if (response) {
-              try {
-                // 如果响应是字符串，尝试解析为JSON
-                if (typeof response === 'string') {
-                  resolve(parseJsonPreserveLargeNumbers(response));
-                } else {
-                  // 如果已经是对象，直接返回
-                  resolve(response);
-                }
-              } catch (e) {
-                console.error('Error parsing JSON response:', e);
-                resolve(null);
-              }
-            } else {
-              console.log('No JSON data received from background');
-              resolve(null);
-            }
-          });
-        });
-      } catch (e) {
-        console.error('Error communicating with background script:', e);
-      }
-    }
-
-    return null;
   };
 
   // 初始化数据
   useEffect(() => {
     const loadData = async () => {
-      const data = await getJsonFromBackground();
+      const data = await getJsonFromPayload();
       if (data) {
         setJsonData(data);
         const jsonString = JSON.stringify(data);
