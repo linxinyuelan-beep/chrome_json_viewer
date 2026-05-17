@@ -23,8 +23,8 @@ import {
     openJsonDrawer,
     setJsonDrawerOutsideClickHandler,
 } from './drawer/drawerHost';
-import { detectJsonInElement } from './content/jsonDetection';
-import { highlightJsonInElement } from './content/highlight';
+import { detectJsonAtPointInElement, detectJsonInElement } from './content/jsonDetection';
+import { highlightJsonInElement, highlightJsonMatchesInElement } from './content/highlight';
 import { registerContentLifecycle } from './content/lifecycle';
 import { registerContentMessageHandler } from './content/messages';
 import { showNotification } from './content/notification';
@@ -204,19 +204,26 @@ function enableHoverDetectionFeature(): void {
 
             if (mayContainJson) {
                 // 尝试提取和检测JSON
-                const jsonContents = detectJsonInElement(target);
+                const jsonMatches = detectJsonAtPointInElement(target, e.clientX, e.clientY);
+                const jsonContents = jsonMatches.length > 0 ? [] : detectJsonInElement(target);
 
-                if (jsonContents.length > 0) {
+                if (jsonMatches.length > 0 || jsonContents.length > 0) {
                     const htmlTarget = target as HTMLElement;
-                    highlightJsonInElement(htmlTarget, jsonContents, {
+                    const highlightOptions = {
                         onOpenJson: showJsonByPreference,
-                        onError: (message, error) => {
+                        onError: (message: string, error: unknown) => {
                             console.error(message, error);
                             if (message === 'Error showing JSON:') {
                                 showNotification('无法显示JSON', 'error');
                             }
                         }
-                    });
+                    };
+
+                    if (jsonMatches.length > 0) {
+                        highlightJsonMatchesInElement(htmlTarget, jsonMatches, highlightOptions);
+                    } else {
+                        highlightJsonInElement(htmlTarget, jsonContents, highlightOptions);
+                    }
                 }
             }
         }
