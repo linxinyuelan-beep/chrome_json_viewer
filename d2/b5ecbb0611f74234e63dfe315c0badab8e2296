@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-06-13-dark-mode-design.md
+  s_e22b20e6bb5938::t_6d553a9ff42760 1-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.16-trip",
+  "base_commit_sha": "d2b5ecbb0611f74234e63dfe315c0badab8e2296",
+  "prompts": {},
+  "sessions": {
+    "s_e22b20e6bb5938": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ebfc8-8113-7550-af01-8ac8a3822b6b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "zysang <zysang@trip.com>"
+    }
+  }
+}
