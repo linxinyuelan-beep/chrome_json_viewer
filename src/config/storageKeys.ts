@@ -7,5 +7,5 @@ export const STORAGE_KEYS = {
   JSON_HISTORY: 'jsonHistory',
   DRAWER_WIDTH: 'jsonDrawerWidth',
   LANGUAGE: 'language',
+  THEME_MODE: 'themeMode',
 } as const;
-

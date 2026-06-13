@@ -1,6 +1,7 @@
 import './config/public-path';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import './assets/styles/theme.css';
 import './assets/styles/main.css';
 import { VERSION } from './config/version';
 import { processJsonDates } from './utils/dateConverter';
@@ -25,6 +26,7 @@ import {
 } from './utils/siteFilter';
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_ACTIONS } from './config/messageActions';
+import { DEFAULT_THEME_MODE, getStoredThemeMode, initTheme, saveThemeMode, ThemeMode } from './utils/theme';
 import JsonInputPanel from './popup/JsonInputPanel';
 import SettingsPanel from './popup/SettingsPanel';
 import SiteFilterPanel from './popup/SiteFilterPanel';
@@ -34,6 +36,7 @@ const App: React.FC = () => {
   const [jsonHoverEnabled, setJsonHoverEnabled] = React.useState(true);
   const [jsonDisplayMode, setJsonDisplayMode] = React.useState<'drawer' | 'window'>('drawer');
   const [defaultViewerMode, setDefaultViewerMode] = React.useState<'default' | 'editor'>('default');
+  const [themeMode, setThemeMode] = React.useState<ThemeMode>(DEFAULT_THEME_MODE);
   const [jsonInput, setJsonInput] = React.useState('');
   const [jsonFormatError, setJsonFormatError] = React.useState<string | null>(null);
   const [language, setLanguage] = React.useState<LanguageCode>(DEFAULT_LANGUAGE);
@@ -48,6 +51,8 @@ const App: React.FC = () => {
 
   // Load saved settings when popup opens
   React.useEffect(() => {
+    const cleanupTheme = initTheme();
+
     // Load all saved settings
     const loadSettings = async () => {
       try {
@@ -55,6 +60,9 @@ const App: React.FC = () => {
         const currentLang = await getCurrentLanguage();
         setLanguage(currentLang);
         setTranslations(getTranslations(currentLang));
+
+        const currentThemeMode = await getStoredThemeMode();
+        setThemeMode(currentThemeMode);
 
         // Load JSON display mode setting
         chrome.storage.local.get(STORAGE_KEYS.JSON_DISPLAY_MODE, (result) => {
@@ -96,6 +104,8 @@ const App: React.FC = () => {
     };
 
     loadSettings();
+
+    return cleanupTheme;
   }, []);
 
   // Handle hover detection setting change
@@ -137,6 +147,12 @@ const App: React.FC = () => {
     const newMode = e.target.value as 'default' | 'editor';
     setDefaultViewerMode(newMode);
     chrome.storage.local.set({ [STORAGE_KEYS.DEFAULT_VIEWER_MODE]: newMode });
+  };
+
+  const handleThemeModeChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMode = e.target.value as ThemeMode;
+    setThemeMode(newMode);
+    await saveThemeMode(newMode);
   };
 
   // 新增：打开 Chrome 快捷键设置页面
@@ -683,10 +699,12 @@ const App: React.FC = () => {
             language={language}
             jsonDisplayMode={jsonDisplayMode}
             defaultViewerMode={defaultViewerMode}
+            themeMode={themeMode}
             onHoverDetectionChange={handleHoverDetectionChange}
             onLanguageChange={handleLanguageChange}
             onDisplayModeChange={handleDisplayModeChange}
             onDefaultViewerModeChange={handleDefaultViewerModeChange}
+            onThemeModeChange={handleThemeModeChange}
             onOpenShortcuts={openShortcutsPage}
           />
         ) : activeTab === 'site-filter' ? (

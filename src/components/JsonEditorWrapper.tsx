@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import { JSONEditor, Mode, Content, JSONContent } from 'vanilla-jsoneditor';
+import 'vanilla-jsoneditor/themes/jse-theme-dark.css';
 import { parseJsonPreserveLargeNumbers } from '../utils/jsonParse';
+import { useResolvedTheme } from '../utils/useResolvedTheme';
 
 // Note: vanilla-jsoneditor usually supplies its own CSS via import, 
 // but sometimes valid css import is needed depending on bundler
@@ -30,6 +32,7 @@ const JsonEditorWrapper = forwardRef<JsonEditorRef, JsonEditorWrapperProps>(({
 }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const jsonEditorRef = useRef<any>(null);
+    const resolvedTheme = useResolvedTheme();
 
     // Map legacy modes to simple vanilla-jsoneditor modes if needed
     // 'tree' -> Mode.tree (which is actually 'tree' string in newer versions, checking types is safer if we had them)
@@ -126,7 +129,7 @@ const JsonEditorWrapper = forwardRef<JsonEditorRef, JsonEditorWrapperProps>(({
     return (
         <div
             ref={containerRef}
-            className="vanilla-jsoneditor-react-container"
+            className={`vanilla-jsoneditor-react-container ${resolvedTheme === 'dark' ? 'jse-theme-dark' : ''}`}
             style={{ height: '100%', width: '100%' }} // Ensure it takes full space
         />
     );

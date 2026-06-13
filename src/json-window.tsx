@@ -1,6 +1,7 @@
 import './config/public-path';
 import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
+import './assets/styles/theme.css';
 import { JsonEditorRef } from './components/JsonEditorWrapper';
 import { DEFAULT_LANGUAGE, getCurrentLanguage, getTranslations, LanguageCode, Translations } from './utils/i18n';
 import { STORAGE_KEYS } from './config/storageKeys';
@@ -12,6 +13,9 @@ import JsonViewerShell from './components/jsonViewer/JsonViewerShell';
 import { useJsonClipboard } from './components/jsonViewer/useJsonClipboard';
 import { useJsonPath } from './components/jsonViewer/useJsonPath';
 import { useJsonViewerMode } from './components/jsonViewer/useJsonViewerMode';
+import { initTheme } from './utils/theme';
+
+initTheme();
 
 // JSON Window React Component
 const JsonWindowApp: React.FC = () => {
@@ -128,7 +132,7 @@ const JsonWindowApp: React.FC = () => {
         </div>
         <div className="json-window-content">
           <div className="json-display">
-            <p style={{ color: '#dc3545', padding: '20px' }}>{i18n.noJsonDataProvided}</p>
+            <p style={{ color: 'var(--danger)', padding: '20px' }}>{i18n.noJsonDataProvided}</p>
           </div>
         </div>
       </div>

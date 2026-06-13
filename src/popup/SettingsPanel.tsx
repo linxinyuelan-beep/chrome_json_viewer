@@ -1,5 +1,6 @@
 import React from 'react';
 import { languageOptions, LanguageCode, Translations } from '../utils/i18n';
+import { ThemeMode } from '../utils/theme';
 
 interface SettingsPanelProps {
   translations: Translations;
@@ -7,10 +8,12 @@ interface SettingsPanelProps {
   language: LanguageCode;
   jsonDisplayMode: 'drawer' | 'window';
   defaultViewerMode: 'default' | 'editor';
+  themeMode: ThemeMode;
   onHoverDetectionChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   onLanguageChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   onDisplayModeChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   onDefaultViewerModeChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+  onThemeModeChange: (event: React.ChangeEvent<HTMLSelectElement>) => void;
   onOpenShortcuts: () => void;
 }
 
@@ -20,10 +23,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   language,
   jsonDisplayMode,
   defaultViewerMode,
+  themeMode,
   onHoverDetectionChange,
   onLanguageChange,
   onDisplayModeChange,
   onDefaultViewerModeChange,
+  onThemeModeChange,
   onOpenShortcuts,
 }) => {
   return (
@@ -81,6 +86,19 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </select>
         </label>
 
+        <label className="language-select-label">
+          {translations.themeMode}:
+          <select
+            className="language-select"
+            value={themeMode}
+            onChange={onThemeModeChange}
+          >
+            <option value="system">{translations.themeModeSystem}</option>
+            <option value="light">{translations.themeModeLight}</option>
+            <option value="dark">{translations.themeModeDark}</option>
+          </select>
+        </label>
+
         <div className="settings-actions">
           <button className="button" onClick={onOpenShortcuts} aria-label="Open Chrome shortcuts settings">
             {translations.configureShortcuts}
@@ -92,4 +110,3 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 };
 
 export default SettingsPanel;
-

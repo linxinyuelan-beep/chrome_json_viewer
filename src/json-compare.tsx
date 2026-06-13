@@ -1,11 +1,15 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import JsonCompare from './components/JsonCompare';
+import './assets/styles/theme.css';
 import './assets/styles/json-compare.css';
+import { initTheme } from './utils/theme';
 
 /**
  * JSON 对比页面入口
  */
+
+initTheme();
 
 // 从 URL 参数获取初始 JSON 数据
 const urlParams = new URLSearchParams(window.location.search);

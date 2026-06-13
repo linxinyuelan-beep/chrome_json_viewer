@@ -8,13 +8,10 @@ import './assets/styles/json-viewer-component.css';
 
 // 导入版本号从中心配置
 import { VERSION } from './config/version';
-const EXTENSION_VERSION = VERSION;
-console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_VERSION}`);
-
-
 import { STORAGE_KEYS } from './config/storageKeys';
 import { MESSAGE_ACTIONS } from './config/messageActions';
 import { DETECTION_UI } from './config/uiConstants';
+import { initTheme } from './utils/theme';
 import {
     closeJsonDrawer,
     ensureJsonDrawerMounted,
@@ -29,6 +26,10 @@ import { registerContentLifecycle } from './content/lifecycle';
 import { registerContentMessageHandler } from './content/messages';
 import { showNotification } from './content/notification';
 import { loadContentSettings } from './content/settings';
+
+const EXTENSION_VERSION = VERSION;
+console.log(`Content script loaded. JSON Formatter & Viewer version ${EXTENSION_VERSION}`);
+initTheme(document.documentElement, { colorScheme: false });
 
 // 是否启用悬停检测，从存储中加载
 let enableHoverDetection = true;

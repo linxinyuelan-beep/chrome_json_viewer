@@ -401,3 +401,152 @@
   background: rgba(16, 185, 129, 0.2);
   color: #047857;
 }
+
+:root[data-theme="dark"] .json-viewer-component {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-soft) 100%);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .json-viewer-header {
+  background: linear-gradient(135deg, var(--surface-muted) 0%, var(--surface-soft) 100%);
+  border-bottom-color: var(--border);
+}
+
+:root[data-theme="dark"] .json-viewer-version,
+:root[data-theme="dark"] .json-viewer-size,
+:root[data-theme="dark"] .json-viewer-path-status,
+:root[data-theme="dark"] .json-viewer-path-label,
+:root[data-theme="dark"] .json-viewer-path-copy-btn {
+  color: var(--text-muted);
+}
+
+:root[data-theme="dark"] .json-viewer-navigation,
+:root[data-theme="dark"] .json-viewer-path-display {
+  background: rgba(148, 163, 184, 0.1);
+  border-color: var(--border-soft);
+}
+
+:root[data-theme="dark"] .json-viewer-nav-button {
+  background: var(--surface-soft);
+  color: var(--text);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+:root[data-theme="dark"] .json-viewer-nav-button:hover:not(.disabled) {
+  background: var(--surface-muted);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: var(--shadow);
+}
+
+:root[data-theme="dark"] .json-viewer-nav-button.disabled {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--text-subtle);
+  border-color: var(--border-soft);
+}
+
+:root[data-theme="dark"] .json-viewer-dropdown-menu {
+  background: var(--surface-elevated);
+  border-color: var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+:root[data-theme="dark"] .json-viewer-dropdown-header {
+  color: var(--text-strong);
+  background: linear-gradient(135deg, var(--surface-muted) 0%, var(--surface-soft) 100%);
+  border-bottom-color: var(--border);
+}
+
+:root[data-theme="dark"] .json-viewer-dropdown-view-all {
+  color: var(--primary);
+}
+
+:root[data-theme="dark"] .json-viewer-dropdown-view-all:hover,
+:root[data-theme="dark"] .json-viewer-path-copy-btn:hover,
+:root[data-theme="dark"] .json-viewer-path-status:hover {
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+}
+
+:root[data-theme="dark"] .json-viewer-dropdown-item {
+  color: var(--text-muted);
+  border-bottom-color: rgba(148, 163, 184, 0.16);
+}
+
+:root[data-theme="dark"] .json-viewer-dropdown-item:hover {
+  background: var(--primary-soft);
+  color: var(--text-strong);
+}
+
+:root[data-theme="dark"] .json-viewer-dropdown-empty {
+  color: var(--text-subtle);
+}
+
+:root[data-theme="dark"] .json-tree-container {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-soft) 100%);
+  color: var(--text);
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+:root[data-theme="dark"] .json-tree-container::-webkit-scrollbar-thumb,
+:root[data-theme="dark"] .json-viewer-dropdown-menu::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+:root[data-theme="dark"] .json-tree-container::-webkit-scrollbar-thumb:hover,
+:root[data-theme="dark"] .json-viewer-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+:root[data-theme="dark"] .json-tree-container::before {
+  background: linear-gradient(90deg, transparent 0%, var(--border-soft) 50%, transparent 100%);
+}
+
+:root[data-theme="dark"] .json-viewer-path-value {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text);
+  border-color: var(--border-soft);
+}
+
+:root[data-theme="dark"] .json-viewer-path-status.success,
+:root[data-theme="dark"] .json-viewer-path-copy-btn.success {
+  color: var(--success);
+  background: var(--success-soft);
+}
+
+:root[data-theme="dark"] .vanilla-jsoneditor-react-container,
+:root[data-theme="dark"] .vanilla-jsoneditor-react-container .jse-main {
+  background: var(--surface);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .vanilla-jsoneditor-react-container.jse-theme-dark {
+  --jse-background-color: var(--surface);
+  --jse-text-color: var(--text);
+  --jse-key-color: #93c5fd;
+  --jse-value-color: var(--text);
+  --jse-value-color-string: #86efac;
+  --jse-value-color-number: #fdba74;
+  --jse-value-color-boolean: #c4b5fd;
+  --jse-value-color-null: #c4b5fd;
+  --jse-delimiter-color: var(--text-subtle);
+  --jse-hover-background-color: rgba(96, 165, 250, 0.12);
+  --jse-selection-background-color: rgba(96, 165, 250, 0.22);
+  --jse-active-line-background-color: rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme="dark"] .vanilla-jsoneditor-react-container .jse-menu,
+:root[data-theme="dark"] .vanilla-jsoneditor-react-container .jse-navigation-bar,
+:root[data-theme="dark"] .vanilla-jsoneditor-react-container .jse-status-bar {
+  background: var(--surface-soft);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+:root[data-theme="dark"] .vanilla-jsoneditor-react-container .jse-contents,
+:root[data-theme="dark"] .vanilla-jsoneditor-react-container .jse-tree-mode,
+:root[data-theme="dark"] .vanilla-jsoneditor-react-container .jse-table-mode,
+:root[data-theme="dark"] .vanilla-jsoneditor-react-container .jse-text-mode {
+  background: var(--surface);
+  color: var(--text);
+}

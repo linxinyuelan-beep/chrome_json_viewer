@@ -3,6 +3,7 @@ import ReactJson from '@microlink/react-json-view';
 import JsonEditorWrapper, { JsonEditorRef } from '../JsonEditorWrapper';
 import { copyJsonViewValue } from './useJsonClipboard';
 import { JsonViewerMode } from './types';
+import { useResolvedTheme } from '../../utils/useResolvedTheme';
 
 interface JsonViewerShellProps {
   data: unknown;
@@ -29,6 +30,9 @@ const JsonViewerShell: React.FC<JsonViewerShellProps> = ({
   windowMode = false,
   invalidJsonText,
 }) => {
+  const resolvedTheme = useResolvedTheme();
+  const jsonViewTheme = resolvedTheme === 'dark' ? 'monokai' : 'rjv-default';
+
   return (
     <div className="json-tree-container" style={{ height }}>
       {viewMode === null ? (
@@ -38,7 +42,7 @@ const JsonViewerShell: React.FC<JsonViewerShellProps> = ({
       ) : viewMode === 'default' ? (
         <ReactJson
           src={data as any}
-          theme="rjv-default"
+          theme={jsonViewTheme}
           style={{ backgroundColor: 'transparent' }}
           collapsed={!expanded}
           collapseStringsAfterLength={false}

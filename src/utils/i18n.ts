@@ -51,6 +51,10 @@ export interface Translations {
   defaultViewerMode: string;
   viewerModeTreeView: string;
   viewerModeEditor: string;
+  themeMode: string;
+  themeModeSystem: string;
+  themeModeLight: string;
+  themeModeDark: string;
 
   // Messages
   enterJsonText: string;
@@ -226,6 +230,10 @@ export const translations: Record<LanguageCode, Translations> = {
     defaultViewerMode: 'Default Viewer Mode',
     viewerModeTreeView: 'Tree View',
     viewerModeEditor: 'Editor',
+    themeMode: 'Theme',
+    themeModeSystem: 'Follow System',
+    themeModeLight: 'Light',
+    themeModeDark: 'Dark',
 
     // Messages
     enterJsonText: 'Please enter JSON text',
@@ -398,6 +406,10 @@ export const translations: Record<LanguageCode, Translations> = {
     defaultViewerMode: '默认查看器模式',
     viewerModeTreeView: '树形视图',
     viewerModeEditor: '编辑器视图',
+    themeMode: '主题',
+    themeModeSystem: '跟随系统',
+    themeModeLight: '浅色',
+    themeModeDark: '深色',
 
     // Messages
     enterJsonText: '请输入JSON文本',

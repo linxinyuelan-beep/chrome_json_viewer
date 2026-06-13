@@ -1,24 +1,7 @@
 :root {
-  --bg: #f4f6fb;
-  --surface: #ffffff;
-  --surface-soft: #f8fafc;
-  --text: #1f2937;
-  --text-muted: #64748b;
-  --border: #dbe3ef;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-soft: #dbeafe;
-  --danger: #dc2626;
-  --danger-soft: #fef2f2;
-  --success: #16a34a;
-  --success-soft: #f0fdf4;
-  --warning: #b45309;
-  --warning-soft: #fffbeb;
   --radius-sm: 8px;
   --radius: 12px;
   --radius-lg: 14px;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow: 0 8px 22px rgba(15, 23, 42, 0.1);
 }
 
 * {
@@ -31,7 +14,7 @@ body {
   width: 400px;
   min-height: 320px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
-  background: linear-gradient(180deg, #eef3ff 0%, #f8faff 100%);
+  background: var(--app-bg);
   color: var(--text);
 }
 
@@ -56,7 +39,7 @@ body {
   line-height: 1.2;
   font-weight: 700;
   letter-spacing: 0.2px;
-  color: #0f172a;
+  color: var(--text-strong);
 }
 
 .version {
@@ -93,8 +76,8 @@ body {
 }
 
 .tab:hover {
-  color: #334155;
-  background: #f1f5f9;
+  color: var(--text);
+  background: var(--surface-muted);
 }
 
 .tab.active {
@@ -430,4 +413,50 @@ body {
 
 .github-link a:hover {
   color: var(--primary-hover);
+}
+
+:root[data-theme="dark"] .json-textarea::placeholder {
+  color: var(--text-subtle);
+}
+
+:root[data-theme="dark"] .json-input-help li::before {
+  color: var(--text-subtle);
+}
+
+:root[data-theme="dark"] .json-error-message {
+  border-color: rgba(248, 113, 113, 0.28);
+}
+
+:root[data-theme="dark"] .json-error-message.success {
+  border-color: rgba(52, 211, 153, 0.28);
+}
+
+:root[data-theme="dark"] .filter-warning {
+  border-color: rgba(251, 191, 36, 0.28);
+}
+
+:root[data-theme="dark"] .site-empty {
+  color: var(--text-subtle);
+}
+
+:root[data-theme="dark"] .json-button.clear,
+:root[data-theme="dark"] .json-button.minify,
+:root[data-theme="dark"] .json-button.escape,
+:root[data-theme="dark"] .json-button.unescape,
+:root[data-theme="dark"] .json-button.convert,
+:root[data-theme="dark"] .json-button.convert-kv,
+:root[data-theme="dark"] .json-button.compare,
+:root[data-theme="dark"] .json-button.secondary {
+  background: #334155;
+}
+
+:root[data-theme="dark"] .json-button.clear:hover,
+:root[data-theme="dark"] .json-button.minify:hover,
+:root[data-theme="dark"] .json-button.escape:hover,
+:root[data-theme="dark"] .json-button.unescape:hover,
+:root[data-theme="dark"] .json-button.convert:hover,
+:root[data-theme="dark"] .json-button.convert-kv:hover,
+:root[data-theme="dark"] .json-button.compare:hover,
+:root[data-theme="dark"] .json-button.secondary:hover {
+  background: #475569;
 }
