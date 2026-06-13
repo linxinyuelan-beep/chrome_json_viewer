@@ -1,0 +1,79 @@
+src/assets/styles/json-drawer.css
+  s_e22b20e6bb5938::t_e3537b0848b589 101-127,345-348,352-378
+  s_e22b20e6bb5938::t_6b624f35b75d6e 342-344,349-351,379-414
+src/popup.tsx
+  s_e22b20e6bb5938::t_5379e7db46c135 29,39,54-55,64-66,107-108,152-157,702,707
+  s_e22b20e6bb5938::t_9b721ef28d5532 4
+src/components/JsonEditorWrapper.tsx
+  s_e22b20e6bb5938::t_85f427a87c4e90 3,5,35,132
+src/utils/i18n.ts
+  s_e22b20e6bb5938::t_2f2a9effc9b2cf 54-57,233-236,409-412
+src/config/version.ts
+  s_850b8ec3d2a05c::t_6a478832062e00 4
+package.json
+  s_850b8ec3d2a05c::t_19b335e3eff98b 3
+src/json-window.tsx
+  s_e22b20e6bb5938::t_2bde0fad098895 135
+  s_e22b20e6bb5938::t_94209672a76f80 4
+  s_e22b20e6bb5938::t_e80865f618a84f 16-18
+scripts/version-sync.js
+  s_e22b20e6bb5938::t_035f37fb93a0c6 28
+src/assets/styles/json-compare.css
+  s_e22b20e6bb5938::t_78c4cef94c23df 741-904,907-910,914-928,934-944
+  s_e22b20e6bb5938::t_fd8efd42734ba1 905-906,911-913,929-933
+src/config/storageKeys.ts
+  s_e22b20e6bb5938::t_9f415996a9df68 10
+src/json-window.html
+  s_e22b20e6bb5938::t_10421aceabfd4a 16-17,29-30,47,56,67,79,84-85,101-102,106,122,131-132,143,159,170-171,175-176,181-189,197
+src/json-compare.tsx
+  s_e22b20e6bb5938::t_083f6af924872e 4
+  s_e22b20e6bb5938::t_46284e94aaea5a 6,12
+src/manifest.json
+  s_850b8ec3d2a05c::t_6a478832062e00 5
+src/assets/styles/main.css
+  s_e22b20e6bb5938::t_1f707921d41300 417-462
+  s_e22b20e6bb5938::t_ae8b0f4a70f5f8 17,42,79-80
+src/assets/styles/theme.css
+  s_e22b20e6bb5938::t_bd1049daa353e5 1-59
+src/assets/styles/json-viewer-component.css
+  s_e22b20e6bb5938::t_a13e32245a3a83 404-522,538-552
+  s_e22b20e6bb5938::t_226a8fad234c3a 523-537
+src/utils/useResolvedTheme.ts
+  s_e22b20e6bb5938::t_207154389f72f3 1-12
+src/components/jsonViewer/JsonViewerShell.tsx
+  s_e22b20e6bb5938::t_24094604ba9363 6,33-35,45
+src/assets/styles/history.css
+  s_e22b20e6bb5938::t_357ff437fc7354 243-313
+src/content.ts
+  s_e22b20e6bb5938::t_a2a6fb80d32bf9 30-32
+  s_e22b20e6bb5938::t_190a3c2dbeccb4 14
+src/utils/theme.ts
+  s_e22b20e6bb5938::t_30cdc09a15ac8d 10-13,30-36,38-40,132-133
+  s_e22b20e6bb5938::t_2f5c6f711fe113 1-9,14-29,37,41-131,134
+src/popup/SettingsPanel.tsx
+  s_e22b20e6bb5938::t_a829fe7213c20a 3,11,16,26,31,89-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.16-trip",
+  "base_commit_sha": "c9ac6d9e1b1eaaca315c4e7041f364813f60c9e6",
+  "prompts": {},
+  "sessions": {
+    "s_850b8ec3d2a05c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ebffa-e200-7b51-9e68-4ad2fc8b314a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "zysang <zysang@trip.com>"
+    },
+    "s_e22b20e6bb5938": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ebfc8-8113-7550-af01-8ac8a3822b6b",
+        "model": "gpt-5.5"
+      },
+      "human_author": "zysang <zysang@trip.com>"
+    }
+  }
+}
