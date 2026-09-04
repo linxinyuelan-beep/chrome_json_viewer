@@ -27,6 +27,7 @@ export interface Translations {
   escapeString: string;
   unescapeString: string;
   convertKeyValue: string;
+  compressLines: string;
   jsonInputHelp1: string;
   jsonInputHelp2: string;
   jsonInputHelp3: string;
@@ -75,6 +76,9 @@ export interface Translations {
   keyValueConvertedAndCopied: string;
   enterTextToConvert: string;
   convertError: string;
+  linesCompressed: string;
+  linesCompressedAndCopied: string;
+  enterTextToCompress: string;
   statusEnabled: string;
   statusDisabled: string;
   jsonExtracted: string;
@@ -206,10 +210,11 @@ export const translations: Record<LanguageCode, Translations> = {
     escapeString: 'Escape String',
     unescapeString: 'Unescape String',
     convertKeyValue: 'Convert Key-Value',
+    compressLines: 'Dedupe & Join Lines',
     jsonInputHelp1: 'Paste JSON text above and click "Format & View" to display formatted JSON',
     jsonInputHelp2: 'Click "Format & Convert" to convert special date format /Date(timestamp)/ to readable dates',
     jsonInputHelp3: '"Minify JSON" compresses JSON to a single line, "Escape String" and "Unescape String" handle special characters',
-    jsonInputHelp4: '"Convert Key-Value" converts semicolon-separated key-value format (key1=value1,key2=value2;key3=value3,key4=value4) to JSON array',
+    jsonInputHelp4: '"Convert Key-Value" converts semicolon-separated key-value format (key1=value1,key2=value2;key3=value3,key4=value4) to JSON array, "Dedupe & Join Lines" merges multi-line text into one comma-separated, deduplicated line',
 
     // Settings section
     keyboardShortcuts: 'Keyboard Shortcuts',
@@ -254,6 +259,9 @@ export const translations: Record<LanguageCode, Translations> = {
     keyValueConvertedAndCopied: 'Key-value format converted to JSON and copied to clipboard',
     enterTextToConvert: 'Please enter key-value text to convert',
     convertError: 'Convert error: ',
+    linesCompressed: 'Lines deduplicated and joined',
+    linesCompressedAndCopied: 'Lines deduplicated, joined and copied to clipboard',
+    enterTextToCompress: 'Please enter multi-line text to compress',
     statusEnabled: 'Enabled',
     statusDisabled: 'Disabled',
     jsonExtracted: 'JSON content extracted and formatted',
@@ -382,10 +390,11 @@ export const translations: Record<LanguageCode, Translations> = {
     escapeString: '转义字符串',
     unescapeString: '反转义字符串',
     convertKeyValue: '转换键值对',
+    compressLines: '去重压缩',
     jsonInputHelp1: '将JSON文本粘贴在上方，然后点击"格式化并查看"以显示格式化后的JSON',
     jsonInputHelp2: '点击"格式化并转换"可将特殊日期格式 /Date(timestamp)/ 转换为可读日期并显示',
     jsonInputHelp3: '点击\"压缩\"可将JSON压缩为单行，\"转义字符串\"和\"反转义字符串\"用于处理特殊字符',
-    jsonInputHelp4: '"转换键值对"可将分号分隔的键值对格式 (key1=value1,key2=value2;key3=value3,key4=value4) 转换为JSON数组',
+    jsonInputHelp4: '"转换键值对"可将分号分隔的键值对格式 (key1=value1,key2=value2;key3=value3,key4=value4) 转换为JSON数组，"去重压缩"可将多行文本去重并合并为一行，以英文逗号分隔',
 
     // Settings section
     keyboardShortcuts: '键盘快捷键',
@@ -430,6 +439,9 @@ export const translations: Record<LanguageCode, Translations> = {
     keyValueConvertedAndCopied: '键值对格式已转换为JSON并复制到剪贴板',
     enterTextToConvert: '请输入需要转换的键值对文本',
     convertError: '转换出错：',
+    linesCompressed: '行已去重压缩',
+    linesCompressedAndCopied: '行已去重压缩并复制到剪贴板',
+    enterTextToCompress: '请输入需要压缩的多行文本',
     statusEnabled: '已启用',
     statusDisabled: '已禁用',
     jsonExtracted: 'JSON内容已提取并格式化',

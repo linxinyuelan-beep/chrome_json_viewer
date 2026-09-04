@@ -663,6 +663,37 @@ const App: React.FC = () => {
     }
   };
 
+  // Deduplicate and join multi-line text into a single comma-separated line
+  const compressLines = () => {
+    try {
+      if (!jsonInput.trim()) {
+        setJsonFormatError(translations.enterTextToCompress);
+        return;
+      }
+
+      const lines = jsonInput
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+
+      const uniqueLines = Array.from(new Set(lines));
+      const compressed = uniqueLines.join(', ');
+
+      setJsonInput(compressed);
+      setJsonFormatError(translations.linesCompressed);
+
+      navigator.clipboard.writeText(compressed)
+        .then(() => {
+          setJsonFormatError(translations.linesCompressedAndCopied);
+        })
+        .catch(err => {
+          console.log('Clipboard copy failed, but lines are compressed:', err);
+        });
+    } catch (error) {
+      setJsonFormatError(`${translations.convertError}${(error as Error).message}`);
+    }
+  };
+
   return (
     <div className="popup">
       <div className="header">
@@ -734,6 +765,7 @@ const App: React.FC = () => {
             onUnescape={unescapeJsonString}
             onConvertKeyValue={convertKeyValueToJson}
             onOpenCompare={openJsonComparePage}
+            onCompressLines={compressLines}
           />
         )}
       </div>

@@ -243,6 +243,7 @@ body {
 .json-button.convert,
 .json-button.convert-kv,
 .json-button.compare,
+.json-button.compress-lines,
 .json-button.secondary {
   background: #334155;
   box-shadow: 0 2px 8px rgba(51, 65, 85, 0.25);
@@ -254,6 +255,7 @@ body {
 .json-button.convert:hover,
 .json-button.convert-kv:hover,
 .json-button.compare:hover,
+.json-button.compress-lines:hover,
 .json-button.secondary:hover {
   background: #1f2937;
 }
@@ -446,6 +448,7 @@ body {
 :root[data-theme="dark"] .json-button.convert,
 :root[data-theme="dark"] .json-button.convert-kv,
 :root[data-theme="dark"] .json-button.compare,
+:root[data-theme="dark"] .json-button.compress-lines,
 :root[data-theme="dark"] .json-button.secondary {
   background: #334155;
 }
@@ -457,6 +460,7 @@ body {
 :root[data-theme="dark"] .json-button.convert:hover,
 :root[data-theme="dark"] .json-button.convert-kv:hover,
 :root[data-theme="dark"] .json-button.compare:hover,
+:root[data-theme="dark"] .json-button.compress-lines:hover,
 :root[data-theme="dark"] .json-button.secondary:hover {
   background: #475569;
 }

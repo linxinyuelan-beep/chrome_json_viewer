@@ -14,6 +14,7 @@ interface JsonInputPanelProps {
   onUnescape: () => void;
   onConvertKeyValue: () => void;
   onOpenCompare: () => void;
+  onCompressLines: () => void;
 }
 
 const JsonInputPanel: React.FC<JsonInputPanelProps> = ({
@@ -29,6 +30,7 @@ const JsonInputPanel: React.FC<JsonInputPanelProps> = ({
   onUnescape,
   onConvertKeyValue,
   onOpenCompare,
+  onCompressLines,
 }) => {
   return (
     <div className="json-input-section">
@@ -77,7 +79,9 @@ const JsonInputPanel: React.FC<JsonInputPanelProps> = ({
           <button className="json-button compare" onClick={onOpenCompare}>
             {translations.compare}
           </button>
-          <div className="action-spacer"></div>
+          <button className="json-button compress-lines" onClick={onCompressLines}>
+            {translations.compressLines}
+          </button>
         </div>
       </div>
       <div className="json-input-help">
